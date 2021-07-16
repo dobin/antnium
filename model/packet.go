@@ -20,3 +20,6 @@ type PacketTest struct {
 type PacketInfo struct {
 	Packet
 }
+type PacketPing struct {
+	Packet
+}

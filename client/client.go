@@ -22,10 +22,16 @@ func NewClient(port int) Client {
 func (s Client) Start() {
 	fmt.Println("Client")
 
+	s.sendPing()
 	command := s.getCommand()
 	command.Execute()
 	fmt.Println("My response: " + command.Response())
 	s.sendCommand(command)
+}
+
+func (s Client) sendPing() {
+	pingCommand := model.NewCommandPing("0", "ooy!")
+	s.sendCommand(pingCommand)
 }
 
 func (s Client) getCommand() model.Command {

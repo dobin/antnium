@@ -42,7 +42,13 @@ func JsonToCommand(jsonStr string) Command {
 		}
 		res = NewCommandInfo(packetInfo.PacketId, packetInfo.Response)
 	}
-
+	if packet.Command == "ping" {
+		var packetPing PacketPing
+		if err := json.Unmarshal([]byte(jsonStr), &packetPing); err != nil {
+			log.Fatal(err)
+		}
+		res = NewCommandPing(packetPing.PacketId, packetPing.Response)
+	}
 	return res
 }
 
@@ -133,9 +139,40 @@ func (c *CommandTest) Response() string {
 }
 
 func (c CommandTest) Json() string {
-	p := PacketExec{
+	p := PacketTest{
 		Packet{ComputerId, c.PacketId, "test", c.responseText},
 		c.Arguments,
+	}
+	json, err := json.Marshal(p)
+	if err != nil {
+	}
+	return string(json)
+}
+
+type CommandPing struct {
+	PacketId     string
+	responseText string
+}
+
+func NewCommandPing(packetId string, response string) *CommandPing {
+	c := CommandPing{
+		packetId,
+		response,
+	}
+	return &c
+}
+
+func (c *CommandPing) Execute() {
+	c.responseText = "oy!"
+}
+
+func (c *CommandPing) Response() string {
+	return c.responseText
+}
+
+func (c CommandPing) Json() string {
+	p := PacketPing{
+		Packet{ComputerId, c.PacketId, "ping", c.responseText},
 	}
 	json, err := json.Marshal(p)
 	if err != nil {
