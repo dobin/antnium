@@ -10,9 +10,8 @@ type Command interface {
 	Json() string
 	Execute()
 	Response() string
+	SetComputerId(computerId string)
 }
-
-var ComputerId = "23"
 
 func JsonToCommand(jsonStr string) Command {
 	var res Command
@@ -26,43 +25,56 @@ func JsonToCommand(jsonStr string) Command {
 		if err := json.Unmarshal([]byte(jsonStr), &packetExec); err != nil {
 			log.Fatal(err)
 		}
-		res = NewCommandExec(packetExec.PacketId, packetExec.Arguments, packetExec.Response)
+		res = NewCommandExec(packetExec.ComputerId, packet.PacketId, packetExec.Arguments, packetExec.Response)
 	}
 	if packet.Command == "test" {
 		var packetTest PacketTest
 		if err := json.Unmarshal([]byte(jsonStr), &packetTest); err != nil {
 			log.Fatal(err)
 		}
-		res = NewCommandTest(packetTest.PacketId, packetTest.Arguments, packetTest.Response)
+		res = NewCommandTest(packetTest.ComputerId, packetTest.PacketId, packetTest.Arguments, packetTest.Response)
 	}
 	if packet.Command == "info" {
 		var packetInfo PacketInfo
 		if err := json.Unmarshal([]byte(jsonStr), &packetInfo); err != nil {
 			log.Fatal(err)
 		}
-		res = NewCommandInfo(packetInfo.PacketId, packetInfo.Response)
+		res = NewCommandInfo(packetInfo.ComputerId, packetInfo.PacketId, packetInfo.Response)
 	}
 	if packet.Command == "ping" {
 		var packetPing PacketPing
 		if err := json.Unmarshal([]byte(jsonStr), &packetPing); err != nil {
 			log.Fatal(err)
 		}
-		res = NewCommandPing(packetPing.PacketId, packetPing.Response)
+		/*
+			fmt.Println("XXX1: " + jsonStr)
+			fmt.Println("XXX2: " + packetPing.PacketId)
+			fmt.Println("XXX3: " + packet.PacketId)
+			fmt.Printf("YYY: %+v\n", packetPing)*/
+		res = NewCommandPing(packetPing.ComputerId, packetPing.PacketId, packetPing.Response)
 	}
 	return res
 }
 
-type CommandExec struct {
+type CommandBase struct {
+	ComputerId   string
 	PacketId     string
-	Arguments    []string
 	responseText string
 }
 
-func NewCommandExec(packetId string, args []string, response string) *CommandExec {
+type CommandExec struct {
+	CommandBase
+	Arguments []string
+}
+
+func NewCommandExec(computerId string, packetId string, args []string, response string) *CommandExec {
 	c := CommandExec{
-		packetId,
+		CommandBase{
+			computerId,
+			packetId,
+			response,
+		},
 		args,
-		response,
 	}
 	return &c
 }
@@ -76,9 +88,9 @@ func (c CommandExec) Response() string {
 	return c.responseText
 }
 
-func (c CommandExec) Json() string {
+func (c *CommandExec) Json() string {
 	p := PacketExec{
-		Packet{ComputerId, c.PacketId, "exec", c.responseText},
+		Packet{c.ComputerId, c.PacketId, "exec", c.responseText},
 		c.Arguments,
 	}
 	json, err := json.Marshal(p)
@@ -87,13 +99,22 @@ func (c CommandExec) Json() string {
 	return string(json)
 }
 
-type CommandInfo struct {
-	PacketId     string
-	responseText string
+func (c *CommandExec) SetComputerId(computerId string) {
+	c.ComputerId = computerId
 }
 
-func NewCommandInfo(packetId string, response string) *CommandInfo {
-	c := CommandInfo{packetId, response}
+type CommandInfo struct {
+	CommandBase
+}
+
+func NewCommandInfo(computerId string, packetId string, response string) *CommandInfo {
+	c := CommandInfo{
+		CommandBase{
+			computerId,
+			packetId,
+			response,
+		},
+	}
 	return &c
 }
 
@@ -105,9 +126,9 @@ func (c CommandInfo) Response() string {
 	return c.responseText
 }
 
-func (c CommandInfo) Json() string {
+func (c *CommandInfo) Json() string {
 	p := PacketInfo{
-		Packet{ComputerId, c.PacketId, "info", c.responseText},
+		Packet{c.ComputerId, c.PacketId, "info", c.responseText},
 	}
 	json, err := json.Marshal(p)
 	if err != nil {
@@ -115,17 +136,23 @@ func (c CommandInfo) Json() string {
 	return string(json)
 }
 
-type CommandTest struct {
-	PacketId     string
-	Arguments    []string
-	responseText string
+func (c *CommandInfo) SetComputerId(computerId string) {
+	c.ComputerId = computerId
 }
 
-func NewCommandTest(packetId string, args []string, response string) *CommandTest {
+type CommandTest struct {
+	CommandBase
+	Arguments []string
+}
+
+func NewCommandTest(computerId string, packetId string, args []string, response string) *CommandTest {
 	c := CommandTest{
-		packetId,
+		CommandBase{
+			computerId,
+			packetId,
+			response,
+		},
 		args,
-		response,
 	}
 	return &c
 }
@@ -138,9 +165,9 @@ func (c *CommandTest) Response() string {
 	return c.responseText
 }
 
-func (c CommandTest) Json() string {
+func (c *CommandTest) Json() string {
 	p := PacketTest{
-		Packet{ComputerId, c.PacketId, "test", c.responseText},
+		Packet{c.ComputerId, c.PacketId, "test", c.responseText},
 		c.Arguments,
 	}
 	json, err := json.Marshal(p)
@@ -149,15 +176,21 @@ func (c CommandTest) Json() string {
 	return string(json)
 }
 
-type CommandPing struct {
-	PacketId     string
-	responseText string
+func (c *CommandTest) SetComputerId(computerId string) {
+	c.ComputerId = computerId
 }
 
-func NewCommandPing(packetId string, response string) *CommandPing {
+type CommandPing struct {
+	CommandBase
+}
+
+func NewCommandPing(computerId string, packetId string, response string) *CommandPing {
 	c := CommandPing{
-		packetId,
-		response,
+		CommandBase{
+			computerId,
+			packetId,
+			response,
+		},
 	}
 	return &c
 }
@@ -170,12 +203,16 @@ func (c *CommandPing) Response() string {
 	return c.responseText
 }
 
-func (c CommandPing) Json() string {
+func (c *CommandPing) Json() string {
 	p := PacketPing{
-		Packet{ComputerId, c.PacketId, "ping", c.responseText},
+		Packet{c.ComputerId, c.PacketId, "ping", c.responseText},
 	}
 	json, err := json.Marshal(p)
 	if err != nil {
 	}
 	return string(json)
+}
+
+func (c *CommandPing) SetComputerId(computerId string) {
+	c.ComputerId = computerId
 }

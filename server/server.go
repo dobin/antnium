@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/dobin/antnium/model"
 	"github.com/gorilla/mux"
@@ -17,6 +20,7 @@ type Server struct {
 
 func NewServer(port int) Server {
 	w := Server{port, []model.Command{}}
+	rand.Seed(time.Now().Unix())
 	return w
 }
 
@@ -25,7 +29,7 @@ func (s *Server) Serve() {
 	myRouter.HandleFunc("/admin/listCommands", s.adminListCommands)
 	myRouter.HandleFunc("/admin/addCommand", s.adminAddCommand)
 
-	myRouter.HandleFunc("/getCommand", s.getCommand)
+	myRouter.HandleFunc("/getCommand/{computerId}", s.getCommand)
 	myRouter.HandleFunc("/sendCommand", s.sendCommand)
 
 	fmt.Println("Serving")
@@ -44,10 +48,15 @@ func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
+
 }
 
 func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
-	c := model.NewCommandTest("42", []string{"arg0", "arg1"}, "")
+	//vars := mux.Vars(r)
+	//computerId := vars["computerId"]
+	//fmt.Println("getCommand for ComputerID: " + computerId)
+	c := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
+	fmt.Println("<- " + c.Json())
 	fmt.Fprint(rw, c.Json())
 }
 
@@ -56,9 +65,9 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//fmt.Println(string(reqBody))
 	command := model.JsonToCommand(string(reqBody))
-	fmt.Println("SendCommand: ")
-	fmt.Println(command.Json())
+	fmt.Println("-> " + command.Json())
 	s.commands = append(s.commands, command)
 	fmt.Fprint(rw, "asdf")
 }
