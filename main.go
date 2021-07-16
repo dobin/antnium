@@ -1,29 +1,26 @@
 package main
 
 import (
-	"log"
-	"mux"
-	"net/http"
+	"flag"
+	"fmt"
+
+	"github.com/dobin/antnium/client"
+	"github.com/dobin/antnium/server"
 )
 
-// Webserver contains all data the frontend webserver needs
-type Server struct {
-	port int
-}
-
-// New returns a new webserver instance
-func NewServer(port int) Server {
-	w := Server{port}
-	return w
-}
-
-func (s Server) Serve() {
-	myRouter := mux.NewRouter().StrictSlash(true)
-	myRouter.HandleFunc("/api/{customer}/findRet", w.restFindReg)
-	log.Fatal(http.ListenAndServe())
-}
-
 func main() {
-	s := NewServer(4444)
-	s.Serve()
+	flagServer := flag.Bool("server", false, "IsServer")
+	flagClient := flag.Bool("client", false, "IsClient")
+	flag.Parse()
+
+	fmt.Println("Antnium 0.1")
+
+	if *flagServer {
+		s := server.NewServer(4444)
+		s.Serve()
+	}
+	if *flagClient {
+		c := client.NewClient(4444)
+		c.Start()
+	}
 }
