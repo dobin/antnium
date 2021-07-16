@@ -1,8 +1,10 @@
 package model
 
 type Packet struct {
-	Command  string `json:"command"`
-	Response string `json:"response"`
+	ComputerId string `json:"computerid"`
+	PacketId   string `json:"packetid"`
+	Command    string `json:"command"`
+	Response   string `json:"response"`
 }
 
 type PacketExec struct {

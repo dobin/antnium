@@ -11,16 +11,20 @@ import (
 )
 
 type Server struct {
-	port int
+	port     int
+	commands []model.Command
 }
 
 func NewServer(port int) Server {
-	w := Server{port}
+	w := Server{port, []model.Command{}}
 	return w
 }
 
-func (s Server) Serve() {
+func (s *Server) Serve() {
 	myRouter := mux.NewRouter().StrictSlash(true)
+	myRouter.HandleFunc("/admin/listCommands", s.adminListCommands)
+	myRouter.HandleFunc("/admin/addCommand", s.adminAddCommand)
+
 	myRouter.HandleFunc("/getCommand", s.getCommand)
 	myRouter.HandleFunc("/sendCommand", s.sendCommand)
 
@@ -28,13 +32,26 @@ func (s Server) Serve() {
 	log.Fatal(http.ListenAndServe("127.0.0.1:4444", myRouter))
 }
 
-func (s Server) getCommand(rw http.ResponseWriter, r *http.Request) {
-	c := model.NewCommandTest([]string{"arg0", "arg1"}, "")
+func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(rw, "[")
+	for i, command := range s.commands {
+		fmt.Fprint(rw, command.Json())
+		if i != len(s.commands) {
+			fmt.Fprint(rw, ",")
+		}
+	}
+	fmt.Fprint(rw, "]")
+}
+
+func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
+}
+
+func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
+	c := model.NewCommandTest("42", []string{"arg0", "arg1"}, "")
 	fmt.Fprint(rw, c.Json())
 }
 
-func (s Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
-	//	c := model.NewCommandTest([]string{"arg0", "arg1"})
+func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -42,5 +59,6 @@ func (s Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	command := model.JsonToCommand(string(reqBody))
 	fmt.Println("SendCommand: ")
 	fmt.Println(command.Json())
+	s.commands = append(s.commands, command)
 	fmt.Fprint(rw, "asdf")
 }

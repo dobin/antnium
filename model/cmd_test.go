@@ -14,8 +14,8 @@ func TestFromJson(t *testing.T) {
 }
 
 func TestToJson(t *testing.T) {
-	c := NewCommandTest([]string{"arg0", "arg1"})
-	reference := `{"command":"test","response":"","arguments":["arg0","arg1"]}`
+	c := NewCommandTest("42", []string{"arg0", "arg1"}, "")
+	reference := `{"computerid":"23","packetid":"42","command":"test","response":"","arguments":["arg0","arg1"]}`
 	if c.Json() != reference {
 		t.Errorf("Error jsonify: " + c.Json())
 	}
