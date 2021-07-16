@@ -24,19 +24,21 @@ func JsonToCommand(jsonStr string) Command {
 		if err := json.Unmarshal([]byte(jsonStr), &packetExec); err != nil {
 			log.Fatal(err)
 		}
-
-		res = NewCommandExec(packetExec.Arguments)
+		res = NewCommandExec(packetExec.Arguments, packetExec.Response)
 	}
 	if packet.Command == "test" {
 		var packetTest PacketTest
 		if err := json.Unmarshal([]byte(jsonStr), &packetTest); err != nil {
 			log.Fatal(err)
 		}
-
-		res = NewCommandTest(packetTest.Arguments)
+		res = NewCommandTest(packetTest.Arguments, packetTest.Response)
 	}
 	if packet.Command == "info" {
-		res = NewCommandInfo()
+		var packetInfo PacketInfo
+		if err := json.Unmarshal([]byte(jsonStr), &packetInfo); err != nil {
+			log.Fatal(err)
+		}
+		res = NewCommandInfo(packetInfo.Response)
 	}
 
 	return res
@@ -47,25 +49,26 @@ type CommandExec struct {
 	responseText string
 }
 
-func NewCommandExec(args []string) *CommandExec {
+func NewCommandExec(args []string, response string) *CommandExec {
 	c := CommandExec{
 		args,
-		"",
+		response,
 	}
 	return &c
 }
 
 func (c CommandExec) Execute() {
 	fmt.Printf("Execute: Exec: %v\n", c.Arguments)
+	c.responseText = "exec executed"
 }
 
 func (c CommandExec) Response() string {
-	return "respo exec"
+	return c.responseText
 }
 
 func (c CommandExec) Json() string {
 	p := PacketExec{
-		Packet{"exec"},
+		Packet{"exec", c.responseText},
 		c.Arguments,
 	}
 	json, err := json.Marshal(p)
@@ -75,10 +78,11 @@ func (c CommandExec) Json() string {
 }
 
 type CommandInfo struct {
+	responseText string
 }
 
-func NewCommandInfo() *CommandInfo {
-	c := CommandInfo{}
+func NewCommandInfo(response string) *CommandInfo {
+	c := CommandInfo{response}
 	return &c
 }
 
@@ -87,12 +91,12 @@ func (c CommandInfo) Execute() {
 }
 
 func (c CommandInfo) Response() string {
-	return "respo info"
+	return c.responseText
 }
 
 func (c CommandInfo) Json() string {
 	p := PacketInfo{
-		Packet{"info"},
+		Packet{"info", c.responseText},
 	}
 	json, err := json.Marshal(p)
 	if err != nil {
@@ -105,10 +109,10 @@ type CommandTest struct {
 	responseText string
 }
 
-func NewCommandTest(args []string) *CommandTest {
+func NewCommandTest(args []string, response string) *CommandTest {
 	c := CommandTest{
 		args,
-		"",
+		response,
 	}
 	return &c
 }
@@ -123,7 +127,7 @@ func (c *CommandTest) Response() string {
 
 func (c CommandTest) Json() string {
 	p := PacketExec{
-		Packet{"test"},
+		Packet{"test", c.responseText},
 		c.Arguments,
 	}
 	json, err := json.Marshal(p)
