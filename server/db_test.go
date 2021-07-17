@@ -39,7 +39,7 @@ func TestDb(t *testing.T) {
 
 	// Client: Again, queue empty
 	_, err = db.getCommandFor("23")
-	if err != nil {
+	if err == nil {
 		t.Errorf("Error srvCmdExisting 11")
 	}
 
