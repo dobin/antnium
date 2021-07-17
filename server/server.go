@@ -46,7 +46,7 @@ func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
-	c := model.NewCommandTest("42", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
+	c := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
 	srvCmd := NewSrvCmd(c, STATE_RECORDED, SOURCE_SRV)
 	s.db.add(srvCmd)
 }
@@ -55,8 +55,12 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
 
-	commands := s.db.getCommandsFor(computerId)
-	json, err := json.Marshal(commands)
+	command, err := s.db.getCommandFor(computerId)
+	if err != nil {
+		return
+	}
+
+	json, err := json.Marshal(command)
 	if err != nil {
 		panic(err)
 	}

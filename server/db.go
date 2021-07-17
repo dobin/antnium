@@ -18,28 +18,25 @@ func MakeDb() Db {
 }
 
 func (db *Db) add(srvCmd SrvCmd) {
-	fmt.Printf("Add SrvCmd: %v\n", srvCmd)
 	db.srvCmd = append(db.srvCmd, srvCmd)
 }
 
 func (db *Db) getAll() []SrvCmd {
-	fmt.Printf("GetAll SrvCmd\n")
 	return db.srvCmd
 }
 
-func (db *Db) getCommandsFor(computerId string) []model.Command {
-	fmt.Printf("GetCommandsFor\n")
-	commands := make([]model.Command, 0)
+func (db *Db) getCommandFor(computerId string) (model.Command, error) {
+	var command model.Command
 
 	for i, srvCmd := range db.srvCmd {
 		srvCmdComputerId := srvCmd.Command.GetComputerId()
 		if srvCmdComputerId == "0" || srvCmdComputerId == computerId {
 			db.srvCmd[i].State = STATE_SENT // FIXME
-			commands = append(commands, srvCmd.Command)
+			return srvCmd.Command, nil
 		}
 	}
 
-	return commands
+	return command, fmt.Errorf("Nothing found")
 }
 
 func (db *Db) update(command model.Command) {

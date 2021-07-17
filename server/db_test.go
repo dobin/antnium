@@ -22,24 +22,38 @@ func TestDb(t *testing.T) {
 		t.Errorf("Error not right state 1")
 	}
 
-	srvCmdNotExisting := db.getCommandsFor("xxx")
-	if len(srvCmdNotExisting) != 0 {
-		t.Errorf("Error len srvCmdNotExisting: %d", len(srvCmdNotExisting))
+	// Client: Should not exist
+	_, err := db.getCommandFor("xxx")
+	if err == nil {
+		t.Errorf("Error srvCmdNotExisting")
 	}
 
-	srvCmdExisting := db.getCommandsFor("23")
-	if len(srvCmdExisting) != 1 {
-		t.Errorf("Error len srvCmdExisting: %d", len(srvCmdExisting))
+	// Client: Should exist
+	srvCmdExisting, err := db.getCommandFor("23")
+	if err != nil {
+		t.Errorf("Error srvCmdExisting 1")
+	}
+	if srvCmdExisting.GetComputerId() != "23" {
+		t.Errorf("Error srvCmdExisting 2")
 	}
 
+	// Client: Again, queue empty
+	_, err = db.getCommandFor("23")
+	if err != nil {
+		t.Errorf("Error srvCmdExisting 11")
+	}
+
+	// Backend: Check if exist and right state
 	srvCmdAll = db.getAll()
 	if srvCmdAll[0].State != STATE_SENT {
 		t.Errorf("Error not right state 2")
 	}
 
+	// add response from client
 	c.Response = "oki"
 	db.update(c)
 
+	// Server: Should be right state
 	srvCmdAll = db.getAll()
 	if srvCmdAll[0].State != STATE_ANSWERED {
 		t.Errorf("Error not right state 3")

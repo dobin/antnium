@@ -26,9 +26,11 @@ func (s Client) Start() {
 	fmt.Println("Client")
 
 	s.sendPing()
-	command := s.getCommand()
-	command.Execute()
-	s.sendCommand(command)
+	command, err := s.getCommand()
+	if err == nil {
+		command.Execute()
+		s.sendCommand(command)
+	}
 }
 
 func (s Client) sendPing() {
@@ -36,7 +38,7 @@ func (s Client) sendPing() {
 	s.sendCommand(pingCommand)
 }
 
-func (s Client) getCommand() model.Command {
+func (s Client) getCommand() (model.Command, error) {
 	resp, err := http.Get("http://localhost:4444/getCommand/" + s.computerId)
 	if err != nil {
 		// handle error
@@ -54,8 +56,11 @@ func (s Client) getCommand() model.Command {
 
 	fmt.Println("<- " + bodyString)
 
+	if bodyString == "" {
+		return nil, fmt.Errorf("No commands found")
+	}
 	command := model.JsonToCommand(bodyString)
-	return command
+	return command, nil
 }
 
 func (s Client) sendCommand(command model.Command) {
@@ -68,6 +73,7 @@ func (s Client) sendCommand(command model.Command) {
 	url := "http://localhost:4444/sendCommand"
 	fmt.Println("-> " + string(json))
 	var jsonStr = json
+
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
