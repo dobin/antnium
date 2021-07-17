@@ -38,38 +38,29 @@ func (s *Server) Serve() {
 }
 
 func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
-
-	fmt.Fprint(rw, "[")
-	/*
-		srvCmds := s.db.get()
-		for i, srvCmd := range srvCmds {
-			fmt.Fprint(rw, srvCmd.command.Json())
-			if i != len(srvCmds) {
-				fmt.Fprint(rw, ",")
-			}
-		}
-	*/
-	fmt.Fprint(rw, "]")
+	srvCmds := s.db.getAll()
+	json, err := json.Marshal(srvCmds)
+	if err != nil {
+	}
+	fmt.Fprint(rw, string(json))
 }
 
 func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
-	c := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
+	c := model.NewCommandTest("42", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
 	srvCmd := NewSrvCmd(c, STATE_RECORDED, SOURCE_SRV)
 	s.db.add(srvCmd)
 }
 
 func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//computerId := vars["computerId"]
-	//fmt.Println("getCommand for ComputerID: " + computerId)
-	command := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
-	fmt.Printf("<- %v", command)
-	//fmt.Println("<- " + c.Json())
+	vars := mux.Vars(r)
+	computerId := vars["computerId"]
 
-	json, err := json.Marshal(command)
+	commands := s.db.getCommandsFor(computerId)
+	json, err := json.Marshal(commands)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("<- %s\n", string(json))
 
 	fmt.Fprint(rw, string(json))
 }

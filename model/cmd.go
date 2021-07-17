@@ -9,6 +9,7 @@ import (
 type Command interface {
 	Execute()
 	SetComputerId(computerId string)
+	GetComputerId() string
 	GetResponse() string
 }
 
@@ -63,6 +64,10 @@ func (c *CommandBase) GetResponse() string {
 
 func (c *CommandBase) SetComputerId(computerId string) {
 	c.ComputerId = computerId
+}
+
+func (c *CommandBase) GetComputerId() string {
+	return c.ComputerId
 }
 
 type CommandExec struct {
