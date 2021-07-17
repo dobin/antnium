@@ -29,6 +29,9 @@ func (db *Db) getCommandFor(computerId string) (model.Command, error) {
 	var command model.Command
 
 	for i, srvCmd := range db.srvCmd {
+		if srvCmd.State != STATE_RECORDED {
+			continue
+		}
 		srvCmdComputerId := srvCmd.Command.GetComputerId()
 		if srvCmdComputerId == "0" || srvCmdComputerId == computerId {
 			db.srvCmd[i].State = STATE_SENT // FIXME
