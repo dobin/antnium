@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/model"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -33,8 +34,14 @@ func (s *Server) Serve() {
 	myRouter.HandleFunc("/getCommand/{computerId}", s.getCommand)
 	myRouter.HandleFunc("/sendCommand", s.sendCommand)
 
+	// Angular UI via static directory. Copied during build.
+	myRouter.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
+
+	corsObj := handlers.AllowedOrigins([]string{"*"})
+
 	fmt.Println("Serving")
-	log.Fatal(http.ListenAndServe("127.0.0.1:4444", myRouter))
+	log.Fatal(http.ListenAndServe("127.0.0.1:4444", handlers.CORS(corsObj)(myRouter)))
+	//log.Fatal(http.ListenAndServe("127.0.0.1:4444", myRouter))
 }
 
 func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
