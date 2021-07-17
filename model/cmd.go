@@ -46,11 +46,6 @@ func JsonToCommand(jsonStr string) Command {
 		if err := json.Unmarshal([]byte(jsonStr), &packetPing); err != nil {
 			log.Fatal(err)
 		}
-		/*
-			fmt.Println("XXX1: " + jsonStr)
-			fmt.Println("XXX2: " + packetPing.PacketId)
-			fmt.Println("XXX3: " + packet.PacketId)
-			fmt.Printf("YYY: %+v\n", packetPing)*/
 		res = NewCommandPing(packetPing.ComputerId, packetPing.PacketId, packetPing.Response)
 	}
 	return res

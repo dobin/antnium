@@ -14,12 +14,12 @@ import (
 )
 
 type Server struct {
-	port     int
-	commands []model.Command
+	port int
+	db   Db
 }
 
 func NewServer(port int) Server {
-	w := Server{port, []model.Command{}}
+	w := Server{port, MakeDb()}
 	rand.Seed(time.Now().Unix())
 	return w
 }
@@ -37,10 +37,11 @@ func (s *Server) Serve() {
 }
 
 func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
+	srvCmds := s.db.get()
 	fmt.Fprint(rw, "[")
-	for i, command := range s.commands {
-		fmt.Fprint(rw, command.Json())
-		if i != len(s.commands) {
+	for i, srvCmd := range srvCmds {
+		fmt.Fprint(rw, srvCmd.command.Json())
+		if i != len(srvCmds) {
 			fmt.Fprint(rw, ",")
 		}
 	}
@@ -48,7 +49,9 @@ func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
-
+	c := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
+	srvCmd := NewSrvCmd(c, STATE_RECORDED, SOURCE_SRV)
+	s.db.add(srvCmd)
 }
 
 func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
@@ -68,6 +71,6 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	//fmt.Println(string(reqBody))
 	command := model.JsonToCommand(string(reqBody))
 	fmt.Println("-> " + command.Json())
-	s.commands = append(s.commands, command)
+	//s.commands = append(s.commands, command)
 	fmt.Fprint(rw, "asdf")
 }
