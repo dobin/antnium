@@ -70,9 +70,7 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Println(string(reqBody))
 	command := model.JsonToCommand(string(reqBody))
-	fmt.Printf("-> %v", command)
-	//s.commands = append(s.commands, command)
+	fmt.Printf("-> %v\n", command)
 	fmt.Fprint(rw, "asdf")
 }

@@ -8,9 +8,13 @@ import (
 
 type Command interface {
 	Execute()
+
+	// FIXME?
 	SetComputerId(computerId string)
 	GetComputerId() string
 	GetResponse() string
+	SetResponse(response string)
+	GetPacketId() string
 }
 
 func JsonToCommand(jsonStr string) Command {
@@ -58,8 +62,16 @@ type CommandBase struct {
 	Response   string `json:"response"`
 }
 
+func (c *CommandBase) GetPacketId() string {
+	return c.PacketId
+}
+
 func (c *CommandBase) GetResponse() string {
 	return c.Response
+}
+
+func (c *CommandBase) SetResponse(response string) {
+	c.Response = response
 }
 
 func (c *CommandBase) SetComputerId(computerId string) {

@@ -18,6 +18,9 @@ func TestDb(t *testing.T) {
 	if len(srvCmdAll) != 1 {
 		t.Errorf("Error len srvCmdAll")
 	}
+	if srvCmdAll[0].State != STATE_RECORDED {
+		t.Errorf("Error not right state 1")
+	}
 
 	srvCmdNotExisting := db.getCommandsFor("xxx")
 	if len(srvCmdNotExisting) != 0 {
@@ -27,6 +30,22 @@ func TestDb(t *testing.T) {
 	srvCmdExisting := db.getCommandsFor("23")
 	if len(srvCmdExisting) != 1 {
 		t.Errorf("Error len srvCmdExisting: %d", len(srvCmdExisting))
+	}
+
+	srvCmdAll = db.getAll()
+	if srvCmdAll[0].State != STATE_SENT {
+		t.Errorf("Error not right state 2")
+	}
+
+	c.Response = "oki"
+	db.update(c)
+
+	srvCmdAll = db.getAll()
+	if srvCmdAll[0].State != STATE_ANSWERED {
+		t.Errorf("Error not right state 3")
+	}
+	if srvCmdAll[0].Command.GetResponse() != "oki" {
+		t.Errorf("Error  4")
 	}
 
 }

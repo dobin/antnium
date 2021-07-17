@@ -31,12 +31,22 @@ func (db *Db) getCommandsFor(computerId string) []model.Command {
 	fmt.Printf("GetCommandsFor\n")
 	commands := make([]model.Command, 0)
 
-	for _, srvCmd := range db.srvCmd {
+	for i, srvCmd := range db.srvCmd {
 		srvCmdComputerId := srvCmd.Command.GetComputerId()
 		if srvCmdComputerId == "0" || srvCmdComputerId == computerId {
+			db.srvCmd[i].State = STATE_SENT // FIXME
 			commands = append(commands, srvCmd.Command)
 		}
 	}
 
 	return commands
+}
+
+func (db *Db) update(command model.Command) {
+	for i, srvCmd := range db.srvCmd {
+		if srvCmd.Command.GetPacketId() == command.GetPacketId() {
+			db.srvCmd[i].Command.SetResponse(command.GetResponse())
+			db.srvCmd[i].State = STATE_ANSWERED
+		}
+	}
 }
