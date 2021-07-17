@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -59,10 +60,14 @@ func (s Client) getCommand() model.Command {
 
 func (s Client) sendCommand(command model.Command) {
 	command.SetComputerId(s.computerId)
-	json := command.Json()
+
+	json, err := json.Marshal(command)
+	if err != nil {
+		panic(err)
+	}
 	url := "http://localhost:4444/sendCommand"
-	fmt.Println("-> " + json)
-	var jsonStr = []byte(json)
+	fmt.Println("-> " + string(json))
+	var jsonStr = json
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}

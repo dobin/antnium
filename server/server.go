@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -37,14 +38,17 @@ func (s *Server) Serve() {
 }
 
 func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
-	srvCmds := s.db.get()
+
 	fmt.Fprint(rw, "[")
-	for i, srvCmd := range srvCmds {
-		fmt.Fprint(rw, srvCmd.command.Json())
-		if i != len(srvCmds) {
-			fmt.Fprint(rw, ",")
+	/*
+		srvCmds := s.db.get()
+		for i, srvCmd := range srvCmds {
+			fmt.Fprint(rw, srvCmd.command.Json())
+			if i != len(srvCmds) {
+				fmt.Fprint(rw, ",")
+			}
 		}
-	}
+	*/
 	fmt.Fprint(rw, "]")
 }
 
@@ -58,9 +62,16 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	//vars := mux.Vars(r)
 	//computerId := vars["computerId"]
 	//fmt.Println("getCommand for ComputerID: " + computerId)
-	c := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
-	fmt.Println("<- " + c.Json())
-	fmt.Fprint(rw, c.Json())
+	command := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
+	fmt.Printf("<- %v", command)
+	//fmt.Println("<- " + c.Json())
+
+	json, err := json.Marshal(command)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprint(rw, string(json))
 }
 
 func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
@@ -70,7 +81,7 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	}
 	//fmt.Println(string(reqBody))
 	command := model.JsonToCommand(string(reqBody))
-	fmt.Println("-> " + command.Json())
+	fmt.Printf("-> %v", command)
 	//s.commands = append(s.commands, command)
 	fmt.Fprint(rw, "asdf")
 }

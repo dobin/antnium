@@ -20,9 +20,9 @@ const (
 )
 
 type SrvCmd struct {
-	command model.Command
-	state   BaseState
-	source  BaseSource
+	Command model.Command
+	State   BaseState
+	Source  BaseSource
 }
 
 func NewSrvCmd(command model.Command, state BaseState, source BaseSource) SrvCmd {
