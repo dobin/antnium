@@ -22,7 +22,7 @@ const (
 )
 
 type SrvCmd struct {
-	Command model.Command
+	Command model.CommandBase
 	State   BaseState
 	Source  BaseSource
 
@@ -31,12 +31,12 @@ type SrvCmd struct {
 	TimeAnswered time.Time
 }
 
-func NewSrvCmd(command model.Command, state BaseState, source BaseSource) SrvCmd {
+func NewSrvCmd(command model.CommandBase, state BaseState, source BaseSource) SrvCmd {
 	srvCmd := SrvCmd{
 		command,
 		state,
 		source,
-		time.Now(),
+		time.Time{},
 		time.Time{},
 		time.Time{},
 	}

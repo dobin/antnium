@@ -69,8 +69,11 @@ func (s *Server) adminListClients(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
-	c := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
-	srvCmd := NewSrvCmd(c, STATE_RECORDED, SOURCE_SRV)
+	arguments := make(model.CmdArgument)
+	arguments["msg"] = "ooy!"
+	response := make(model.CmdResponse)
+	command := model.NewCommand("test", "0", strconv.Itoa(rand.Int()), arguments, response)
+	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
 	s.cmdDb.add(srvCmd)
 }
 
@@ -81,12 +84,14 @@ func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
 		log.Error("Could not read body")
 		return
 	}
-	command, err := model.JsonToCommand(string(reqBody))
+
+	var command model.CommandBase
+	err = json.Unmarshal(reqBody, &command)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"body":  reqBody,
 			"error": err,
-		}).Info("Error sending command")
+		}).Info("Error add command")
 		return
 	}
 	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
@@ -124,7 +129,9 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 		log.Error("Could not read body")
 		return
 	}
-	command, err := model.JsonToCommand(string(reqBody))
+
+	var command model.CommandBase
+	err = json.Unmarshal(reqBody, &command)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"body":  reqBody,
@@ -138,6 +145,6 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	}).Info("Send command")
 
 	s.cmdDb.update(command)
-	s.hostDb.updateFor(command.GetComputerId())
+	s.hostDb.updateFor(command.ComputerId)
 	fmt.Fprint(rw, "asdf")
 }

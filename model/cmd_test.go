@@ -7,21 +7,24 @@ import (
 )
 
 func TestFromJson(t *testing.T) {
-	a := `{ "command": "test", "arguments": [ "arg0", "arg1" ] }`
-	command, err := JsonToCommand(a)
+	a := `{"computerid":"23","packetid":"42","command":"test","arguments":{"arg0":"value0"},"response":{"foo":"bar"}}`
+	var command CommandBase
+	err := json.Unmarshal([]byte(a), &command)
 	if err != nil {
-		t.Errorf("Could not parse command test: %s", err)
+		t.Errorf("Could not parse command test 1: %s", err)
 	}
-	command.Execute()
-	if command.GetResponse() != "executed" {
-		t.Errorf("Could not execute command test: %s", command.GetResponse())
+	if command.Response["foo"] != "bar" {
+		t.Errorf("Could not parse command test 2: %s", err)
 	}
 }
 
 func TestToJson(t *testing.T) {
-	c := NewCommandTest("23", "42", []string{"arg0", "arg1"}, "")
-	reference := `{"computerid":"23","packetid":"42","command":"test","response":"","arguments":["arg0","arg1"]}`
+	arguments := make(CmdArgument)
+	arguments["arg0"] = "value0"
+	response := make(CmdResponse)
+	c := NewCommand("test", "23", "42", arguments, response)
 
+	reference := `{"computerid":"23","packetid":"42","command":"test","arguments":{"arg0":"value0"},"response":{}}`
 	u, err := json.Marshal(c)
 	if err != nil {
 		panic(err)

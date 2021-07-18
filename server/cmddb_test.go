@@ -9,7 +9,10 @@ import (
 func TestDb(t *testing.T) {
 	cmdDb := MakeCmdDb()
 
-	c := model.NewCommandTest("23", "42", []string{"arg0", "arg1"}, "")
+	arguments := make(model.CmdArgument)
+	arguments["arg0"] = "value0"
+	response := make(model.CmdResponse)
+	c := model.NewCommand("test", "23", "42", arguments, response)
 	srvCmd := NewSrvCmd(c, STATE_RECORDED, SOURCE_SRV)
 
 	cmdDb.add(srvCmd)
@@ -33,7 +36,7 @@ func TestDb(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error srvCmdExisting 1")
 	}
-	if srvCmdExisting.GetComputerId() != "23" {
+	if srvCmdExisting.ComputerId != "23" {
 		t.Errorf("Error srvCmdExisting 2")
 	}
 
@@ -50,7 +53,7 @@ func TestDb(t *testing.T) {
 	}
 
 	// add response from client
-	c.Response = "oki"
+	c.Response["ret"] = "oki"
 	cmdDb.update(c)
 
 	// Server: Should be right state
@@ -58,7 +61,7 @@ func TestDb(t *testing.T) {
 	if srvCmdAll[0].State != STATE_ANSWERED {
 		t.Errorf("Error not right state 3")
 	}
-	if srvCmdAll[0].Command.GetResponse() != "oki" {
+	if srvCmdAll[0].Command.Response["ret"] != "oki" {
 		t.Errorf("Error  4")
 	}
 

@@ -19,6 +19,7 @@ func MakeCmdDb() CmdDb {
 }
 
 func (db *CmdDb) add(srvCmd SrvCmd) {
+	srvCmd.TimeRecorded = time.Now()
 	db.srvCmd = append(db.srvCmd, srvCmd)
 }
 
@@ -26,12 +27,12 @@ func (db *CmdDb) getAll() []SrvCmd {
 	return db.srvCmd
 }
 
-func (db *CmdDb) getCommandFor(computerId string) (model.Command, error) {
+func (db *CmdDb) getCommandFor(computerId string) (model.CommandBase, error) {
 	for i, srvCmd := range db.srvCmd {
 		if srvCmd.State != STATE_RECORDED {
 			continue
 		}
-		srvCmdComputerId := srvCmd.Command.GetComputerId()
+		srvCmdComputerId := srvCmd.Command.ComputerId
 		if srvCmdComputerId == "0" || srvCmdComputerId == computerId {
 			db.srvCmd[i].State = STATE_SENT // FIXME
 			db.srvCmd[i].TimeSent = time.Now()
@@ -39,16 +40,16 @@ func (db *CmdDb) getCommandFor(computerId string) (model.Command, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Nothing found")
+	return model.CommandBase{}, fmt.Errorf("Nothing found")
 }
 
-func (db *CmdDb) update(command model.Command) {
+func (db *CmdDb) update(command model.CommandBase) {
 	for i, srvCmd := range db.srvCmd {
-		if srvCmd.Command.GetPacketId() == command.GetPacketId() {
+		if srvCmd.Command.PacketId == command.PacketId {
 			db.srvCmd[i].State = STATE_ANSWERED
 			db.srvCmd[i].TimeAnswered = time.Now()
-			db.srvCmd[i].Command.SetResponse(command.GetResponse())
-			db.srvCmd[i].Command.SetComputerId(command.GetComputerId())
+			db.srvCmd[i].Command.Response = command.Response
+			db.srvCmd[i].Command.ComputerId = command.ComputerId
 		}
 	}
 }

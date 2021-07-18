@@ -35,8 +35,11 @@ func (s Client) Start() {
 }
 
 func (s Client) sendPing() {
-	pingCommand := model.NewCommandPing(s.computerId, "0", "ooy!")
-	s.sendCommand(pingCommand)
+	arguments := make(model.CmdArgument)
+	arguments["msg"] = "ooy!"
+	response := make(model.CmdResponse)
+	command := model.NewCommand("ping", s.computerId, "0", arguments, response)
+	s.sendCommand(command)
 }
 
 func (s Client) requestAndExecute() {
@@ -53,14 +56,15 @@ func (s Client) requestAndExecute() {
 		return
 	}
 
-	err = command.Execute()
+	/*err = command.Execute()
 	if err != nil {
 		log.WithFields(log.Fields{
 			"command": command,
 			"error":   err,
 		}).Info("Error executing command")
 		return
-	}
+	}*/
+	command.Response["asdf"] = "xxx"
 
 	err = s.sendCommand(command)
 	if err != nil {
@@ -72,40 +76,41 @@ func (s Client) requestAndExecute() {
 	}
 }
 
-func (s Client) getCommand() (model.Command, error) {
+func (s Client) getCommand() (model.CommandBase, error) {
 	url := "http://localhost:4444/getCommand/" + s.computerId
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Error requesting URL %s with error %s", url, err)
+		return model.CommandBase{}, fmt.Errorf("Error requesting URL %s with error %s", url, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Error status code %d in requesting URL %s", resp.StatusCode, url)
+		return model.CommandBase{}, fmt.Errorf("Error status code %d in requesting URL %s", resp.StatusCode, url)
 	}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading body of URL %s with error %s", url, err)
+		return model.CommandBase{}, fmt.Errorf("Error reading body of URL %s with error %s", url, err)
 	}
 	bodyString := string(bodyBytes)
 	if bodyString == "" {
-		return nil, ErrNoCommandsFound
+		return model.CommandBase{}, ErrNoCommandsFound
 	}
 
 	log.WithFields(log.Fields{
 		"command": bodyString,
 	}).Info("Received Command")
-	command, err := model.JsonToCommand(bodyString)
-	if err != nil {
-		return nil, err
+
+	var commandBase model.CommandBase
+	if err := json.Unmarshal([]byte(bodyString), &commandBase); err != nil {
+		return model.CommandBase{}, err
 	}
-	return command, nil
+	return commandBase, nil
 }
 
-func (s Client) sendCommand(command model.Command) error {
+func (s Client) sendCommand(command model.CommandBase) error {
 	url := "http://localhost:4444/sendCommand"
 
 	// Setup response
-	command.SetComputerId(s.computerId)
+	command.ComputerId = s.computerId
 	json, err := json.Marshal(command)
 	if err != nil {
 		return err
