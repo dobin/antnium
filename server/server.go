@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"github.com/dobin/antnium/model"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -27,7 +27,9 @@ func NewServer(port int) Server {
 }
 
 func (s *Server) Serve() {
+	srvaddr := "127.0.0.1:4444"
 	myRouter := mux.NewRouter().StrictSlash(true)
+
 	myRouter.HandleFunc("/admin/listCommands", s.adminListCommands)
 	myRouter.HandleFunc("/admin/addCommand", s.adminAddCommand)
 
@@ -36,18 +38,19 @@ func (s *Server) Serve() {
 
 	// Angular UI via static directory. Copied during build.
 	myRouter.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
-
+	// Allow CORS
 	corsObj := handlers.AllowedOrigins([]string{"*"})
 
-	fmt.Println("Serving")
-	log.Fatal(http.ListenAndServe("127.0.0.1:4444", handlers.CORS(corsObj)(myRouter)))
-	//log.Fatal(http.ListenAndServe("127.0.0.1:4444", myRouter))
+	fmt.Println("Starting webserver on " + srvaddr)
+	log.Fatal(http.ListenAndServe(srvaddr, handlers.CORS(corsObj)(myRouter)))
 }
 
 func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
 	srvCmds := s.db.getAll()
 	json, err := json.Marshal(srvCmds)
 	if err != nil {
+		log.Error("Could not JSON marshal %v", srvCmds)
+		return
 	}
 	fmt.Fprint(rw, string(json))
 }
@@ -69,9 +72,13 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 
 	json, err := json.Marshal(command)
 	if err != nil {
-		panic(err)
+		log.Error("Could not JSON marshal %v", command)
+		return
 	}
-	fmt.Printf("<- %s\n", string(json))
+
+	log.WithFields(log.Fields{
+		"command": command,
+	}).Info("Get command")
 
 	fmt.Fprint(rw, string(json))
 }
@@ -79,10 +86,21 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Error("Could not read body")
+		return
 	}
-	command := model.JsonToCommand(string(reqBody))
-	fmt.Printf("-> %v\n", command)
+	command, err := model.JsonToCommand(string(reqBody))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"body":  reqBody,
+			"error": err,
+		}).Info("Error executing command")
+		return
+	}
+
+	log.WithFields(log.Fields{
+		"command": command,
+	}).Info("Send command")
 
 	s.db.update(command)
 	fmt.Fprint(rw, "asdf")

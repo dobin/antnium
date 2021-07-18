@@ -26,8 +26,6 @@ func (db *Db) getAll() []SrvCmd {
 }
 
 func (db *Db) getCommandFor(computerId string) (model.Command, error) {
-	var command model.Command
-
 	for i, srvCmd := range db.srvCmd {
 		if srvCmd.State != STATE_RECORDED {
 			continue
@@ -39,7 +37,7 @@ func (db *Db) getCommandFor(computerId string) (model.Command, error) {
 		}
 	}
 
-	return command, fmt.Errorf("Nothing found")
+	return nil, fmt.Errorf("Nothing found")
 }
 
 func (db *Db) update(command model.Command) {

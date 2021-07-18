@@ -7,7 +7,7 @@ import (
 )
 
 type Command interface {
-	Execute()
+	Execute() error
 
 	// FIXME?
 	SetComputerId(computerId string)
@@ -17,9 +17,7 @@ type Command interface {
 	GetPacketId() string
 }
 
-func JsonToCommand(jsonStr string) Command {
-	var res Command
-
+func JsonToCommand(jsonStr string) (Command, error) {
 	var packet CommandBase
 	if err := json.Unmarshal([]byte(jsonStr), &packet); err != nil {
 		log.Fatal(err)
@@ -29,30 +27,31 @@ func JsonToCommand(jsonStr string) Command {
 		if err := json.Unmarshal([]byte(jsonStr), &commandExec); err != nil {
 			log.Fatal(err)
 		}
-		res = &commandExec
+		return &commandExec, nil
 	}
 	if packet.Command == "test" {
 		var commandTest CommandTest
 		if err := json.Unmarshal([]byte(jsonStr), &commandTest); err != nil {
 			log.Fatal(err)
 		}
-		res = &commandTest
+		return &commandTest, nil
 	}
 	if packet.Command == "info" {
 		var commandInfo CommandInfo
 		if err := json.Unmarshal([]byte(jsonStr), &commandInfo); err != nil {
 			log.Fatal(err)
 		}
-		res = &commandInfo
+		return &commandInfo, nil
 	}
 	if packet.Command == "ping" {
 		var commandPing CommandPing
 		if err := json.Unmarshal([]byte(jsonStr), &commandPing); err != nil {
 			log.Fatal(err)
 		}
-		res = &commandPing
+		return &commandPing, nil
 	}
-	return res
+
+	return nil, fmt.Errorf("Could not parse json %s", jsonStr)
 }
 
 type CommandBase struct {
@@ -100,9 +99,10 @@ func NewCommandExec(computerId string, packetId string, args []string, response 
 	return &c
 }
 
-func (c *CommandExec) Execute() {
+func (c *CommandExec) Execute() error {
 	fmt.Printf("Execute: Exec: %v\n", c.Arguments)
 	c.CommandBase.Response = "exec executed"
+	return nil
 }
 
 type CommandInfo struct {
@@ -121,8 +121,9 @@ func NewCommandInfo(computerId string, packetId string, response string) *Comman
 	return &c
 }
 
-func (c CommandInfo) Execute() {
+func (c CommandInfo) Execute() error {
 	fmt.Printf("Execute: Info")
+	return nil
 }
 
 type CommandTest struct {
@@ -143,8 +144,9 @@ func NewCommandTest(computerId string, packetId string, args []string, response 
 	return &c
 }
 
-func (c *CommandTest) Execute() {
+func (c *CommandTest) Execute() error {
 	c.CommandBase.Response = "executed"
+	return nil
 }
 
 type CommandPing struct {
@@ -163,8 +165,9 @@ func NewCommandPing(computerId string, packetId string, response string) *Comman
 	return &c
 }
 
-func (c *CommandPing) Execute() {
+func (c *CommandPing) Execute() error {
 	c.CommandBase.Response = "oy!"
+	return nil
 }
 
 func (c *CommandPing) SetComputerId(computerId string) {
