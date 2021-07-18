@@ -49,7 +49,7 @@ func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
 	srvCmds := s.db.getAll()
 	json, err := json.Marshal(srvCmds)
 	if err != nil {
-		log.Error("Could not JSON marshal %v", srvCmds)
+		log.Error("Could not JSON marshal")
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -72,7 +72,7 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 
 	json, err := json.Marshal(command)
 	if err != nil {
-		log.Error("Could not JSON marshal %v", command)
+		log.Error("Could not JSON marshal")
 		return
 	}
 

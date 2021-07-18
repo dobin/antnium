@@ -8,10 +8,13 @@ import (
 
 func TestFromJson(t *testing.T) {
 	a := `{ "command": "test", "arguments": [ "arg0", "arg1" ] }`
-	command := JsonToCommand(a)
+	command, err := JsonToCommand(a)
+	if err != nil {
+		t.Errorf("Could not parse command test: %s", err)
+	}
 	command.Execute()
 	if command.GetResponse() != "executed" {
-		t.Errorf("Could not execute command test: " + command.GetResponse())
+		t.Errorf("Could not execute command test: %s", command.GetResponse())
 	}
 }
 

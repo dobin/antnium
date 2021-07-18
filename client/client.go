@@ -94,7 +94,10 @@ func (s Client) getCommand() (model.Command, error) {
 	log.WithFields(log.Fields{
 		"command": bodyString,
 	}).Info("Received Command")
-	command := model.JsonToCommand(bodyString)
+	command, err := model.JsonToCommand(bodyString)
+	if err != nil {
+		return nil, err
+	}
 	return command, nil
 }
 
