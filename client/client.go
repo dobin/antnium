@@ -43,7 +43,7 @@ func (s Client) requestAndExecute() {
 	command, err := s.getCommand()
 	if err != nil {
 		if err == ErrNoCommandsFound {
-			// All ok
+			fmt.Print(".")
 			return
 		}
 

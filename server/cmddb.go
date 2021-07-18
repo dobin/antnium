@@ -6,26 +6,26 @@ import (
 	"github.com/dobin/antnium/model"
 )
 
-type Db struct {
+type CmdDb struct {
 	srvCmd []SrvCmd
 }
 
-func MakeDb() Db {
-	db := Db{
+func MakeCmdDb() CmdDb {
+	db := CmdDb{
 		make([]SrvCmd, 0),
 	}
 	return db
 }
 
-func (db *Db) add(srvCmd SrvCmd) {
+func (db *CmdDb) add(srvCmd SrvCmd) {
 	db.srvCmd = append(db.srvCmd, srvCmd)
 }
 
-func (db *Db) getAll() []SrvCmd {
+func (db *CmdDb) getAll() []SrvCmd {
 	return db.srvCmd
 }
 
-func (db *Db) getCommandFor(computerId string) (model.Command, error) {
+func (db *CmdDb) getCommandFor(computerId string) (model.Command, error) {
 	for i, srvCmd := range db.srvCmd {
 		if srvCmd.State != STATE_RECORDED {
 			continue
@@ -40,7 +40,7 @@ func (db *Db) getCommandFor(computerId string) (model.Command, error) {
 	return nil, fmt.Errorf("Nothing found")
 }
 
-func (db *Db) update(command model.Command) {
+func (db *CmdDb) update(command model.Command) {
 	for i, srvCmd := range db.srvCmd {
 		if srvCmd.Command.GetPacketId() == command.GetPacketId() {
 			db.srvCmd[i].Command.SetResponse(command.GetResponse())
