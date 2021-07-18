@@ -47,6 +47,7 @@ func (db *Db) update(command model.Command) {
 		if srvCmd.Command.GetPacketId() == command.GetPacketId() {
 			db.srvCmd[i].Command.SetResponse(command.GetResponse())
 			db.srvCmd[i].State = STATE_ANSWERED
+			db.srvCmd[i].Command.SetComputerId(command.GetComputerId())
 		}
 	}
 }

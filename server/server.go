@@ -83,5 +83,7 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	}
 	command := model.JsonToCommand(string(reqBody))
 	fmt.Printf("-> %v\n", command)
+
+	s.db.update(command)
 	fmt.Fprint(rw, "asdf")
 }
