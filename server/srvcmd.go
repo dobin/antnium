@@ -1,6 +1,8 @@
 package server
 
 import (
+	"time"
+
 	"github.com/dobin/antnium/model"
 )
 
@@ -23,6 +25,10 @@ type SrvCmd struct {
 	Command model.Command
 	State   BaseState
 	Source  BaseSource
+
+	TimeRecorded time.Time
+	TimeSent     time.Time
+	TimeAnswered time.Time
 }
 
 func NewSrvCmd(command model.Command, state BaseState, source BaseSource) SrvCmd {
@@ -30,6 +36,9 @@ func NewSrvCmd(command model.Command, state BaseState, source BaseSource) SrvCmd
 		command,
 		state,
 		source,
+		time.Now(),
+		time.Time{},
+		time.Time{},
 	}
 	return srvCmd
 }
