@@ -34,6 +34,7 @@ func (s *Server) Serve() {
 	myRouter.HandleFunc("/admin/commands", s.adminListCommands)
 	myRouter.HandleFunc("/admin/clients", s.adminListClients)
 	myRouter.HandleFunc("/admin/addTestCommand", s.adminAddTestCommand)
+	myRouter.HandleFunc("/admin/addCommand", s.adminAddCommand)
 
 	myRouter.HandleFunc("/getCommand/{computerId}", s.getCommand)
 	myRouter.HandleFunc("/sendCommand", s.sendCommand)
@@ -73,6 +74,25 @@ func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 	s.cmdDb.add(srvCmd)
 }
 
+func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
+	//c := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Error("Could not read body")
+		return
+	}
+	command, err := model.JsonToCommand(string(reqBody))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"body":  reqBody,
+			"error": err,
+		}).Info("Error sending command")
+		return
+	}
+	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
+	s.cmdDb.add(srvCmd)
+}
+
 func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
@@ -109,7 +129,7 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 		log.WithFields(log.Fields{
 			"body":  reqBody,
 			"error": err,
-		}).Info("Error executing command")
+		}).Info("Error sending command")
 		return
 	}
 

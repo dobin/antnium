@@ -43,8 +43,8 @@ func (db *CmdDb) getCommandFor(computerId string) (model.Command, error) {
 func (db *CmdDb) update(command model.Command) {
 	for i, srvCmd := range db.srvCmd {
 		if srvCmd.Command.GetPacketId() == command.GetPacketId() {
-			db.srvCmd[i].Command.SetResponse(command.GetResponse())
 			db.srvCmd[i].State = STATE_ANSWERED
+			db.srvCmd[i].Command.SetResponse(command.GetResponse())
 			db.srvCmd[i].Command.SetComputerId(command.GetComputerId())
 		}
 	}

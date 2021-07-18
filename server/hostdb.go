@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -18,7 +17,6 @@ func MakeHostDb() HostDb {
 }
 
 func (db *HostDb) updateFor(computerId string) {
-	fmt.Println("Update for: " + computerId)
 	if _, ok := db.hostDb[computerId]; !ok {
 		db.hostDb[computerId] = &HostBase{
 			computerId,
