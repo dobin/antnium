@@ -22,9 +22,9 @@ const (
 )
 
 type SrvCmd struct {
-	Command model.CommandBase
-	State   BaseState
-	Source  BaseSource
+	Command  model.CommandBase
+	State    BaseState
+	ClientIp string
 
 	TimeRecorded time.Time
 	TimeSent     time.Time
@@ -35,7 +35,7 @@ func NewSrvCmd(command model.CommandBase, state BaseState, source BaseSource) Sr
 	srvCmd := SrvCmd{
 		command,
 		state,
-		source,
+		"",
 		time.Time{},
 		time.Time{},
 		time.Time{},

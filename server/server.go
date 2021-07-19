@@ -118,19 +118,22 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	// Update last seen for this host
 	s.hostDb.updateFor(computerId)
 
-	command, err := s.cmdDb.getCommandFor(computerId)
+	srvCmd, err := s.cmdDb.getCommandFor(computerId)
 	if err != nil {
 		return
 	}
 
-	json, err := json.Marshal(command)
+	// Set source IP for this command
+	srvCmd.ClientIp = r.RemoteAddr
+
+	json, err := json.Marshal(srvCmd.Command)
 	if err != nil {
 		log.Error("Could not JSON marshal")
 		return
 	}
 
 	log.WithFields(log.Fields{
-		"command": command,
+		"command": srvCmd.Command,
 	}).Info("Get command")
 
 	fmt.Fprint(rw, string(json))

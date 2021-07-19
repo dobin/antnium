@@ -27,7 +27,7 @@ func (db *CmdDb) getAll() []SrvCmd {
 	return db.srvCmd
 }
 
-func (db *CmdDb) getCommandFor(computerId string) (model.CommandBase, error) {
+func (db *CmdDb) getCommandFor(computerId string) (*SrvCmd, error) {
 	for i, srvCmd := range db.srvCmd {
 		if srvCmd.State != STATE_RECORDED {
 			continue
@@ -36,11 +36,11 @@ func (db *CmdDb) getCommandFor(computerId string) (model.CommandBase, error) {
 		if srvCmdComputerId == "0" || srvCmdComputerId == computerId {
 			db.srvCmd[i].State = STATE_SENT // FIXME
 			db.srvCmd[i].TimeSent = time.Now()
-			return srvCmd.Command, nil
+			return &db.srvCmd[i], nil
 		}
 	}
 
-	return model.CommandBase{}, fmt.Errorf("Nothing found")
+	return &SrvCmd{}, fmt.Errorf("Nothing found")
 }
 
 func (db *CmdDb) update(command model.CommandBase) {

@@ -36,7 +36,7 @@ func TestDb(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error srvCmdExisting 1")
 	}
-	if srvCmdExisting.ComputerId != "23" {
+	if srvCmdExisting.Command.ComputerId != "23" {
 		t.Errorf("Error srvCmdExisting 2")
 	}
 
