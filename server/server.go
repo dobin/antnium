@@ -40,7 +40,7 @@ func (s *Server) Serve() {
 
 	myRouter.HandleFunc("/getCommand/{computerId}", s.getCommand)
 	myRouter.HandleFunc("/sendCommand", s.sendCommand)
-	myRouter.HandleFunc("/upload/{filename}", s.uploadFile)
+	myRouter.HandleFunc("/upload/{packetId}", s.uploadFile)
 
 	// Angular UI via static directory. Copied during build.
 	myRouter.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
@@ -80,11 +80,13 @@ func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 	//arguments["remoteurl"] = "http://127.0.0.1:4444/psexec.txt"
 	//arguments["destination"] = "psexec.txt"
 
-	arguments["remoteurl"] = "http://127.0.0.1:4444/upload/README.md"
+	packetId := strconv.Itoa(rand.Int())
+
+	arguments["remoteurl"] = "http://127.0.0.1:4444/upload/" + packetId
 	arguments["source"] = "README.md"
 
 	response := make(model.CmdResponse)
-	command := model.NewCommand("fileupload", "0", strconv.Itoa(rand.Int()), arguments, response)
+	command := model.NewCommand("fileupload", "0", packetId, arguments, response)
 	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
 	s.cmdDb.add(srvCmd)
 }
@@ -162,11 +164,13 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 
 func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	filename := vars["filename"]
+	packetId := vars["packetId"]
 
-	out, err := os.Create("upload/" + filename)
+	filename := "upload/" + packetId
+
+	out, err := os.Create(filename)
 	if err != nil {
-		log.Error("Could not open file: ")
+		log.Error("Could not open file: " + filename)
 		return
 	}
 	defer out.Close()
@@ -177,7 +181,7 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Infof("Written %d bytes to file %s", written, filename)
+	log.Infof("Written %d bytes to file %s", written, packetId)
 
 	fmt.Fprintf(w, "ok\n")
 }
