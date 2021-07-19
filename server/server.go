@@ -25,8 +25,15 @@ type Server struct {
 
 func NewServer(port int) Server {
 	w := Server{port, MakeCmdDb(), MakeHostDb()}
+
+	// Init random for packet id generation
+	// Doesnt need to be secure
 	rand.Seed(time.Now().Unix())
 	return w
+}
+
+func (s *Server) getRandomPacketId() string {
+	return strconv.Itoa(rand.Int())
 }
 
 func (s *Server) Serve() {
@@ -80,7 +87,7 @@ func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 	//arguments["remoteurl"] = "http://127.0.0.1:4444/psexec.txt"
 	//arguments["destination"] = "psexec.txt"
 
-	packetId := strconv.Itoa(rand.Int())
+	packetId := s.getRandomPacketId()
 
 	arguments["remoteurl"] = "http://127.0.0.1:4444/upload/" + packetId
 	arguments["source"] = "README.md"

