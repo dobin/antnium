@@ -18,13 +18,13 @@ import (
 )
 
 type Server struct {
-	port   int
-	cmdDb  CmdDb
-	hostDb HostDb
+	srvaddr string
+	cmdDb   CmdDb
+	hostDb  HostDb
 }
 
 func NewServer(port int) Server {
-	w := Server{port, MakeCmdDb(), MakeHostDb()}
+	w := Server{"127.0.0.1:4444", MakeCmdDb(), MakeHostDb()}
 
 	// Init random for packet id generation
 	// Doesnt need to be secure
@@ -37,7 +37,6 @@ func (s *Server) getRandomPacketId() string {
 }
 
 func (s *Server) Serve() {
-	srvaddr := "127.0.0.1:4444"
 	myRouter := mux.NewRouter().StrictSlash(true)
 
 	myRouter.HandleFunc("/admin/commands", s.adminListCommands)
@@ -54,8 +53,8 @@ func (s *Server) Serve() {
 	// Allow CORS
 	corsObj := handlers.AllowedOrigins([]string{"*"})
 
-	fmt.Println("Starting webserver on " + srvaddr)
-	log.Fatal(http.ListenAndServe(srvaddr, handlers.CORS(corsObj)(myRouter)))
+	fmt.Println("Starting webserver on " + s.srvaddr)
+	log.Fatal(http.ListenAndServe(s.srvaddr, handlers.CORS(corsObj)(myRouter)))
 }
 
 func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
