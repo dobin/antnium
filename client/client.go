@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/model"
-	"github.com/google/uuid"
+	"github.com/rs/xid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,7 +23,7 @@ type Client struct {
 }
 
 func NewClient(port int) Client {
-	w := Client{port, uuid.New().String(), MakeCommandExec()}
+	w := Client{port, xid.New().String(), MakeCommandExec()}
 	return w
 }
 
