@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -31,7 +32,7 @@ func (s *CommandExec) execute(command *model.CommandBase) error {
 	} else if command.Command == "exec" {
 		command.Response = s.actionExec(command.Arguments)
 	} else if command.Command == "fileupload" {
-		command.Response = s.actionFiledownload(command.Arguments)
+		command.Response = s.actionFileupload(command.Arguments)
 	} else if command.Command == "filedownload" {
 		command.Response = s.actionFiledownload(command.Arguments)
 	} else {
@@ -95,12 +96,12 @@ func (s *CommandExec) actionFiledownload(cmdArgument model.CmdArgument) model.Cm
 		return ret
 	}
 
+	// Download and write file
 	resp, err := http.Get(remoteurl)
 	if err != nil {
 		ret["err"] = err.Error()
 		return ret
 	}
-
 	defer resp.Body.Close()
 	out, err := os.Create(destination)
 	if err != nil {
@@ -108,7 +109,6 @@ func (s *CommandExec) actionFiledownload(cmdArgument model.CmdArgument) model.Cm
 		return ret
 	}
 	defer out.Close()
-
 	written, err := io.Copy(out, resp.Body)
 	if err != nil {
 		ret["err"] = err.Error()
@@ -121,6 +121,41 @@ func (s *CommandExec) actionFiledownload(cmdArgument model.CmdArgument) model.Cm
 
 func (s *CommandExec) actionFileupload(cmdArgument model.CmdArgument) model.CmdResponse {
 	ret := make(model.CmdResponse)
-	ret["response"] = "upload answer"
+
+	// Check and transform input
+	remoteurl, ok := cmdArgument["remoteurl"]
+	if !ok {
+		ret["error"] = "No remoteurl given"
+		return ret
+	}
+	source, ok := cmdArgument["source"]
+	if !ok {
+		ret["error"] = "No source given"
+		return ret
+	}
+
+	client := &http.Client{}
+	data, err := os.Open(source)
+	if err != nil {
+		ret["error"] = err.Error()
+		return ret
+	}
+	req, err := http.NewRequest("POST", remoteurl, data)
+	if err != nil {
+		ret["error"] = err.Error()
+		return ret
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		ret["error"] = err.Error()
+		return ret
+	}
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		ret["error"] = err.Error()
+		return ret
+	}
+
+	ret["response"] = fmt.Sprintf("Status: %s", resp.Status)
 	return ret
 }

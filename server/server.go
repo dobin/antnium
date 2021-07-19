@@ -3,9 +3,11 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -38,6 +40,7 @@ func (s *Server) Serve() {
 
 	myRouter.HandleFunc("/getCommand/{computerId}", s.getCommand)
 	myRouter.HandleFunc("/sendCommand", s.sendCommand)
+	myRouter.HandleFunc("/upload/{filename}", s.uploadFile)
 
 	// Angular UI via static directory. Copied during build.
 	myRouter.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
@@ -74,11 +77,14 @@ func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 	//arguments["arg1"] = "/C"
 	//arguments["arg2"] = "whoami"
 
-	arguments["remoteurl"] = "http://127.0.0.1:4444/psexec.txt"
-	arguments["destination"] = "psexec.txt"
+	//arguments["remoteurl"] = "http://127.0.0.1:4444/psexec.txt"
+	//arguments["destination"] = "psexec.txt"
+
+	arguments["remoteurl"] = "http://127.0.0.1:4444/upload/README.md"
+	arguments["source"] = "README.md"
 
 	response := make(model.CmdResponse)
-	command := model.NewCommand("filedownload", "0", strconv.Itoa(rand.Int()), arguments, response)
+	command := model.NewCommand("fileupload", "0", strconv.Itoa(rand.Int()), arguments, response)
 	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
 	s.cmdDb.add(srvCmd)
 }
@@ -152,4 +158,26 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	s.cmdDb.update(command)
 	s.hostDb.updateFor(command.ComputerId)
 	fmt.Fprint(rw, "asdf")
+}
+
+func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	filename := vars["filename"]
+
+	out, err := os.Create("upload/" + filename)
+	if err != nil {
+		log.Error("Could not open file: ")
+		return
+	}
+	defer out.Close()
+
+	written, err := io.Copy(out, r.Body)
+	if err != nil {
+		log.Error("Error copying: " + err.Error())
+		return
+	}
+
+	log.Infof("Written %d bytes to file %s", written, filename)
+
+	fmt.Fprintf(w, "ok\n")
 }
