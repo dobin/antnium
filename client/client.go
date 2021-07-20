@@ -16,12 +16,18 @@ import (
 var ErrNoCommandsFound = errors.New("Server did not return any commands")
 
 type Client struct {
-	config      ClientConfig
+	config   ClientConfig
+	campgain model.Campaign
+	coder    model.Coder
+
 	commandExec CommandExec
 }
 
-func NewClient(port int) Client {
-	w := Client{MakeClientConfig(), MakeCommandExec()}
+func NewClient() Client {
+	campaign := model.MakeCampgain()
+	coder := model.MakeCoder(campaign)
+
+	w := Client{MakeClientConfig(), campaign, coder, MakeCommandExec()}
 	return w
 }
 
@@ -88,20 +94,16 @@ func (s Client) getCommand() (model.CommandBase, error) {
 	if err != nil {
 		return model.CommandBase{}, fmt.Errorf("Error reading body of URL %s with error %s", url, err)
 	}
-	bodyString := string(bodyBytes)
-	if bodyString == "" {
+
+	if len(bodyBytes) <= 0 {
 		return model.CommandBase{}, ErrNoCommandsFound
 	}
 
-	log.WithFields(log.Fields{
-		"command": bodyString,
-	}).Info("Received Command")
-
-	var commandBase model.CommandBase
-	if err := json.Unmarshal([]byte(bodyString), &commandBase); err != nil {
-		return model.CommandBase{}, err
+	command, err := s.coder.DecodeData(bodyBytes)
+	if err != nil {
+		return model.CommandBase{}, fmt.Errorf("Error decoding body of URL %s with error %s", url, err)
 	}
-	return commandBase, nil
+	return command, nil
 }
 
 func (s Client) sendCommand(command model.CommandBase) error {
@@ -118,12 +120,20 @@ func (s Client) sendCommand(command model.CommandBase) error {
 		"command": string(json),
 	}).Info("Send Command")
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(json))
+	data, err := s.coder.EncodeData(command)
+	if err != nil {
+		return fmt.Errorf("Could not send answer to URL %s: %s", url, err.Error())
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("Could not make HTTP request %s: %s", url, err.Error())
+	}
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("Could not send answer to URL %s: %s", url, err)
+		return fmt.Errorf("Could not send answer to URL %s: %s", url, err.Error())
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {

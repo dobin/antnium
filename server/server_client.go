@@ -1,14 +1,12 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 
-	"github.com/dobin/antnium/model"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -29,38 +27,14 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	srvCmd.ClientIp = r.RemoteAddr
 
 	// Encode the command and send it
-	jsonData, err := s.encodeData(srvCmd.Command)
+	jsonData, err := s.coder.EncodeData(srvCmd.Command)
 	if err != nil {
 		return
 	}
 	log.WithFields(log.Fields{
 		"command": srvCmd.Command,
 	}).Info("Get command")
-	fmt.Fprint(rw, jsonData)
-}
-
-func (s *Server) encodeData(command model.CommandBase) (string, error) {
-	json, err := json.Marshal(command)
-	if err != nil {
-		log.Error("Could not JSON marshal")
-		return "", err
-	}
-
-	return string(json), nil
-}
-
-func (s *Server) decodeData(data []byte) (model.CommandBase, error) {
-	var command model.CommandBase
-	err := json.Unmarshal(data, &command)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"body":  data,
-			"error": err,
-		}).Info("Error sending command")
-		return command, err
-	}
-
-	return command, nil
+	fmt.Fprint(rw, string(jsonData))
 }
 
 func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
@@ -70,7 +44,7 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	command, err := s.decodeData(reqBody)
+	command, err := s.coder.DecodeData(reqBody)
 	if err != nil {
 		return
 	}

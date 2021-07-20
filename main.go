@@ -16,11 +16,11 @@ func main() {
 	fmt.Println("Antnium 0.1")
 
 	if *flagServer {
-		s := server.NewServer(4444)
+		s := server.NewServer()
 		s.Serve()
 	}
 	if *flagClient {
-		c := client.NewClient(4444)
+		c := client.NewClient()
 		c.Start()
 	}
 }

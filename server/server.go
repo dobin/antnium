@@ -7,19 +7,28 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/dobin/antnium/model"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
-	srvaddr string
-	cmdDb   CmdDb
-	hostDb  HostDb
+	srvaddr  string
+	campgain model.Campaign
+	coder    model.Coder
+	cmdDb    CmdDb
+	hostDb   HostDb
 }
 
-func NewServer(port int) Server {
-	w := Server{"127.0.0.1:4444", MakeCmdDb(), MakeHostDb()}
+func NewServer() Server {
+	campaign := model.MakeCampgain()
+	coder := model.MakeCoder(campaign)
+	w := Server{
+		"127.0.0.1:4444",
+		campaign,
+		coder,
+		MakeCmdDb(), MakeHostDb()}
 
 	// Init random for packet id generation
 	// Doesnt need to be secure
