@@ -81,7 +81,7 @@ func (s Client) requestAndExecute() {
 }
 
 func (s Client) getCommand() (model.CommandBase, error) {
-	url := s.config.DestinationHost + s.config.CommandGetPath + s.config.ComputerId
+	url := s.campgain.ServerUrl + s.campgain.CommandGetPath + s.config.ComputerId
 	resp, err := http.Get(url)
 	if err != nil {
 		return model.CommandBase{}, fmt.Errorf("Error requesting URL %s with error %s", url, err)
@@ -107,7 +107,7 @@ func (s Client) getCommand() (model.CommandBase, error) {
 }
 
 func (s Client) sendCommand(command model.CommandBase) error {
-	url := s.config.DestinationHost + s.config.CommandSendPath
+	url := s.campgain.ServerUrl + s.campgain.CommandSendPath
 
 	// Setup response
 	command.ComputerId = s.config.ComputerId

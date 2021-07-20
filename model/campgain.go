@@ -11,6 +11,11 @@ type Campaign struct {
 
 	WithZip bool
 	WithEnc bool
+
+	ServerUrl string
+
+	CommandSendPath string
+	CommandGetPath  string
 }
 
 func MakeCampgain() Campaign {
@@ -28,6 +33,9 @@ func MakeCampgain() Campaign {
 		key,
 		true,
 		true,
+		"http://localhost:4444",
+		"/sendCommand",
+		"/getCommand/",
 	}
 	return c
 }
