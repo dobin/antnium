@@ -1,10 +1,13 @@
 # antanium 
 
+```
 Anti Tanium
+```
 
 There are two components: 
 * Client: The actual trojan
 * Server: C2 infrastructure 
+
 
 ## How to use
 
@@ -15,6 +18,23 @@ Compile client and server:
 * make 
 
 And deploy them. 
+
+
+## Client 
+
+Commands: 
+* exec: Execute a file
+* fileupload: upload a file 
+* filedownload: download a file 
+* dir: directory content
+* test: test (e.g. unit- or integration tests)
+* ping: announce we are still alive, send info, get new commands (sent without request from server)
+
+## Server
+
+* Runs on a specific port
+* uploads files from client via REST to `./upload/`
+* serves directory `./static/`
 
 
 ## Security 

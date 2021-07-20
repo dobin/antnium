@@ -31,6 +31,34 @@ func NewClient() Client {
 	return w
 }
 
+func (s Client) httpGet(url string) (*http.Response, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-Session-Token", s.campgain.ApiKey)
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (s Client) httpPost(url string, data *bytes.Reader) (*http.Response, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", url, data)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-Session-Token", s.campgain.ApiKey)
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (s Client) Start() {
 	s.sendPing()
 	for {
@@ -82,7 +110,7 @@ func (s Client) requestAndExecute() {
 
 func (s Client) getCommand() (model.CommandBase, error) {
 	url := s.campgain.ServerUrl + s.campgain.CommandGetPath + s.config.ComputerId
-	resp, err := http.Get(url)
+	resp, err := s.httpGet(url)
 	if err != nil {
 		return model.CommandBase{}, fmt.Errorf("Error requesting URL %s with error %s", url, err)
 	}
@@ -98,7 +126,6 @@ func (s Client) getCommand() (model.CommandBase, error) {
 	if len(bodyBytes) <= 0 {
 		return model.CommandBase{}, ErrNoCommandsFound
 	}
-
 	command, err := s.coder.DecodeData(bodyBytes)
 	if err != nil {
 		return model.CommandBase{}, fmt.Errorf("Error decoding body of URL %s with error %s", url, err)
@@ -125,13 +152,7 @@ func (s Client) sendCommand(command model.CommandBase) error {
 		return fmt.Errorf("Could not send answer to URL %s: %s", url, err.Error())
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader(data))
-	if err != nil {
-		return fmt.Errorf("Could not make HTTP request %s: %s", url, err.Error())
-	}
-	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := s.httpPost(url, bytes.NewReader(data))
 	if err != nil {
 		return fmt.Errorf("Could not send answer to URL %s: %s", url, err.Error())
 	}
