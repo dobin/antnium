@@ -27,6 +27,17 @@ func (db *CmdDb) getAll() []SrvCmd {
 	return db.srvCmd
 }
 
+func (db *CmdDb) ByPacketId(packetId string) (SrvCmd, error) {
+	for _, srvCmd := range db.srvCmd {
+		if srvCmd.Command.PacketId == packetId {
+			return srvCmd, nil
+			//return &db.srvCmd[i], nil
+		}
+	}
+
+	return SrvCmd{}, fmt.Errorf("Nothing found")
+}
+
 func (db *CmdDb) getCommandFor(computerId string) (*SrvCmd, error) {
 	for i, srvCmd := range db.srvCmd {
 		if srvCmd.State != STATE_RECORDED {
