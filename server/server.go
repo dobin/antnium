@@ -51,6 +51,8 @@ func (s *Server) Serve() {
 	adminRouter.HandleFunc("/clients", s.adminListClients)
 	adminRouter.HandleFunc("/addTestCommand", s.adminAddTestCommand)
 	adminRouter.HandleFunc("/addCommand", s.adminAddCommand)
+	adminRouter.PathPrefix("/upload").Handler(http.StripPrefix("/admin/upload/",
+		http.FileServer(http.Dir("./upload/"))))
 
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
@@ -62,7 +64,8 @@ func (s *Server) Serve() {
 	// only via packetId:
 	myRouter.HandleFunc("/upload/{packetId}", s.uploadFile)
 	// just use random filenames:
-	myRouter.PathPrefix("/static").Handler(http.FileServer(http.Dir("./"))) // http.Dir is relative to our path prefix!
+	myRouter.PathPrefix("/static").Handler(http.StripPrefix("/static/",
+		http.FileServer(http.Dir("./static/"))))
 
 	// Allow CORS
 	corsObj := handlers.AllowedOrigins([]string{"*"})

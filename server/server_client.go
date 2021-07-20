@@ -63,11 +63,13 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 	// Check if request for this file really exists
 	srvCmd, err := s.cmdDb.ByPacketId(packetId)
 	if err != nil {
-		log.Warnf("Client attempted to upload a file with an expired command with packetid: %s: %s", packetId, err.Error())
+		log.Warnf("Client attempted to upload a file with an expired command with packetid: %s: %s",
+			packetId, err.Error())
 		return
 	}
 	if srvCmd.State != STATE_SENT {
-		log.Warnf("Client attempted to upload a file with an weird command state %d", srvCmd.State)
+		log.Warnf("Client attempted to upload a file with an weird command state %d",
+			srvCmd.State)
 		return
 	}
 

@@ -63,16 +63,21 @@ func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdRespons
 		ret["error"] = "No executable given"
 		return ret
 	}
-	arg1, ok := cmdArgument["arg1"]
+	arg1, ok := cmdArgument["param1"]
 	if ok {
 		args = append(args, arg1)
 	}
-	arg2, ok := cmdArgument["arg2"]
+	arg2, ok := cmdArgument["param2"]
 	if ok {
 		args = append(args, arg2)
 	}
+	arg3, ok := cmdArgument["param3"]
+	if ok {
+		args = append(args, arg3)
+	}
 
 	// Execute and return result
+	log.Infof("Executing: %s %v", executable, args)
 	cmd := exec.Command(executable, args...)
 	stdout, err := cmd.Output()
 	if err != nil {
