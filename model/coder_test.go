@@ -5,7 +5,7 @@ import (
 )
 
 func TestEncodeDecode(t *testing.T) {
-	campaign := MakeCampgain()
+	campaign := MakeCampaign()
 	coder := MakeCoder(campaign)
 
 	packetId := "1234"
@@ -31,7 +31,7 @@ func TestEncodeDecode(t *testing.T) {
 }
 
 func TestEncryption(t *testing.T) {
-	campaign := MakeCampgain()
+	campaign := MakeCampaign()
 	coder := MakeCoder(campaign)
 
 	reference := "verysecret"

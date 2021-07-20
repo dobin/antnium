@@ -19,7 +19,7 @@ type Campaign struct {
 	CommandUploadPath string
 }
 
-func MakeCampgain() Campaign {
+func MakeCampaign() Campaign {
 	apiKey := "Secret-Api-Key"
 	encKey := "Secret-Enc-Key"
 

