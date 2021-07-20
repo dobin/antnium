@@ -52,6 +52,7 @@ func (s *CommandExec) actionTest(cmdArgument model.CmdArgument) model.CmdRespons
 	ret["response"] = "test answer"
 	return ret
 }
+
 func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdResponse {
 	ret := make(model.CmdResponse)
 	args := make([]string, 3)
@@ -74,9 +75,11 @@ func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdRespons
 	// Execute and return result
 	cmd := exec.Command(executable, args...)
 	stdout, err := cmd.Output()
-	ret["stdout"] = string(stdout)
 	if err != nil {
-		ret["err"] = err.Error()
+
+		ret["error"] = err.Error()
+	} else {
+		ret["stdout"] = string(stdout)
 	}
 	return ret
 }
@@ -99,19 +102,19 @@ func (s *CommandExec) actionFiledownload(cmdArgument model.CmdArgument) model.Cm
 	// Download and write file
 	resp, err := http.Get(remoteurl)
 	if err != nil {
-		ret["err"] = err.Error()
+		ret["error"] = err.Error()
 		return ret
 	}
 	defer resp.Body.Close()
 	out, err := os.Create(destination)
 	if err != nil {
-		ret["err"] = err.Error()
+		ret["error"] = err.Error()
 		return ret
 	}
 	defer out.Close()
 	written, err := io.Copy(out, resp.Body)
 	if err != nil {
-		ret["err"] = err.Error()
+		ret["error"] = err.Error()
 		return ret
 	}
 
