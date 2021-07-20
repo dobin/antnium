@@ -40,6 +40,7 @@ func (s *Server) Serve() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 
 	myRouter.HandleFunc("/admin/commands", s.adminListCommands)
+	myRouter.HandleFunc("/admin/commands/{computerId}", s.adminListCommandsComputerId)
 	myRouter.HandleFunc("/admin/clients", s.adminListClients)
 	myRouter.HandleFunc("/admin/addTestCommand", s.adminAddTestCommand)
 	myRouter.HandleFunc("/admin/addCommand", s.adminAddCommand)
@@ -60,6 +61,29 @@ func (s *Server) Serve() {
 func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
 	srvCmds := s.cmdDb.getAll()
 	json, err := json.Marshal(srvCmds)
+	if err != nil {
+		log.Error("Could not JSON marshal")
+		return
+	}
+	fmt.Fprint(rw, string(json))
+}
+
+func (s *Server) adminListCommandsComputerId(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	computerId := vars["computerId"]
+
+	var filteredCmds []SrvCmd = make([]SrvCmd, 5)
+	srvCmds := s.cmdDb.getAll()
+	for i, srvCmd := range srvCmds {
+		if srvCmd.Command.ComputerId == computerId {
+			filteredCmds = append(filteredCmds, srvCmd)
+		}
+		if i >= 5 {
+			break
+		}
+	}
+
+	json, err := json.Marshal(filteredCmds)
 	if err != nil {
 		log.Error("Could not JSON marshal")
 		return
