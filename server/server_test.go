@@ -12,7 +12,7 @@ import (
 
 func TestServer(t *testing.T) {
 	port := "55001"
-	packetId := "packetit-42"
+	packetId := "packetid-42"
 	computerId := "computerid-23"
 	s := NewServer("127.0.0.1:" + port)
 
@@ -31,7 +31,7 @@ func TestServer(t *testing.T) {
 	// This tests most of the stuff (encryption, encoding, campaign data, server paths and more)
 	c := client.NewClient()
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
-	c.Config.ComputerId = "computerid-23"
+	c.Config.ComputerId = computerId
 	command, err := c.GetCommand()
 	if err != nil {
 		t.Errorf("Error when receiving command: " + err.Error())
@@ -42,8 +42,6 @@ func TestServer(t *testing.T) {
 	if command.Arguments["arg0"] != "value0" {
 		t.Errorf("Command received, but wrong args: %v", command.Arguments)
 	}
-
-	// Todo: send answer, and check result on server
 }
 
 func TestServerAuth(t *testing.T) {
