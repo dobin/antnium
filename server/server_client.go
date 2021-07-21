@@ -18,6 +18,9 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	// Update last seen for this host
 	s.hostDb.updateFor(computerId)
 
+	// always notify
+	s.adminWebSocket.broadcastCmd("client_sent", computerId)
+
 	srvCmd, err := s.cmdDb.getCommandFor(computerId)
 	if err != nil {
 		return
@@ -43,16 +46,18 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 		log.Error("Could not read body")
 		return
 	}
-
 	command, err := s.coder.DecodeData(reqBody)
 	if err != nil {
+		log.Error("Could not decode")
 		return
 	}
 	log.WithFields(log.Fields{
 		"command": command,
 	}).Info("Send command")
+
 	s.cmdDb.update(command)
 	s.hostDb.updateFor(command.ComputerId)
+	s.adminWebSocket.broadcastCmd("client_answer", command.ComputerId)
 	fmt.Fprint(rw, "asdf")
 }
 

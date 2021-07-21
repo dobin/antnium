@@ -72,6 +72,8 @@ func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 	command := model.NewCommand("fileupload", "0", packetId, arguments, response)
 	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
 	s.cmdDb.add(srvCmd)
+
+	s.adminWebSocket.broadcastCmd("admin_testcmd", command.ComputerId)
 }
 
 func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
@@ -92,4 +94,7 @@ func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
 	}
 	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
 	s.cmdDb.add(srvCmd)
+
+	// Notify UI immediately (for STATE_RECORDED)
+	s.adminWebSocket.broadcastCmd("admin_addcmd", command.ComputerId)
 }

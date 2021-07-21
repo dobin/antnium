@@ -14,11 +14,12 @@ import (
 )
 
 type Server struct {
-	srvaddr  string
-	campgain model.Campaign
-	coder    model.Coder
-	cmdDb    CmdDb
-	hostDb   HostDb
+	srvaddr        string
+	campgain       model.Campaign
+	coder          model.Coder
+	cmdDb          CmdDb
+	hostDb         HostDb
+	adminWebSocket AdminWebSocket
 }
 
 func NewServer(srvAddr string) Server {
@@ -28,7 +29,7 @@ func NewServer(srvAddr string) Server {
 		srvAddr,
 		campaign,
 		coder,
-		MakeCmdDb(), MakeHostDb()}
+		MakeCmdDb(), MakeHostDb(), MakeAdminWebSocket()}
 
 	// Init random for packet id generation
 	// Doesnt need to be secure
@@ -51,6 +52,8 @@ func (s *Server) Serve() {
 	adminRouter.HandleFunc("/clients", s.adminListClients)
 	adminRouter.HandleFunc("/addTestCommand", s.adminAddTestCommand)
 	adminRouter.HandleFunc("/addCommand", s.adminAddCommand)
+	adminRouter.HandleFunc("/ws", s.adminWebSocket.wsHandler)
+	go s.adminWebSocket.Distributor()
 	adminRouter.PathPrefix("/upload").Handler(http.StripPrefix("/admin/upload/",
 		http.FileServer(http.Dir("./upload/"))))
 
