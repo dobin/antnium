@@ -25,13 +25,13 @@ func (s *Server) adminListCommandsComputerId(rw http.ResponseWriter, r *http.Req
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
 
-	var filteredCmds []SrvCmd = make([]SrvCmd, 5)
+	var filteredCmds []SrvCmd = make([]SrvCmd, 0)
 	srvCmds := s.cmdDb.getAll()
-	for i, srvCmd := range srvCmds {
+	for _, srvCmd := range srvCmds {
 		if srvCmd.Command.ComputerId == computerId {
 			filteredCmds = append(filteredCmds, srvCmd)
 		}
-		if i >= 5 {
+		if len(srvCmds) > 5 {
 			break
 		}
 	}
