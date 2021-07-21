@@ -76,8 +76,10 @@ func (s Client) HttpPost(url string, data *bytes.Reader) (*http.Response, error)
 func (s Client) Start() {
 	s.sendPing()
 	for {
-		s.requestAndExecute()
-		time.Sleep(3 * time.Second)
+		gotCommand := s.requestAndExecute()
+		if !gotCommand {
+			time.Sleep(3 * time.Second)
+		}
 	}
 }
 
@@ -89,18 +91,18 @@ func (s Client) sendPing() {
 	s.sendCommand(command)
 }
 
-func (s Client) requestAndExecute() {
+func (s Client) requestAndExecute() bool {
 	command, err := s.GetCommand()
 	if err != nil {
 		if err == ErrNoCommandsFound {
 			fmt.Print(".")
-			return
+			return false // no news, sleep
 		}
 
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Debug("Error get command")
-		return
+		return false // if there is a broken command on server, dont flood him
 	}
 
 	err = s.commandExec.execute(&command)
@@ -109,7 +111,7 @@ func (s Client) requestAndExecute() {
 			"command": command,
 			"error":   err,
 		}).Info("Error executing command")
-		return
+		return true // we still got a command
 	}
 
 	err = s.sendCommand(command)
@@ -118,8 +120,9 @@ func (s Client) requestAndExecute() {
 			"command": command,
 			"error":   err,
 		}).Info("Error sending command")
-		return
+		return true // we still got a command
 	}
+	return true // got a command
 }
 
 func (s Client) GetCommand() (model.CommandBase, error) {
