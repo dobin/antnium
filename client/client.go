@@ -99,7 +99,7 @@ func (s Client) requestAndExecute() {
 
 		log.WithFields(log.Fields{
 			"error": err,
-		}).Info("Error get command")
+		}).Debug("Error get command")
 		return
 	}
 
