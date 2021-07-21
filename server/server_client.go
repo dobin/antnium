@@ -18,13 +18,13 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	// Update last seen for this host
 	s.hostDb.updateFor(computerId)
 
-	// always notify
-	s.adminWebSocket.broadcastCmd("client_sent", computerId)
-
 	srvCmd, err := s.cmdDb.getCommandFor(computerId)
 	if err != nil {
 		return
 	}
+
+	// only notify if we had a command for the client
+	s.adminWebSocket.broadcastCmd("client_sent", computerId)
 
 	// Set source IP for this command
 	srvCmd.ClientIp = r.RemoteAddr
@@ -57,7 +57,9 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 
 	s.cmdDb.update(command)
 	s.hostDb.updateFor(command.ComputerId)
+
 	s.adminWebSocket.broadcastCmd("client_answer", command.ComputerId)
+
 	fmt.Fprint(rw, "asdf")
 }
 
