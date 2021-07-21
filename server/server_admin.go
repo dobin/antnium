@@ -31,9 +31,6 @@ func (s *Server) adminListCommandsComputerId(rw http.ResponseWriter, r *http.Req
 		if srvCmd.Command.ComputerId == computerId {
 			filteredCmds = append(filteredCmds, srvCmd)
 		}
-		if len(srvCmds) > 5 {
-			break
-		}
 	}
 
 	json, err := json.Marshal(filteredCmds)
