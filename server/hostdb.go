@@ -16,11 +16,12 @@ func MakeHostDb() HostDb {
 	return db
 }
 
-func (db *HostDb) updateFor(computerId string) {
+func (db *HostDb) updateFor(computerId string, ip string) {
 	if _, ok := db.hostDb[computerId]; !ok {
 		db.hostDb[computerId] = &HostBase{
 			computerId,
 			time.Now(),
+			ip,
 		}
 	} else {
 		db.hostDb[computerId].LastSeen = time.Now()

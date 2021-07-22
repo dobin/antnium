@@ -5,6 +5,7 @@ import (
 )
 
 type HostBase struct {
-	ComputerId string
-	LastSeen   time.Time
+	ComputerId string    `json:"ComputerId"`
+	LastSeen   time.Time `json:"LastSeen"`
+	LastIp     string    `json:"LastIp"`
 }

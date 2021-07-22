@@ -16,7 +16,7 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	computerId := vars["computerId"]
 
 	// Update last seen for this host
-	s.hostDb.updateFor(computerId)
+	s.hostDb.updateFor(computerId, r.RemoteAddr)
 
 	srvCmd, err := s.cmdDb.getCommandFor(computerId)
 	if err != nil {
@@ -56,7 +56,7 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 	}).Info("Send command")
 
 	s.cmdDb.update(command)
-	s.hostDb.updateFor(command.ComputerId)
+	s.hostDb.updateFor(command.ComputerId, r.RemoteAddr)
 
 	s.adminWebSocket.broadcastCmd("client_answer", command.ComputerId)
 
