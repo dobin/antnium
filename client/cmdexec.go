@@ -56,41 +56,30 @@ func (s *CommandExec) actionTest(cmdArgument model.CmdArgument) model.CmdRespons
 
 func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdResponse {
 	ret := make(model.CmdResponse)
-	args := make([]string, 3)
 
 	// Check and transform input
-	executable, ok := cmdArgument["executable"]
-	if !ok {
-		ret["error"] = "No executable given"
+	executable, args, err := model.MakeCmdArgumentFrom(cmdArgument)
+	if err != nil {
+		ret["error"] = err.Error()
 		return ret
-	}
-	arg1, ok := cmdArgument["param1"]
-	if ok {
-		args = append(args, arg1)
-	}
-	arg2, ok := cmdArgument["param2"]
-	if ok {
-		args = append(args, arg2)
-	}
-	arg3, ok := cmdArgument["param3"]
-	if ok {
-		args = append(args, arg3)
 	}
 
 	// Execute and return result
 	log.Infof("Executing: %s %v", executable, args)
 	cmd := exec.Command(executable, args...)
 	stdout, err := cmd.Output()
-
-	d := charmap.CodePage850.NewDecoder()
-	outDecoded, err := d.Bytes(stdout)
 	if err != nil {
-		ret["error"] = err.Error()
-	}
-	if err != nil {
+		// If program didnt exit nicely
 		ret["error"] = err.Error()
 	} else {
-		ret["stdout"] = string(outDecoded)
+		d := charmap.CodePage850.NewDecoder()
+		outDecoded, err := d.Bytes(stdout)
+		if err != nil {
+			// Fall back to stdout if decoding failed
+			ret["stdout"] = string(stdout)
+		} else {
+			ret["stdout"] = string(outDecoded)
+		}
 	}
 	return ret
 }
