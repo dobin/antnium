@@ -95,3 +95,12 @@ func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
 	// Notify UI immediately (for STATE_RECORDED)
 	s.adminWebSocket.broadcastCmd("admin_addcmd", command.ComputerId)
 }
+
+func (s *Server) getCampaign(rw http.ResponseWriter, r *http.Request) {
+	json, err := json.Marshal(s.campgain)
+	if err != nil {
+		log.Error("Could not JSON marshal")
+		return
+	}
+	fmt.Fprint(rw, string(json))
+}

