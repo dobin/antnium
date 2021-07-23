@@ -6,10 +6,11 @@ import (
 )
 
 type Campaign struct {
-	ApiKey  string `json:"ApiKey"`
-	EncKey  []byte `json:"EncKey"`
-	WithZip bool   `json:"WithZip"`
-	WithEnc bool   `json:"WithEnc"`
+	ApiKey      string `json:"ApiKey"`
+	AdminApiKey string `json:"AdminApiKey"`
+	EncKey      []byte `json:"EncKey"`
+	WithZip     bool   `json:"WithZip"`
+	WithEnc     bool   `json:"WithEnc"`
 
 	ServerUrl string `json:"ServerUrl"`
 
@@ -21,6 +22,7 @@ type Campaign struct {
 
 func MakeCampaign() Campaign {
 	apiKey := "Secret-Api-Key"
+	adminApiKey := "Secret-AdminApi-Key"
 	encKey := "Secret-Enc-Key"
 
 	// Generate the actual AES key based on encKey
@@ -31,6 +33,7 @@ func MakeCampaign() Campaign {
 
 	c := Campaign{
 		apiKey,
+		adminApiKey,
 		key,
 		true,
 		true,

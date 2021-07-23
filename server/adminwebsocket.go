@@ -19,12 +19,14 @@ type GuiData struct {
 }
 
 type AdminWebSocket struct {
-	clients map[*websocket.Conn]bool
+	clients     map[*websocket.Conn]bool
+	adminapiKey string
 }
 
-func MakeAdminWebSocket() AdminWebSocket {
+func MakeAdminWebSocket(adminApiKey string) AdminWebSocket {
 	a := AdminWebSocket{
 		make(map[*websocket.Conn]bool),
+		adminApiKey,
 	}
 	return a
 }
@@ -41,14 +43,33 @@ var upgrader = websocket.Upgrader{
 
 /****/
 
+type AuthToken string
+
 func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// register client
-	a.clients[ws] = true
+	// WebSocket Authentication
+	// first message should be the AdminApiKey
+	var authToken AuthToken
+	_, message, err := ws.ReadMessage()
+	if err != nil {
+		log.Error("Websocket read error")
+		return
+	}
+	err = json.Unmarshal(message, &authToken)
+	if err != nil {
+		log.Warn("WebSocket: could not decode auth")
+		return
+	}
+	if string(authToken) == a.adminapiKey {
+		// register client as auth succeeded
+		a.clients[ws] = true
+	} else {
+		log.Warn("WebSocket: incorrect key: " + authToken)
+	}
 }
 
 func (a *AdminWebSocket) broadcastCmd(reason string, computerId string) {
