@@ -14,9 +14,10 @@ type Campaign struct {
 
 	ServerUrl string
 
-	CommandSendPath   string
-	CommandGetPath    string
-	CommandUploadPath string
+	CommandSendPath         string
+	CommandGetPath          string
+	CommandFileUploadPath   string
+	CommandFileDownloadPath string
 }
 
 func MakeCampaign() Campaign {
@@ -35,9 +36,10 @@ func MakeCampaign() Campaign {
 		true,
 		true,
 		"http://localhost:4444",
-		"/sendCommand",
-		"/getCommand/",
+		"/send",
+		"/get/",
 		"/upload/",
+		"/static/",
 	}
 	return c
 }

