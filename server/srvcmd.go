@@ -14,13 +14,6 @@ const (
 	STATE_ANSWERED
 )
 
-type BaseSource int
-
-const (
-	SOURCE_SRV BaseSource = iota
-	SOURCE_CLI
-)
-
 type SrvCmd struct {
 	Command  model.CommandBase
 	State    BaseState
@@ -31,7 +24,7 @@ type SrvCmd struct {
 	TimeAnswered time.Time
 }
 
-func NewSrvCmd(command model.CommandBase, state BaseState, source BaseSource) SrvCmd {
+func NewSrvCmd(command model.CommandBase, state BaseState) SrvCmd {
 	srvCmd := SrvCmd{
 		command,
 		state,

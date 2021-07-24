@@ -25,6 +25,7 @@ func (db *HostDb) updateFor(computerId string, ip string) {
 		}
 	} else {
 		db.hostDb[computerId].LastSeen = time.Now()
+		db.hostDb[computerId].LastIp = ip
 	}
 }
 

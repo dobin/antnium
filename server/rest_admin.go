@@ -67,7 +67,7 @@ func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 
 	response := make(model.CmdResponse)
 	command := model.NewCommand("fileupload", "0", packetId, arguments, response)
-	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
+	srvCmd := NewSrvCmd(command, STATE_RECORDED)
 	s.cmdDb.add(srvCmd)
 
 	s.adminWebSocket.broadcastCmd("admin_testcmd", command.ComputerId)
@@ -89,7 +89,7 @@ func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
 		}).Info("Error add command")
 		return
 	}
-	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
+	srvCmd := NewSrvCmd(command, STATE_RECORDED)
 	s.cmdDb.add(srvCmd)
 
 	// Notify UI immediately (for STATE_RECORDED)

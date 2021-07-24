@@ -7,10 +7,9 @@ import (
 
 	"github.com/dobin/antnium/client"
 	"github.com/dobin/antnium/model"
-	log "github.com/sirupsen/logrus"
 )
 
-func TestServer(t *testing.T) {
+func TestServerClientIntegration(t *testing.T) {
 	port := "55001"
 	packetId := "packetid-42"
 	computerId := "computerid-23"
@@ -21,7 +20,7 @@ func TestServer(t *testing.T) {
 	arguments["arg0"] = "value0"
 	response := make(model.CmdResponse)
 	command := model.NewCommand("test", computerId, packetId, arguments, response)
-	srvCmd := NewSrvCmd(command, STATE_RECORDED, SOURCE_SRV)
+	srvCmd := NewSrvCmd(command, STATE_RECORDED)
 	s.cmdDb.add(srvCmd)
 
 	// make server go
@@ -44,12 +43,11 @@ func TestServer(t *testing.T) {
 	}
 }
 
-func TestServerAuth(t *testing.T) {
+func TestServerAuthAdmin(t *testing.T) {
 	var err error
-	var url string
 
 	// Start server in the background
-	port := "55000"
+	port := "55002"
 	s := NewServer("127.0.0.1:" + port)
 	go s.Serve()
 
@@ -58,24 +56,45 @@ func TestServerAuth(t *testing.T) {
 		Timeout: 1 * time.Second,
 	}
 
-	/*
-		// Test Admin
-		r, _ := http.NewRequest("GET", "http://127.0.0.1:55000/admin/commands", nil)
-		resp, err := client.Do(r)
-		if err != nil {
-			panic(err)
-		}
-		//assert.Equal(t, http.StatusOK, resp.StatusCode)
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(body)
-		//assert.Equal(t, []byte("abcd"), body)
-	*/
+	// Test Admin
+	r, _ := http.NewRequest("GET", "http://127.0.0.1:55002/admin/commands", nil)
+	resp, err := unauthHttp.Do(r)
+	if err != nil {
+		panic(err)
+	}
+	if resp.StatusCode == 200 {
+		t.Errorf("Could access admin API without authentication")
+	}
+}
+
+func TestServerAuthClient(t *testing.T) {
+	var err error
+	var url string
+	packetId := "packetid-42"
+	computerId := "computerid-23"
+
+	// Start server in the background
+	port := "55000"
+	s := NewServer("127.0.0.1:" + port)
+
+	// Make a example command the client should receive
+	arguments := make(model.CmdArgument)
+	arguments["arg0"] = "value0"
+	response := make(model.CmdResponse)
+	command := model.NewCommand("test", computerId, packetId, arguments, response)
+	srvCmd := NewSrvCmd(command, STATE_RECORDED)
+	s.cmdDb.add(srvCmd)
+
+	go s.Serve()
+
+	// Create a default (non authenticated) HTTP client
+	unauthHttp := &http.Client{
+		Timeout: 1 * time.Second,
+	}
 
 	c := client.NewClient()
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
+	c.Config.ComputerId = computerId
 
 	// Test Client: No key
 	url = c.CommandGetUrl()
@@ -89,12 +108,19 @@ func TestServerAuth(t *testing.T) {
 	}
 
 	// Test Client: Correct key
-	url = c.CommandGetUrl()
-	resp, err = c.HttpGet(url)
-	if resp.StatusCode != 200 {
-		t.Errorf("Could not access server API for client: " + url)
+	command, err = c.GetCommand()
+	if err != nil {
+		t.Errorf("Could not get command: " + err.Error())
 	}
-	log.Println(resp)
+	if command.Command != "test" {
+		t.Errorf("Recv command err")
+	}
+	if command.ComputerId != computerId {
+		t.Errorf("Recv command err")
+	}
+	if command.PacketId != packetId {
+		t.Errorf("Recv command err")
+	}
 
 	// Test: Static
 	/*
@@ -106,6 +132,8 @@ func TestServerAuth(t *testing.T) {
 		}
 		if resp.StatusCode != 200 {
 			t.Errorf("Could access static: " + url)
-		}*/
+		}
+	*/
 
+	// Test: Upload?
 }

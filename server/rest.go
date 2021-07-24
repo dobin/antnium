@@ -66,10 +66,9 @@ func (s *Server) Serve() {
 	clientRouter.HandleFunc(s.campgain.CommandGetPath+"{computerId}", s.getCommand) // /getCommand/{computerId}
 	clientRouter.HandleFunc(s.campgain.CommandSendPath, s.sendCommand)              // /sendCommand
 
-	// No Authentication
-	// only via packetId:
+	// Authentication only via packetId parameter
 	myRouter.HandleFunc(s.campgain.CommandFileUploadPath+"{packetId}", s.uploadFile) // /upload/{packetId}
-	// just use random filenames:
+	// Authentication based on known filenames
 	myRouter.PathPrefix(s.campgain.CommandFileDownloadPath).Handler(
 		http.StripPrefix(s.campgain.CommandFileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
 

@@ -31,7 +31,6 @@ func (db *CmdDb) ByPacketId(packetId string) (SrvCmd, error) {
 	for _, srvCmd := range db.srvCmd {
 		if srvCmd.Command.PacketId == packetId {
 			return srvCmd, nil
-			//return &db.srvCmd[i], nil
 		}
 	}
 
