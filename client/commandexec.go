@@ -14,10 +14,14 @@ import (
 )
 
 type CommandExec struct {
+	interactiveCmd InteractiveCmd
 }
 
 func MakeCommandExec() CommandExec {
-	commandExec := CommandExec{}
+	interactiveCmd := makeInteractiveCmd()
+	commandExec := CommandExec{
+		interactiveCmd,
+	}
 	return commandExec
 }
 
@@ -36,10 +40,47 @@ func (s *CommandExec) execute(command *model.CommandBase) error {
 		command.Response = s.actionFileupload(command.Arguments)
 	} else if command.Command == "filedownload" {
 		command.Response = s.actionFiledownload(command.Arguments)
+
+	} else if command.Command == "interactiveCmd_open" {
+		command.Response = s.actionInteractiveCmdOpen(command.Arguments)
+	} else if command.Command == "interactiveCmd_issue" {
+		command.Response = s.actionInteractiveCmdIssue(command.Arguments)
+
 	} else {
-		command.Response["response"] = "generic"
+		command.Response["response"] = "command not found: " + command.Command
 	}
+
 	return nil
+}
+
+func (s *CommandExec) actionInteractiveCmdOpen(cmdArgument model.CmdArgument) model.CmdResponse {
+	ret := make(model.CmdResponse)
+	stdout, stderr, err := s.interactiveCmd.open()
+
+	ret["stdout"] = stdout
+	ret["stderr"] = stderr
+	if err != nil {
+		ret["error"] = err.Error()
+	}
+
+	return ret
+}
+func (s *CommandExec) actionInteractiveCmdIssue(cmdArgument model.CmdArgument) model.CmdResponse {
+	ret := make(model.CmdResponse)
+
+	// Check and transform input
+	commandline, ok := cmdArgument["commandline"]
+	if !ok {
+		ret["error"] = "No commandline given"
+		return ret
+	}
+
+	stdout, stderr := s.interactiveCmd.issue(commandline)
+
+	ret["stdout"] = stdout
+	ret["stderr"] = stderr
+
+	return ret
 }
 
 func (s *CommandExec) actionPing(cmdArgument model.CmdArgument) model.CmdResponse {
