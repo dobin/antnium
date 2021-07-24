@@ -41,9 +41,9 @@ func (s *CommandExec) execute(command *model.CommandBase) error {
 	} else if command.Command == "filedownload" {
 		command.Response = s.actionFiledownload(command.Arguments)
 
-	} else if command.Command == "interactiveCmd_open" {
+	} else if command.Command == "iOpen" {
 		command.Response = s.actionInteractiveCmdOpen(command.Arguments)
-	} else if command.Command == "interactiveCmd_issue" {
+	} else if command.Command == "iIssue" {
 		command.Response = s.actionInteractiveCmdIssue(command.Arguments)
 
 	} else {
