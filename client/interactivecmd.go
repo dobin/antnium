@@ -110,6 +110,7 @@ func (interactiveCmd *InteractiveCmd) open() (string, string, error) {
 
 func (interactiveCmd *InteractiveCmd) issue(cmd string) (string, string) {
 	// Give command to cmd
+	// Do it every time, or we will block! (even when empty "")
 	fmt.Fprintln(interactiveCmd.stdin, cmd)
 
 	/* We read until the output buffer does not increase in size for a certain
