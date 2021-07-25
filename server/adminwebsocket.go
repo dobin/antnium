@@ -6,7 +6,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -16,6 +15,10 @@ import (
 type GuiData struct {
 	Reason     string `json:"Reason"`
 	ComputerId string `json:"ComputerId"`
+}
+
+type WebsocketData struct {
+	SrvCmd SrvCmd `json:"SrvCmd"`
 }
 
 type AdminWebSocket struct {
@@ -33,7 +36,7 @@ func MakeAdminWebSocket(adminApiKey string) AdminWebSocket {
 
 /****/
 
-var broadcast = make(chan *GuiData)
+var broadcast = make(chan *WebsocketData)
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -72,13 +75,11 @@ func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a *AdminWebSocket) broadcastCmd(reason string, computerId string) {
-	guiData := GuiData{
-		reason,
-		computerId,
+func (a *AdminWebSocket) broadcastCmd(srvCmd SrvCmd) {
+	websocketData := WebsocketData{
+		srvCmd,
 	}
-	broadcast <- &guiData
-	fmt.Printf("Sending to WS: %v\n", guiData)
+	broadcast <- &websocketData
 }
 
 func (a *AdminWebSocket) Distributor() {

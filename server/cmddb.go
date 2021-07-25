@@ -18,9 +18,10 @@ func MakeCmdDb() CmdDb {
 	return db
 }
 
-func (db *CmdDb) add(srvCmd SrvCmd) {
+func (db *CmdDb) add(srvCmd SrvCmd) SrvCmd {
 	srvCmd.TimeRecorded = time.Now()
 	db.srvCmd = append(db.srvCmd, srvCmd)
+	return srvCmd
 }
 
 func (db *CmdDb) getAll() []SrvCmd {
@@ -53,13 +54,16 @@ func (db *CmdDb) getCommandFor(computerId string) (*SrvCmd, error) {
 	return &SrvCmd{}, fmt.Errorf("Nothing found")
 }
 
-func (db *CmdDb) update(command model.CommandBase) {
+func (db *CmdDb) update(command model.CommandBase) (SrvCmd, error) {
 	for i, srvCmd := range db.srvCmd {
 		if srvCmd.Command.PacketId == command.PacketId {
 			db.srvCmd[i].State = STATE_ANSWERED
 			db.srvCmd[i].TimeAnswered = time.Now()
 			db.srvCmd[i].Command.Response = command.Response
 			db.srvCmd[i].Command.ComputerId = command.ComputerId
+			return db.srvCmd[i], nil
 		}
 	}
+
+	return SrvCmd{}, fmt.Errorf("command not found")
 }

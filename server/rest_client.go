@@ -24,7 +24,7 @@ func (s *Server) getCommand(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// only notify if we had a command for the client
-	s.adminWebSocket.broadcastCmd("client_sent", computerId)
+	s.adminWebSocket.broadcastCmd(*srvCmd)
 
 	// Set source IP for this command
 	srvCmd.ClientIp = r.RemoteAddr
@@ -55,10 +55,13 @@ func (s *Server) sendCommand(rw http.ResponseWriter, r *http.Request) {
 		"command": command,
 	}).Info("Send command")
 
-	s.cmdDb.update(command)
 	s.hostDb.updateFor(command.ComputerId, r.RemoteAddr)
 
-	s.adminWebSocket.broadcastCmd("client_answer", command.ComputerId)
+	srvCmd, err := s.cmdDb.update(command)
+	if err == nil {
+		// only broadcast if element has been found (against ping-cmd spam)
+		s.adminWebSocket.broadcastCmd(srvCmd)
+	}
 
 	fmt.Fprint(rw, "asdf")
 }

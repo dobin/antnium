@@ -70,7 +70,7 @@ func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 	srvCmd := NewSrvCmd(command, STATE_RECORDED)
 	s.cmdDb.add(srvCmd)
 
-	s.adminWebSocket.broadcastCmd("admin_testcmd", command.ComputerId)
+	s.adminWebSocket.broadcastCmd(srvCmd)
 }
 
 func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
@@ -90,10 +90,10 @@ func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	srvCmd := NewSrvCmd(command, STATE_RECORDED)
-	s.cmdDb.add(srvCmd)
+	srvCmd = s.cmdDb.add(srvCmd) // Get updated one
 
-	// Notify UI immediately (for STATE_RECORDED)
-	s.adminWebSocket.broadcastCmd("admin_addcmd", command.ComputerId)
+	// Notify UI immediately (for initial STATE_RECORDED)
+	s.adminWebSocket.broadcastCmd(srvCmd)
 }
 
 func (s *Server) getCampaign(rw http.ResponseWriter, r *http.Request) {
