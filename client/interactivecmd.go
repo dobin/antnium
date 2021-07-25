@@ -14,6 +14,7 @@ import (
 */
 
 type InteractiveCmd struct {
+	cmd       *exec.Cmd
 	stdin     io.WriteCloser
 	stdout    io.ReadCloser
 	stderr    io.ReadCloser
@@ -28,8 +29,17 @@ func makeInteractiveCmd() InteractiveCmd {
 		nil,
 		nil,
 		nil,
+		nil,
 	}
 	return interactiveCmd
+}
+
+func (interactiveCmd *InteractiveCmd) AlreadyOpen() bool {
+	if interactiveCmd.cmd == nil {
+		return false
+	} else {
+		return true
+	}
 }
 
 func (interactiveCmd *InteractiveCmd) open() (string, string, error) {
@@ -52,6 +62,7 @@ func (interactiveCmd *InteractiveCmd) open() (string, string, error) {
 	if err := cmd.Start(); err != nil {
 		return "", "", err
 	}
+	interactiveCmd.cmd = cmd
 
 	// Read initial stdin
 	// Its always two read's. If not, it will block forever
@@ -118,10 +129,15 @@ func (interactiveCmd *InteractiveCmd) issue(cmd string) (string, string) {
 	   how it is.
 	*/
 	prevLen := 0
+	n := 10
 	for {
+		n -= 1
 		time.Sleep(100 * time.Millisecond)
 
 		len := interactiveCmd.stdoutBuf.Len()
+		if n == 0 {
+			break
+		}
 		if len == 0 {
 			continue
 		}

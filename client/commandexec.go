@@ -54,12 +54,21 @@ func (s *CommandExec) execute(command *model.CommandBase) error {
 
 func (s *CommandExec) actionInteractiveCmdOpen(cmdArgument model.CmdArgument) model.CmdResponse {
 	ret := make(model.CmdResponse)
-	stdout, stderr, err := s.interactiveCmd.open()
+	_, force := cmdArgument["force"]
 
-	ret["stdout"] = stdout
-	ret["stderr"] = stderr
-	if err != nil {
-		ret["error"] = err.Error()
+	if s.interactiveCmd.AlreadyOpen() && !force {
+		ret["error"] = "already_open"
+	} else {
+		if s.interactiveCmd.AlreadyOpen() {
+			s.interactiveCmd.cmd.Process.Kill()
+		}
+		stdout, stderr, err := s.interactiveCmd.open()
+
+		ret["stdout"] = stdout
+		ret["stderr"] = stderr
+		if err != nil {
+			ret["error"] = err.Error()
+		}
 	}
 
 	return ret
