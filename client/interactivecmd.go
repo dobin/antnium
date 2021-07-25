@@ -132,10 +132,13 @@ func (interactiveCmd *InteractiveCmd) issue(cmd string) (string, string) {
 	}
 
 	// Get data we aquired until now, and reset the buffers
-	stdout := interactiveCmd.stdoutBuf.String()
+	stdoutBytes := interactiveCmd.stdoutBuf.Bytes()
 	interactiveCmd.stdoutBuf.Reset()
-	stderr := interactiveCmd.stderrBuf.String()
+	stderrBytes := interactiveCmd.stderrBuf.Bytes()
 	interactiveCmd.stderrBuf.Reset()
 
-	return stdout, stderr
+	stdoutStr := windowsToString(stdoutBytes)
+	stderrStr := windowsToString(stderrBytes)
+
+	return stdoutStr, stderrStr
 }

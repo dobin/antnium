@@ -10,7 +10,6 @@ import (
 
 	"github.com/dobin/antnium/model"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/text/encoding/charmap"
 )
 
 type CommandExec struct {
@@ -113,14 +112,7 @@ func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdRespons
 		// If program didnt exit nicely
 		ret["error"] = err.Error()
 	} else {
-		d := charmap.CodePage850.NewDecoder()
-		outDecoded, err := d.Bytes(stdout)
-		if err != nil {
-			// Fall back to stdout if decoding failed
-			ret["stdout"] = string(stdout)
-		} else {
-			ret["stdout"] = string(outDecoded)
-		}
+		ret["stdout"] = windowsToString(stdout)
 	}
 	return ret
 }
