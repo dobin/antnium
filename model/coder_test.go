@@ -13,19 +13,19 @@ func TestEncodeDecode(t *testing.T) {
 	arguments["remoteurl"] = "http://127.0.0.1:4444/upload/" + packetId
 	arguments["source"] = "README.md"
 	response := make(PacketResponse)
-	command := NewCommand("fileupload", "0", packetId, arguments, response)
+	packet := NewPacket("fileupload", "0", packetId, arguments, response)
 
-	data, err := coder.EncodeData(command)
+	data, err := coder.EncodeData(packet)
 	if err != nil {
 		t.Errorf("Error encoding: " + err.Error())
 	}
 
-	command2, err := coder.DecodeData(data)
+	packet2, err := coder.DecodeData(data)
 	if err != nil {
 		t.Errorf("Error decoding: " + err.Error())
 	}
 
-	if command.PacketId != command2.PacketId {
+	if packet.PacketId != packet2.PacketId {
 		t.Errorf("Comparison error")
 	}
 }

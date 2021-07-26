@@ -30,7 +30,7 @@ func (db *PacketDb) getAll() []PacketInfo {
 
 func (db *PacketDb) ByPacketId(packetId string) (PacketInfo, error) {
 	for _, packetInfo := range db.packetInfo {
-		if packetInfo.Command.PacketId == packetId {
+		if packetInfo.Packet.PacketId == packetId {
 			return packetInfo, nil
 		}
 	}
@@ -38,12 +38,12 @@ func (db *PacketDb) ByPacketId(packetId string) (PacketInfo, error) {
 	return PacketInfo{}, fmt.Errorf("Nothing found")
 }
 
-func (db *PacketDb) getCommandFor(computerId string) (*PacketInfo, error) {
+func (db *PacketDb) getPacketFor(computerId string) (*PacketInfo, error) {
 	for i, packetInfo := range db.packetInfo {
 		if packetInfo.State != STATE_RECORDED {
 			continue
 		}
-		packetInfoComputerId := packetInfo.Command.ComputerId
+		packetInfoComputerId := packetInfo.Packet.ComputerId
 		if packetInfoComputerId == "0" || packetInfoComputerId == computerId {
 			db.packetInfo[i].State = STATE_SENT // FIXME
 			db.packetInfo[i].TimeSent = time.Now()
@@ -54,16 +54,16 @@ func (db *PacketDb) getCommandFor(computerId string) (*PacketInfo, error) {
 	return &PacketInfo{}, fmt.Errorf("Nothing found")
 }
 
-func (db *PacketDb) update(command model.Packet) (PacketInfo, error) {
+func (db *PacketDb) update(packet model.Packet) (PacketInfo, error) {
 	for i, packetInfo := range db.packetInfo {
-		if packetInfo.Command.PacketId == command.PacketId {
+		if packetInfo.Packet.PacketId == packet.PacketId {
 			db.packetInfo[i].State = STATE_ANSWERED
 			db.packetInfo[i].TimeAnswered = time.Now()
-			db.packetInfo[i].Command.Response = command.Response
-			db.packetInfo[i].Command.ComputerId = command.ComputerId
+			db.packetInfo[i].Packet.Response = packet.Response
+			db.packetInfo[i].Packet.ComputerId = packet.ComputerId
 			return db.packetInfo[i], nil
 		}
 	}
 
-	return PacketInfo{}, fmt.Errorf("command not found")
+	return PacketInfo{}, fmt.Errorf("packet not found")
 }

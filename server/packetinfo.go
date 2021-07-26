@@ -15,7 +15,7 @@ const (
 )
 
 type PacketInfo struct {
-	Command  model.Packet
+	Packet   model.Packet
 	State    BaseState
 	ClientIp string
 
@@ -24,9 +24,9 @@ type PacketInfo struct {
 	TimeAnswered time.Time
 }
 
-func NewPacketInfo(command model.Packet, state BaseState) PacketInfo {
+func NewPacketInfo(packet model.Packet, state BaseState) PacketInfo {
 	packetInfo := PacketInfo{
-		command,
+		packet,
 		state,
 		"",
 		time.Time{},

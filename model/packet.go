@@ -41,11 +41,11 @@ func MakePacketArgumentFrom(packetArgument PacketArgument) (string, []string, er
 	return executable, args, nil
 }
 
-func NewCommand(command string, computerId string, packetId string, arguments PacketArgument, response PacketResponse) Packet {
+func NewPacket(packet string, computerId string, packetId string, arguments PacketArgument, response PacketResponse) Packet {
 	c := Packet{
 		computerId,
 		packetId,
-		command,
+		packet,
 		arguments,
 		response,
 	}

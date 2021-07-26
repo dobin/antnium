@@ -22,9 +22,9 @@ func MakeCoder(campaign Campaign) Coder {
 	return w
 }
 
-func (s *Coder) EncodeData(command Packet) ([]byte, error) {
+func (s *Coder) EncodeData(packet Packet) ([]byte, error) {
 	// Go to JSON
-	data, err := json.Marshal(command)
+	data, err := json.Marshal(packet)
 	if err != nil {
 		log.Error("Could not JSON marshal")
 		return nil, err
@@ -77,17 +77,17 @@ func (s *Coder) DecodeData(data []byte) (Packet, error) {
 	}
 
 	// JSON to GO
-	var command Packet
-	err = json.Unmarshal(data, &command)
+	var packet Packet
+	err = json.Unmarshal(data, &packet)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"body":  data,
 			"error": err,
-		}).Info("Error sending command")
+		}).Info("Error sending packet")
 		return Packet{}, fmt.Errorf("JSON Unmarshall: %s: %v", string(data), err)
 	}
 
-	return command, nil
+	return packet, nil
 }
 
 func (s *Coder) encryptData(plaintext []byte) ([]byte, error) {

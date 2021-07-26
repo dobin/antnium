@@ -8,13 +8,13 @@ import (
 
 func TestFromJson(t *testing.T) {
 	a := `{"computerid":"23","packetid":"42","command":"test","arguments":{"arg0":"value0"},"response":{"foo":"bar"}}`
-	var command Packet
-	err := json.Unmarshal([]byte(a), &command)
+	var packet Packet
+	err := json.Unmarshal([]byte(a), &packet)
 	if err != nil {
-		t.Errorf("Could not parse command test 1: %s", err)
+		t.Errorf("Could not parse packet test 1: %s", err)
 	}
-	if command.Response["foo"] != "bar" {
-		t.Errorf("Could not parse command test 2: %s", err)
+	if packet.Response["foo"] != "bar" {
+		t.Errorf("Could not parse packet test 2: %s", err)
 	}
 }
 
@@ -22,7 +22,7 @@ func TestToJson(t *testing.T) {
 	arguments := make(PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(PacketResponse)
-	c := NewCommand("test", "23", "42", arguments, response)
+	c := NewPacket("test", "23", "42", arguments, response)
 
 	reference := `{"computerid":"23","packetid":"42","command":"test","arguments":{"arg0":"value0"},"response":{}}`
 	u, err := json.Marshal(c)

@@ -15,31 +15,31 @@ func TestServerClientIntegration(t *testing.T) {
 	computerId := "computerid-23"
 	s := NewServer("127.0.0.1:" + port)
 
-	// Make a example command the client should receive
+	// Make a example packet the client should receive
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
-	command := model.NewCommand("test", computerId, packetId, arguments, response)
-	packetInfo := NewPacketInfo(command, STATE_RECORDED)
+	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
 	s.packetDb.add(packetInfo)
 
 	// make server go
 	go s.Serve()
 
-	// create client, receive the command we added above
+	// create client, receive the packet we added above
 	// This tests most of the stuff (encryption, encoding, campaign data, server paths and more)
 	c := client.NewClient()
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Config.ComputerId = computerId
-	command, err := c.GetCommand()
+	packet, err := c.GetPacket()
 	if err != nil {
-		t.Errorf("Error when receiving command: " + err.Error())
+		t.Errorf("Error when receiving packet: " + err.Error())
 	}
-	if command.PacketId != packetId {
-		t.Errorf("Command received, but wrong packetid: %s", command.PacketId)
+	if packet.PacketId != packetId {
+		t.Errorf("Packet received, but wrong packetid: %s", packet.PacketId)
 	}
-	if command.Arguments["arg0"] != "value0" {
-		t.Errorf("Command received, but wrong args: %v", command.Arguments)
+	if packet.Arguments["arg0"] != "value0" {
+		t.Errorf("Packet received, but wrong args: %v", packet.Arguments)
 	}
 }
 
@@ -57,7 +57,7 @@ func TestServerAuthAdmin(t *testing.T) {
 	}
 
 	// Test Admin
-	r, _ := http.NewRequest("GET", "http://127.0.0.1:55002/admin/commands", nil)
+	r, _ := http.NewRequest("GET", "http://127.0.0.1:55002/admin/packets", nil)
 	resp, err := unauthHttp.Do(r)
 	if err != nil {
 		panic(err)
@@ -77,12 +77,12 @@ func TestServerAuthClient(t *testing.T) {
 	port := "55000"
 	s := NewServer("127.0.0.1:" + port)
 
-	// Make a example command the client should receive
+	// Make a example packet the client should receive
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
-	command := model.NewCommand("test", computerId, packetId, arguments, response)
-	packetInfo := NewPacketInfo(command, STATE_RECORDED)
+	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
 	s.packetDb.add(packetInfo)
 
 	go s.Serve()
@@ -97,7 +97,7 @@ func TestServerAuthClient(t *testing.T) {
 	c.Config.ComputerId = computerId
 
 	// Test Client: No key
-	url = c.CommandGetUrl()
+	url = c.PacketGetUrl()
 	r, _ := http.NewRequest("GET", url, nil)
 	resp, err := unauthHttp.Do(r)
 	if err != nil {
@@ -108,23 +108,23 @@ func TestServerAuthClient(t *testing.T) {
 	}
 
 	// Test Client: Correct key
-	command, err = c.GetCommand()
+	packet, err = c.GetPacket()
 	if err != nil {
-		t.Errorf("Could not get command: " + err.Error())
+		t.Errorf("Could not get packet: " + err.Error())
 	}
-	if command.Command != "test" {
-		t.Errorf("Recv command err")
+	if packet.Command != "test" {
+		t.Errorf("Recv packet err")
 	}
-	if command.ComputerId != computerId {
-		t.Errorf("Recv command err")
+	if packet.ComputerId != computerId {
+		t.Errorf("Recv packet err")
 	}
-	if command.PacketId != packetId {
-		t.Errorf("Recv command err")
+	if packet.PacketId != packetId {
+		t.Errorf("Recv packet err")
 	}
 
 	// Test: Static
 	/*
-		url = c.CommandGetUrl()
+		url = c.PacketGetUrl()
 		r, _ = http.NewRequest("GET", url, nil)
 		resp, err = unauthHttp.Do(r)
 		if err != nil {

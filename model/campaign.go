@@ -14,10 +14,10 @@ type Campaign struct {
 
 	ServerUrl string `json:"ServerUrl"`
 
-	CommandSendPath         string `json:"CommandSendPath"`
-	CommandGetPath          string `json:"CommandGetPath"`
-	CommandFileUploadPath   string `json:"CommandFileUploadPath"`
-	CommandFileDownloadPath string `json:"CommandFileDownloadPath"`
+	PacketSendPath   string `json:"PacketSendPath"`
+	PacketGetPath    string `json:"PacketGetPath"`
+	FileUploadPath   string `json:"FileUploadPath"`
+	FileDownloadPath string `json:"FileDownloadPath"`
 }
 
 func MakeCampaign() Campaign {

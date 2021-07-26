@@ -13,7 +13,7 @@ func TestPacketDb(t *testing.T) {
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
-	c := model.NewCommand("test", "23", "42", arguments, response)
+	c := model.NewPacket("test", "23", "42", arguments, response)
 	packetInfo := NewPacketInfo(c, STATE_RECORDED)
 	packetDb.add(packetInfo)
 
@@ -27,22 +27,22 @@ func TestPacketDb(t *testing.T) {
 	}
 
 	// Client Packet: Should not exist
-	_, err := packetDb.getCommandFor("xxx")
+	_, err := packetDb.getPacketFor("xxx")
 	if err == nil {
 		t.Errorf("Error packetInfoNotExisting")
 	}
 
 	// Client Packet: Should exist
-	packetInfoExisting, err := packetDb.getCommandFor("23")
+	packetInfoExisting, err := packetDb.getPacketFor("23")
 	if err != nil {
 		t.Errorf("Error packetInfoExisting 1")
 	}
-	if packetInfoExisting.Command.ComputerId != "23" {
+	if packetInfoExisting.Packet.ComputerId != "23" {
 		t.Errorf("Error packetInfoExisting 2")
 	}
 
 	// Client: Again, queue empty
-	_, err = packetDb.getCommandFor("23")
+	_, err = packetDb.getPacketFor("23")
 	if err == nil {
 		t.Errorf("Error packetInfoExisting 11")
 	}
@@ -62,7 +62,7 @@ func TestPacketDb(t *testing.T) {
 	if packetInfoAll[0].State != STATE_ANSWERED {
 		t.Errorf("Error not right state 3")
 	}
-	if packetInfoAll[0].Command.Response["ret"] != "oki" {
+	if packetInfoAll[0].Packet.Response["ret"] != "oki" {
 		t.Errorf("Error  4")
 	}
 
@@ -71,7 +71,7 @@ func TestPacketDb(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error  5")
 	}
-	if packetInfo.Command.ComputerId != "23" {
+	if packetInfo.Packet.ComputerId != "23" {
 		t.Errorf("Error  6")
 	}
 }

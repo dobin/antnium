@@ -24,29 +24,29 @@ func MakePacketExecutor() PacketExecutor {
 	return packetExecutor
 }
 
-func (s *PacketExecutor) execute(command *model.Packet) error {
+func (s *PacketExecutor) execute(packet *model.Packet) error {
 	log.WithFields(log.Fields{
-		"command": command,
+		"packet": packet,
 	}).Info("Execute")
 
-	if command.Command == "ping" {
-		command.Response = s.actionPing(command.Arguments)
-	} else if command.Command == "test" {
-		command.Response = s.actionTest(command.Arguments)
-	} else if command.Command == "exec" {
-		command.Response = s.actionExec(command.Arguments)
-	} else if command.Command == "fileupload" {
-		command.Response = s.actionFileupload(command.Arguments)
-	} else if command.Command == "filedownload" {
-		command.Response = s.actionFiledownload(command.Arguments)
+	if packet.Command == "ping" {
+		packet.Response = s.actionPing(packet.Arguments)
+	} else if packet.Command == "test" {
+		packet.Response = s.actionTest(packet.Arguments)
+	} else if packet.Command == "exec" {
+		packet.Response = s.actionExec(packet.Arguments)
+	} else if packet.Command == "fileupload" {
+		packet.Response = s.actionFileupload(packet.Arguments)
+	} else if packet.Command == "filedownload" {
+		packet.Response = s.actionFiledownload(packet.Arguments)
 
-	} else if command.Command == "iOpen" {
-		command.Response = s.actionInteractiveShellOpen(command.Arguments)
-	} else if command.Command == "iIssue" {
-		command.Response = s.actionInteractiveShellIssue(command.Arguments)
+	} else if packet.Command == "iOpen" {
+		packet.Response = s.actionInteractiveShellOpen(packet.Arguments)
+	} else if packet.Command == "iIssue" {
+		packet.Response = s.actionInteractiveShellIssue(packet.Arguments)
 
 	} else {
-		command.Response["response"] = "command not found: " + command.Command
+		packet.Response["response"] = "packet not found: " + packet.Command
 	}
 
 	return nil
