@@ -112,7 +112,7 @@ func TestServerAuthClient(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not get packet: " + err.Error())
 	}
-	if packet.Command != "test" {
+	if packet.PacketType != "test" {
 		t.Errorf("Recv packet err")
 	}
 	if packet.ComputerId != computerId {

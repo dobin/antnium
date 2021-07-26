@@ -11,7 +11,7 @@ type PacketResponse map[string]string
 type Packet struct {
 	ComputerId string         `json:"computerid"`
 	PacketId   string         `json:"packetid"`
-	Command    string         `json:"command"`
+	PacketType string         `json:"packetType"`
 	Arguments  PacketArgument `json:"arguments"`
 	Response   PacketResponse `json:"response"`
 }

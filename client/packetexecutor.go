@@ -29,24 +29,24 @@ func (s *PacketExecutor) execute(packet *model.Packet) error {
 		"packet": packet,
 	}).Info("Execute")
 
-	if packet.Command == "ping" {
+	if packet.PacketType == "ping" {
 		packet.Response = s.actionPing(packet.Arguments)
-	} else if packet.Command == "test" {
+	} else if packet.PacketType == "test" {
 		packet.Response = s.actionTest(packet.Arguments)
-	} else if packet.Command == "exec" {
+	} else if packet.PacketType == "exec" {
 		packet.Response = s.actionExec(packet.Arguments)
-	} else if packet.Command == "fileupload" {
+	} else if packet.PacketType == "fileupload" {
 		packet.Response = s.actionFileupload(packet.Arguments)
-	} else if packet.Command == "filedownload" {
+	} else if packet.PacketType == "filedownload" {
 		packet.Response = s.actionFiledownload(packet.Arguments)
 
-	} else if packet.Command == "iOpen" {
+	} else if packet.PacketType == "iOpen" {
 		packet.Response = s.actionInteractiveShellOpen(packet.Arguments)
-	} else if packet.Command == "iIssue" {
+	} else if packet.PacketType == "iIssue" {
 		packet.Response = s.actionInteractiveShellIssue(packet.Arguments)
 
 	} else {
-		packet.Response["response"] = "packet not found: " + packet.Command
+		packet.Response["response"] = "packet not found: " + packet.PacketType
 	}
 
 	return nil
