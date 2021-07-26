@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/dobin/antnium/model"
 	log "github.com/sirupsen/logrus"
@@ -107,7 +108,7 @@ func (s *PacketExecutor) actionExec(packetArgument model.PacketArgument) model.P
 	ret := make(model.PacketResponse)
 
 	// Check and transform input
-	executable, args, err := model.MakePacketArgumentFrom(packetArgument)
+	executable, args, err := MakePacketArgumentFrom(packetArgument)
 	if err != nil {
 		ret["error"] = err.Error()
 		return ret
@@ -203,4 +204,28 @@ func (s *PacketExecutor) actionFileupload(packetArgument model.PacketArgument) m
 
 	ret["response"] = fmt.Sprintf("Status: %s", resp.Status)
 	return ret
+}
+
+func MakePacketArgumentFrom(packetArgument model.PacketArgument) (string, []string, error) {
+	args := make([]string, 0)
+
+	executable, ok := packetArgument["executable"]
+	if !ok {
+		return "", nil, fmt.Errorf("No executable given")
+	}
+
+	n := 0
+	for {
+		nr := strconv.Itoa(n)
+		key := "param" + nr
+		_, ok := packetArgument[key]
+		if ok {
+			args = append(args, packetArgument[key])
+		} else {
+			break
+		}
+		n = n + 1
+	}
+
+	return executable, args, nil
 }

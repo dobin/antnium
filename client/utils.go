@@ -1,6 +1,8 @@
 package client
 
-import "golang.org/x/text/encoding/charmap"
+import (
+	"golang.org/x/text/encoding/charmap"
+)
 
 func windowsToString(data []byte) string {
 	d := charmap.CodePage850.NewDecoder()

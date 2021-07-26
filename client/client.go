@@ -85,8 +85,11 @@ func (s *Client) Start() {
 
 func (s *Client) sendPing() {
 	arguments := make(model.PacketArgument)
-	arguments["msg"] = "ooy!"
 	response := make(model.PacketResponse)
+
+	response["hostname"] = s.Config.Hostname
+	model.AddArrayToResponse("localIp", s.Config.LocalIps, response)
+
 	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
 	s.sendPacket(packet)
 }

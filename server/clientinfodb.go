@@ -2,6 +2,8 @@ package server
 
 import (
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type ClientInfoDb struct {
@@ -22,10 +24,21 @@ func (db *ClientInfoDb) updateFor(computerId string, ip string) {
 			computerId,
 			time.Now(),
 			ip,
+			"",
+			nil,
 		}
 	} else {
 		db.clientInfoDb[computerId].LastSeen = time.Now()
 		db.clientInfoDb[computerId].LastIp = ip
+	}
+}
+
+func (db *ClientInfoDb) updateMore(computerId, hostname string, localIps []string) {
+	if _, ok := db.clientInfoDb[computerId]; ok {
+		db.clientInfoDb[computerId].Hostname = hostname
+		db.clientInfoDb[computerId].LocalIps = localIps
+	} else {
+		log.Error("Client not found in clientdb")
 	}
 }
 

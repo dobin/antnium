@@ -54,6 +54,25 @@ This is intentional. The campgain is only protected against outsiders, not a mot
 
 The admin API is protected by a separate AdminApi key, not found in the client. 
 
+## Packet Types
+
+From client to server:
+
+* Ping
+  * sent from client to server upon start
+  * only packet not initiated by server
+  * only packettype the server knows about
+  * not logged or broadcasted (anti-spam)
+  * contains host info
+  * data available through /admin/clients API
+
+From server to client: 
+* exec
+* iOpen
+* iIssue
+* fileUpload
+* fileDownload
+
 
 ## Testing
 
