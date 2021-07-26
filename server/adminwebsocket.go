@@ -18,7 +18,7 @@ type GuiData struct {
 }
 
 type WebsocketData struct {
-	SrvCmd SrvCmd `json:"SrvCmd"`
+	PacketInfo PacketInfo `json:"PacketInfo"`
 }
 
 type AdminWebSocket struct {
@@ -75,9 +75,9 @@ func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a *AdminWebSocket) broadcastCmd(srvCmd SrvCmd) {
+func (a *AdminWebSocket) broadcastPacket(packetInfo PacketInfo) {
 	websocketData := WebsocketData{
-		srvCmd,
+		packetInfo,
 	}
 	broadcast <- &websocketData
 }

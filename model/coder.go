@@ -22,7 +22,7 @@ func MakeCoder(campaign Campaign) Coder {
 	return w
 }
 
-func (s *Coder) EncodeData(command CommandBase) ([]byte, error) {
+func (s *Coder) EncodeData(command Packet) ([]byte, error) {
 	// Go to JSON
 	data, err := json.Marshal(command)
 	if err != nil {
@@ -50,14 +50,14 @@ func (s *Coder) EncodeData(command CommandBase) ([]byte, error) {
 	return data, nil
 }
 
-func (s *Coder) DecodeData(data []byte) (CommandBase, error) {
+func (s *Coder) DecodeData(data []byte) (Packet, error) {
 	var err error
 
 	// Cypertext to ZIP
 	if s.campaign.WithEnc {
 		data, err = s.decryptData(data)
 		if err != nil {
-			return CommandBase{}, err
+			return Packet{}, err
 		}
 	}
 
@@ -66,25 +66,25 @@ func (s *Coder) DecodeData(data []byte) (CommandBase, error) {
 		var out bytes.Buffer
 		r, err := zlib.NewReader(bytes.NewReader(data))
 		if err != nil {
-			return CommandBase{}, fmt.Errorf("ZLIB: %v", err)
+			return Packet{}, fmt.Errorf("ZLIB: %v", err)
 		}
 		_, err = io.Copy(&out, r)
 		if err != nil {
-			return CommandBase{}, fmt.Errorf("ZLIB copy: %v", err)
+			return Packet{}, fmt.Errorf("ZLIB copy: %v", err)
 		}
 		data = out.Bytes()
 		r.Close()
 	}
 
 	// JSON to GO
-	var command CommandBase
+	var command Packet
 	err = json.Unmarshal(data, &command)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"body":  data,
 			"error": err,
 		}).Info("Error sending command")
-		return CommandBase{}, fmt.Errorf("JSON Unmarshall: %s: %v", string(data), err)
+		return Packet{}, fmt.Errorf("JSON Unmarshall: %s: %v", string(data), err)
 	}
 
 	return command, nil

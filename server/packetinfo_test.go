@@ -8,14 +8,14 @@ import (
 )
 
 func TestToJson(t *testing.T) {
-	arguments := make(model.CmdArgument)
+	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
-	response := make(model.CmdResponse)
+	response := make(model.PacketResponse)
 	command := model.NewCommand("test", "23", "42", arguments, response)
-	srvCmd := NewSrvCmd(command, STATE_RECORDED)
+	packetInfo := NewPacketInfo(command, STATE_RECORDED)
 
 	reference := `{"Command":{"computerid":"23","packetid":"42","command":"test","arguments":{"arg0":"value0"},"response":{}},"State":0,"ClientIp":"","TimeRecorded":"0001-01-01T00:00:00Z","TimeSent":"0001-01-01T00:00:00Z","TimeAnswered":"0001-01-01T00:00:00Z"}`
-	u, err := json.Marshal(srvCmd)
+	u, err := json.Marshal(packetInfo)
 	if err != nil {
 		panic(err)
 	}
@@ -26,15 +26,15 @@ func TestToJson(t *testing.T) {
 }
 
 func TestToJsonCommand(t *testing.T) {
-	arguments := make(model.CmdArgument)
+	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
-	response := make(model.CmdResponse)
+	response := make(model.PacketResponse)
 	c := model.NewCommand("test", "23", "42", arguments, response)
 	reference := `{"computerid":"23","packetid":"42","command":"test","arguments":{"arg0":"value0"},"response":{}}`
 
-	srvCmd := NewSrvCmd(c, STATE_RECORDED)
+	packetInfo := NewPacketInfo(c, STATE_RECORDED)
 
-	u, err := json.Marshal(srvCmd.Command)
+	u, err := json.Marshal(packetInfo.Command)
 	if err != nil {
 		panic(err)
 	}

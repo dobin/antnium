@@ -17,8 +17,8 @@ type Server struct {
 	srvaddr        string
 	campgain       model.Campaign
 	coder          model.Coder
-	cmdDb          CmdDb
-	hostDb         HostDb
+	packetDb       PacketDb
+	clientInfoDb   ClientInfoDb
 	adminWebSocket AdminWebSocket
 }
 
@@ -29,7 +29,7 @@ func NewServer(srvAddr string) Server {
 		srvAddr,
 		campaign,
 		coder,
-		MakeCmdDb(), MakeHostDb(), MakeAdminWebSocket(campaign.AdminApiKey)}
+		MakePacketDb(), MakeClientInfoDb(), MakeAdminWebSocket(campaign.AdminApiKey)}
 
 	// Init random for packet id generation
 	// Doesnt need to be secure

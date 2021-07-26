@@ -16,12 +16,12 @@ func TestServerClientIntegration(t *testing.T) {
 	s := NewServer("127.0.0.1:" + port)
 
 	// Make a example command the client should receive
-	arguments := make(model.CmdArgument)
+	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
-	response := make(model.CmdResponse)
+	response := make(model.PacketResponse)
 	command := model.NewCommand("test", computerId, packetId, arguments, response)
-	srvCmd := NewSrvCmd(command, STATE_RECORDED)
-	s.cmdDb.add(srvCmd)
+	packetInfo := NewPacketInfo(command, STATE_RECORDED)
+	s.packetDb.add(packetInfo)
 
 	// make server go
 	go s.Serve()
@@ -78,12 +78,12 @@ func TestServerAuthClient(t *testing.T) {
 	s := NewServer("127.0.0.1:" + port)
 
 	// Make a example command the client should receive
-	arguments := make(model.CmdArgument)
+	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
-	response := make(model.CmdResponse)
+	response := make(model.PacketResponse)
 	command := model.NewCommand("test", computerId, packetId, arguments, response)
-	srvCmd := NewSrvCmd(command, STATE_RECORDED)
-	s.cmdDb.add(srvCmd)
+	packetInfo := NewPacketInfo(command, STATE_RECORDED)
+	s.packetDb.add(packetInfo)
 
 	go s.Serve()
 

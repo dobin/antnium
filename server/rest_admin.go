@@ -12,8 +12,8 @@ import (
 )
 
 func (s *Server) adminListCommands(rw http.ResponseWriter, r *http.Request) {
-	srvCmds := s.cmdDb.getAll()
-	json, err := json.Marshal(srvCmds)
+	packetInfos := s.packetDb.getAll()
+	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("Could not JSON marshal")
 		return
@@ -25,15 +25,15 @@ func (s *Server) adminListCommandsComputerId(rw http.ResponseWriter, r *http.Req
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
 
-	var filteredCmds []SrvCmd = make([]SrvCmd, 0)
-	srvCmds := s.cmdDb.getAll()
-	for _, srvCmd := range srvCmds {
-		if srvCmd.Command.ComputerId == computerId {
-			filteredCmds = append(filteredCmds, srvCmd)
+	var filteredPackets []PacketInfo = make([]PacketInfo, 0)
+	packetInfos := s.packetDb.getAll()
+	for _, packetInfo := range packetInfos {
+		if packetInfo.Command.ComputerId == computerId {
+			filteredPackets = append(filteredPackets, packetInfo)
 		}
 	}
 
-	json, err := json.Marshal(filteredCmds)
+	json, err := json.Marshal(filteredPackets)
 	if err != nil {
 		log.Error("Could not JSON marshal")
 		return
@@ -42,7 +42,7 @@ func (s *Server) adminListCommandsComputerId(rw http.ResponseWriter, r *http.Req
 }
 
 func (s *Server) adminListClients(rw http.ResponseWriter, r *http.Request) {
-	hostList := s.hostDb.getAsList()
+	hostList := s.clientInfoDb.getAsList()
 	json, err := json.Marshal(hostList)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -52,8 +52,8 @@ func (s *Server) adminListClients(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
-	arguments := make(model.CmdArgument)
-	//arguments["executable"] = "cmd"
+	arguments := make(model.PacketArgument)
+	//arguments["executable"] = "packet"
 	//arguments["arg1"] = "/C"
 	//arguments["arg2"] = "whoami"
 
@@ -65,12 +65,12 @@ func (s *Server) adminAddTestCommand(rw http.ResponseWriter, r *http.Request) {
 	arguments["remoteurl"] = "http://127.0.0.1:4444/upload/" + packetId
 	arguments["source"] = "README.md"
 
-	response := make(model.CmdResponse)
+	response := make(model.PacketResponse)
 	command := model.NewCommand("fileupload", "0", packetId, arguments, response)
-	srvCmd := NewSrvCmd(command, STATE_RECORDED)
-	s.cmdDb.add(srvCmd)
+	packetInfo := NewPacketInfo(command, STATE_RECORDED)
+	s.packetDb.add(packetInfo)
 
-	s.adminWebSocket.broadcastCmd(srvCmd)
+	s.adminWebSocket.broadcastPacket(packetInfo)
 }
 
 func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
@@ -80,7 +80,7 @@ func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var command model.CommandBase
+	var command model.Packet
 	err = json.Unmarshal(reqBody, &command)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -89,11 +89,11 @@ func (s *Server) adminAddCommand(rw http.ResponseWriter, r *http.Request) {
 		}).Info("Error add command")
 		return
 	}
-	srvCmd := NewSrvCmd(command, STATE_RECORDED)
-	srvCmd = s.cmdDb.add(srvCmd) // Get updated one
+	packetInfo := NewPacketInfo(command, STATE_RECORDED)
+	packetInfo = s.packetDb.add(packetInfo) // Get updated one
 
 	// Notify UI immediately (for initial STATE_RECORDED)
-	s.adminWebSocket.broadcastCmd(srvCmd)
+	s.adminWebSocket.broadcastPacket(packetInfo)
 }
 
 func (s *Server) getCampaign(rw http.ResponseWriter, r *http.Request) {

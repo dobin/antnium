@@ -4,15 +4,15 @@ import (
 	"testing"
 )
 
-func TestHostDb(t *testing.T) {
+func TestClientInfoDb(t *testing.T) {
 
-	hostDb := MakeHostDb()
+	clientInfoDb := MakeClientInfoDb()
 
-	hostDb.updateFor("1-1", "1.1.1.1")
-	hostDb.updateFor("1-1", "1.1.1.1")
-	hostDb.updateFor("1-2", "1.1.1.2")
+	clientInfoDb.updateFor("1-1", "1.1.1.1")
+	clientInfoDb.updateFor("1-1", "1.1.1.1")
+	clientInfoDb.updateFor("1-2", "1.1.1.2")
 
-	hostList := hostDb.getAsList()
+	hostList := clientInfoDb.getAsList()
 	if len(hostList) != 2 {
 		t.Errorf("Len wrong")
 	}
@@ -33,12 +33,12 @@ func TestHostDb(t *testing.T) {
 		t.Errorf("Error")
 	}
 
-	// Checkk
+	// Check
 	if hostList[1].LastSeen.After(hostList[0].LastSeen) {
 		t.Errorf("Error")
 	}
-	hostDb.updateFor("1-1", "1.1.1.3")
-	hostList = hostDb.getAsList()
+	clientInfoDb.updateFor("1-1", "1.1.1.3")
+	hostList = clientInfoDb.getAsList()
 	if len(hostList) != 2 {
 		t.Errorf("Len wrong")
 	}

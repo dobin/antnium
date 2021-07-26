@@ -14,8 +14,8 @@ const (
 	STATE_ANSWERED
 )
 
-type SrvCmd struct {
-	Command  model.CommandBase
+type PacketInfo struct {
+	Command  model.Packet
 	State    BaseState
 	ClientIp string
 
@@ -24,8 +24,8 @@ type SrvCmd struct {
 	TimeAnswered time.Time
 }
 
-func NewSrvCmd(command model.CommandBase, state BaseState) SrvCmd {
-	srvCmd := SrvCmd{
+func NewPacketInfo(command model.Packet, state BaseState) PacketInfo {
+	packetInfo := PacketInfo{
 		command,
 		state,
 		"",
@@ -33,5 +33,5 @@ func NewSrvCmd(command model.CommandBase, state BaseState) SrvCmd {
 		time.Time{},
 		time.Time{},
 	}
-	return srvCmd
+	return packetInfo
 }

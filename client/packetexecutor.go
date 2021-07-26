@@ -12,19 +12,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type CommandExec struct {
-	interactiveCmd InteractiveCmd
+type PacketExecutor struct {
+	interactiveShell InteractiveShell
 }
 
-func MakeCommandExec() CommandExec {
-	interactiveCmd := makeInteractiveCmd()
-	commandExec := CommandExec{
-		interactiveCmd,
+func MakePacketExecutor() PacketExecutor {
+	interactiveShell := makeInteractiveShell()
+	packetExecutor := PacketExecutor{
+		interactiveShell,
 	}
-	return commandExec
+	return packetExecutor
 }
 
-func (s *CommandExec) execute(command *model.CommandBase) error {
+func (s *PacketExecutor) execute(command *model.Packet) error {
 	log.WithFields(log.Fields{
 		"command": command,
 	}).Info("Execute")
@@ -41,9 +41,9 @@ func (s *CommandExec) execute(command *model.CommandBase) error {
 		command.Response = s.actionFiledownload(command.Arguments)
 
 	} else if command.Command == "iOpen" {
-		command.Response = s.actionInteractiveCmdOpen(command.Arguments)
+		command.Response = s.actionInteractiveShellOpen(command.Arguments)
 	} else if command.Command == "iIssue" {
-		command.Response = s.actionInteractiveCmdIssue(command.Arguments)
+		command.Response = s.actionInteractiveShellIssue(command.Arguments)
 
 	} else {
 		command.Response["response"] = "command not found: " + command.Command
@@ -52,17 +52,17 @@ func (s *CommandExec) execute(command *model.CommandBase) error {
 	return nil
 }
 
-func (s *CommandExec) actionInteractiveCmdOpen(cmdArgument model.CmdArgument) model.CmdResponse {
-	ret := make(model.CmdResponse)
-	_, force := cmdArgument["force"]
+func (s *PacketExecutor) actionInteractiveShellOpen(packetArgument model.PacketArgument) model.PacketResponse {
+	ret := make(model.PacketResponse)
+	_, force := packetArgument["force"]
 
-	if s.interactiveCmd.AlreadyOpen() && !force {
+	if s.interactiveShell.AlreadyOpen() && !force {
 		ret["error"] = "already_open"
 	} else {
-		if s.interactiveCmd.AlreadyOpen() {
-			s.interactiveCmd.cmd.Process.Kill()
+		if s.interactiveShell.AlreadyOpen() {
+			s.interactiveShell.execCmd.Process.Kill()
 		}
-		stdout, stderr, err := s.interactiveCmd.open()
+		stdout, stderr, err := s.interactiveShell.open()
 
 		ret["stdout"] = stdout
 		ret["stderr"] = stderr
@@ -73,17 +73,17 @@ func (s *CommandExec) actionInteractiveCmdOpen(cmdArgument model.CmdArgument) mo
 
 	return ret
 }
-func (s *CommandExec) actionInteractiveCmdIssue(cmdArgument model.CmdArgument) model.CmdResponse {
-	ret := make(model.CmdResponse)
+func (s *PacketExecutor) actionInteractiveShellIssue(packetArgument model.PacketArgument) model.PacketResponse {
+	ret := make(model.PacketResponse)
 
 	// Check and transform input
-	commandline, ok := cmdArgument["commandline"]
+	commandline, ok := packetArgument["commandline"]
 	if !ok {
 		ret["error"] = "No commandline given"
 		return ret
 	}
 
-	stdout, stderr := s.interactiveCmd.issue(commandline)
+	stdout, stderr := s.interactiveShell.issue(commandline)
 
 	ret["stdout"] = stdout
 	ret["stderr"] = stderr
@@ -91,23 +91,23 @@ func (s *CommandExec) actionInteractiveCmdIssue(cmdArgument model.CmdArgument) m
 	return ret
 }
 
-func (s *CommandExec) actionPing(cmdArgument model.CmdArgument) model.CmdResponse {
-	ret := make(model.CmdResponse)
+func (s *PacketExecutor) actionPing(packetArgument model.PacketArgument) model.PacketResponse {
+	ret := make(model.PacketResponse)
 	ret["response"] = "ping answer"
 	return ret
 }
 
-func (s *CommandExec) actionTest(cmdArgument model.CmdArgument) model.CmdResponse {
-	ret := make(model.CmdResponse)
+func (s *PacketExecutor) actionTest(packetArgument model.PacketArgument) model.PacketResponse {
+	ret := make(model.PacketResponse)
 	ret["response"] = "test answer"
 	return ret
 }
 
-func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdResponse {
-	ret := make(model.CmdResponse)
+func (s *PacketExecutor) actionExec(packetArgument model.PacketArgument) model.PacketResponse {
+	ret := make(model.PacketResponse)
 
 	// Check and transform input
-	executable, args, err := model.MakeCmdArgumentFrom(cmdArgument)
+	executable, args, err := model.MakePacketArgumentFrom(packetArgument)
 	if err != nil {
 		ret["error"] = err.Error()
 		return ret
@@ -115,8 +115,8 @@ func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdRespons
 
 	// Execute and return result
 	log.Infof("Executing: %s %v", executable, args)
-	cmd := exec.Command(executable, args...)
-	stdout, err := cmd.Output()
+	packet := exec.Command(executable, args...)
+	stdout, err := packet.Output()
 	if err != nil {
 		// If program didnt exit nicely
 		ret["error"] = err.Error()
@@ -126,16 +126,16 @@ func (s *CommandExec) actionExec(cmdArgument model.CmdArgument) model.CmdRespons
 	return ret
 }
 
-func (s *CommandExec) actionFiledownload(cmdArgument model.CmdArgument) model.CmdResponse {
-	ret := make(model.CmdResponse)
+func (s *PacketExecutor) actionFiledownload(packetArgument model.PacketArgument) model.PacketResponse {
+	ret := make(model.PacketResponse)
 
 	// Check and transform input
-	remoteurl, ok := cmdArgument["remoteurl"]
+	remoteurl, ok := packetArgument["remoteurl"]
 	if !ok {
 		ret["error"] = "No remoteurl given"
 		return ret
 	}
-	destination, ok := cmdArgument["destination"]
+	destination, ok := packetArgument["destination"]
 	if !ok {
 		ret["error"] = "No destination given"
 		return ret
@@ -164,16 +164,16 @@ func (s *CommandExec) actionFiledownload(cmdArgument model.CmdArgument) model.Cm
 	return ret
 }
 
-func (s *CommandExec) actionFileupload(cmdArgument model.CmdArgument) model.CmdResponse {
-	ret := make(model.CmdResponse)
+func (s *PacketExecutor) actionFileupload(packetArgument model.PacketArgument) model.PacketResponse {
+	ret := make(model.PacketResponse)
 
 	// Check and transform input
-	remoteurl, ok := cmdArgument["remoteurl"]
+	remoteurl, ok := packetArgument["remoteurl"]
 	if !ok {
 		ret["error"] = "No remoteurl given"
 		return ret
 	}
-	source, ok := cmdArgument["source"]
+	source, ok := packetArgument["source"]
 	if !ok {
 		ret["error"] = "No source given"
 		return ret

@@ -13,8 +13,8 @@ import (
    and checking its resulting buffer from time to time.
 */
 
-type InteractiveCmd struct {
-	cmd       *exec.Cmd
+type InteractiveShell struct {
+	execCmd   *exec.Cmd
 	stdin     io.WriteCloser
 	stdout    io.ReadCloser
 	stderr    io.ReadCloser
@@ -22,8 +22,8 @@ type InteractiveCmd struct {
 	stderrBuf *bytes.Buffer
 }
 
-func makeInteractiveCmd() InteractiveCmd {
-	interactiveCmd := InteractiveCmd{
+func makeInteractiveShell() InteractiveShell {
+	interactiveShell := InteractiveShell{
 		nil,
 		nil,
 		nil,
@@ -31,38 +31,38 @@ func makeInteractiveCmd() InteractiveCmd {
 		nil,
 		nil,
 	}
-	return interactiveCmd
+	return interactiveShell
 }
 
-func (interactiveCmd *InteractiveCmd) AlreadyOpen() bool {
-	if interactiveCmd.cmd == nil {
+func (interactiveShell *InteractiveShell) AlreadyOpen() bool {
+	if interactiveShell.execCmd == nil {
 		return false
 	} else {
 		return true
 	}
 }
 
-func (interactiveCmd *InteractiveCmd) open() (string, string, error) {
+func (interactiveShell *InteractiveShell) open() (string, string, error) {
 	// Setup command
-	cmd := exec.Command("cmd", "/a")
-	stdin, err := cmd.StdinPipe()
+	exeCommand := exec.Command("cmd", "/a")
+	stdin, err := exeCommand.StdinPipe()
 	if err != nil {
 		return "", "", err
 	}
-	stdout, err := cmd.StdoutPipe()
+	stdout, err := exeCommand.StdoutPipe()
 	if err != nil {
 		return "", "", err
 	}
-	stderr, err := cmd.StderrPipe()
+	stderr, err := exeCommand.StderrPipe()
 	if err != nil {
 		return "", "", err
 	}
 
 	// Start it
-	if err := cmd.Start(); err != nil {
+	if err := exeCommand.Start(); err != nil {
 		return "", "", err
 	}
-	interactiveCmd.cmd = cmd
+	interactiveShell.execCmd = exeCommand
 
 	// Read initial stdin
 	// Its always two read's. If not, it will block forever
@@ -87,42 +87,42 @@ func (interactiveCmd *InteractiveCmd) open() (string, string, error) {
 		return "", "", err
 	}*/
 
-	interactiveCmd.stdin = stdin
-	interactiveCmd.stdout = stdout
-	interactiveCmd.stderr = stderr
-	interactiveCmd.stdoutBuf = bytes.NewBuffer(nil)
-	interactiveCmd.stderrBuf = bytes.NewBuffer(nil)
+	interactiveShell.stdin = stdin
+	interactiveShell.stdout = stdout
+	interactiveShell.stderr = stderr
+	interactiveShell.stdoutBuf = bytes.NewBuffer(nil)
+	interactiveShell.stderrBuf = bytes.NewBuffer(nil)
 
 	// read the stdout continuously in a separate goroutine and capture it in our vars
 	// Read() will block if no data is available.
 	go func() {
 		for {
 			part := make([]byte, 128)
-			n, err := interactiveCmd.stdout.Read(part)
+			n, err := interactiveShell.stdout.Read(part)
 			if err != nil {
 				break
 			}
-			interactiveCmd.stdoutBuf.Write(part[0:n])
+			interactiveShell.stdoutBuf.Write(part[0:n])
 		}
 	}()
 	go func() {
 		for {
 			part := make([]byte, 128)
-			n, err := interactiveCmd.stderr.Read(part)
+			n, err := interactiveShell.stderr.Read(part)
 			if err != nil {
 				break
 			}
-			interactiveCmd.stderrBuf.Write(part[0:n])
+			interactiveShell.stderrBuf.Write(part[0:n])
 		}
 	}()
 
 	return string(stdoutCut1) + string(stdoutCut2), string(""), nil
 }
 
-func (interactiveCmd *InteractiveCmd) issue(cmd string) (string, string) {
-	// Give command to cmd
+func (interactiveShell *InteractiveShell) issue(commandline string) (string, string) {
+	// Give command to packet
 	// Do it every time, or we will block! (even when empty "")
-	fmt.Fprintln(interactiveCmd.stdin, cmd)
+	fmt.Fprintln(interactiveShell.stdin, commandline)
 
 	/* We read until the output buffer does not increase in size for a certain
 	   amount of time. We cannot be sure if it dumped all of its data, but thats
@@ -134,7 +134,7 @@ func (interactiveCmd *InteractiveCmd) issue(cmd string) (string, string) {
 		n -= 1
 		time.Sleep(100 * time.Millisecond)
 
-		len := interactiveCmd.stdoutBuf.Len()
+		len := interactiveShell.stdoutBuf.Len()
 		if n == 0 {
 			break
 		}
@@ -148,10 +148,10 @@ func (interactiveCmd *InteractiveCmd) issue(cmd string) (string, string) {
 	}
 
 	// Get data we aquired until now, and reset the buffers
-	stdoutBytes := interactiveCmd.stdoutBuf.Bytes()
-	interactiveCmd.stdoutBuf.Reset()
-	stderrBytes := interactiveCmd.stderrBuf.Bytes()
-	interactiveCmd.stderrBuf.Reset()
+	stdoutBytes := interactiveShell.stdoutBuf.Bytes()
+	interactiveShell.stdoutBuf.Reset()
+	stderrBytes := interactiveShell.stderrBuf.Bytes()
+	interactiveShell.stderrBuf.Reset()
 
 	stdoutStr := windowsToString(stdoutBytes)
 	stderrStr := windowsToString(stderrBytes)

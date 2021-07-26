@@ -6,14 +6,14 @@ import (
 	"github.com/dobin/antnium/model"
 )
 
-func TestCmd(t *testing.T) {
-	cmdArgument := make(model.CmdArgument, 3)
+func TestPacket(t *testing.T) {
+	packetArgument := make(model.PacketArgument, 3)
 
-	cmdArgument["executable"] = "e"
-	cmdArgument["param0"] = "a0"
-	cmdArgument["param1"] = "a1"
+	packetArgument["executable"] = "e"
+	packetArgument["param0"] = "a0"
+	packetArgument["param1"] = "a1"
 
-	executable, args, err := model.MakeCmdArgumentFrom(cmdArgument)
+	executable, args, err := model.MakePacketArgumentFrom(packetArgument)
 	if err != nil {
 		t.Errorf("Make error")
 	}

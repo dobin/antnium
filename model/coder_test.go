@@ -9,10 +9,10 @@ func TestEncodeDecode(t *testing.T) {
 	coder := MakeCoder(campaign)
 
 	packetId := "1234"
-	arguments := make(CmdArgument)
+	arguments := make(PacketArgument)
 	arguments["remoteurl"] = "http://127.0.0.1:4444/upload/" + packetId
 	arguments["source"] = "README.md"
-	response := make(CmdResponse)
+	response := make(PacketResponse)
 	command := NewCommand("fileupload", "0", packetId, arguments, response)
 
 	data, err := coder.EncodeData(command)
