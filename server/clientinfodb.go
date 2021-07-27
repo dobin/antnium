@@ -23,6 +23,7 @@ func (db *ClientInfoDb) updateFor(computerId string, ip string) {
 		db.clientInfoDb[computerId] = &ClientInfo{
 			computerId,
 			time.Now(),
+			time.Now(),
 			ip,
 			"",
 			nil,
