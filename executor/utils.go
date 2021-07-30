@@ -1,4 +1,4 @@
-package client
+package executor
 
 import (
 	"golang.org/x/text/encoding/charmap"

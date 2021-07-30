@@ -1,4 +1,4 @@
-package client
+package executor
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ func TestPacket(t *testing.T) {
 	packetArgument["param0"] = "a0"
 	packetArgument["param1"] = "a1"
 
-	executable, args, err := model.MakePacketArgumentFrom(packetArgument)
+	executable, args, err := MakePacketArgumentFrom(packetArgument)
 	if err != nil {
 		t.Errorf("Make error")
 	}

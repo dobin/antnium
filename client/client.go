@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dobin/antnium/executor"
 	"github.com/dobin/antnium/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -21,7 +22,7 @@ type Client struct {
 	coder    model.Coder
 	state    ClientState
 
-	packetExecutor PacketExecutor
+	packetExecutor executor.PacketExecutor
 }
 
 func NewClient() Client {
@@ -34,7 +35,7 @@ func NewClient() Client {
 		campaign,
 		coder,
 		MakeClientState(),
-		MakePacketExecutor(),
+		executor.MakePacketExecutor(),
 	}
 	return w
 }
@@ -109,7 +110,7 @@ func (s *Client) requestAndExecute() bool {
 		return false // if there is a broken packet on server, dont flood him
 	}
 
-	err = s.packetExecutor.execute(&packet)
+	err = s.packetExecutor.Execute(&packet)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"packet": packet,

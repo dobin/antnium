@@ -15,12 +15,14 @@ type ClientConfig struct {
 }
 
 func MakeClientConfig() ClientConfig {
+	// Hostname
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.Error("Hostname failed")
 		hostname = "unknown"
 	}
 
+	// Local interfaces
 	localIps := make([]string, 0)
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -45,6 +47,17 @@ func MakeClientConfig() ClientConfig {
 			localIps = append(localIps, ip.String())
 		}
 	}
+
+	// Env
+	/*
+			for _, e := range os.Environ() {
+		        pair := strings.SplitN(e, "=", 2)
+		        fmt.Println(pair[0])
+		    }
+	*/
+
+	// Machine ID
+	// https://github.com/denisbrodbeck/machineid
 
 	db := ClientConfig{
 		xid.New().String(),

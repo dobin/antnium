@@ -1,4 +1,4 @@
-package client
+package executor
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ func MakePacketExecutor() PacketExecutor {
 	return packetExecutor
 }
 
-func (s *PacketExecutor) execute(packet *model.Packet) error {
+func (s *PacketExecutor) Execute(packet *model.Packet) error {
 	log.WithFields(log.Fields{
 		"packet": packet,
 	}).Info("Execute")
