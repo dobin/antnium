@@ -15,12 +15,7 @@ func MakeClientState() ClientState {
 	return d
 }
 
-func (c *ClientState) getSleepDuration(gotPacket bool) time.Duration {
-	if gotPacket {
-		c.lastPacketSent = time.Now()
-		return time.Second * 1
-	}
-
+func (c *ClientState) getSleepDuration() time.Duration {
 	timeNow := time.Now()
 	timeDiff := timeNow.Sub(c.lastPacketSent)
 	duration := timeDiff.Seconds()
@@ -34,4 +29,8 @@ func (c *ClientState) getSleepDuration(gotPacket bool) time.Duration {
 	} else {
 		return time.Second * 60
 	}
+}
+
+func (c *ClientState) gotPacket() {
+	c.lastPacketSent = time.Now()
 }
