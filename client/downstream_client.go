@@ -20,9 +20,12 @@ func MakeDownstreamClient() DownstreamClient {
 	return u
 }
 
-func (d DownstreamClient) start() {
+func (d *DownstreamClient) start() {
+	log.Info("Start Downstream: Client")
+
 	for {
 		packet := <-d.channel
+		log.Info("Downstream: Client")
 
 		err := d.packetExecutor.Execute(&packet)
 		if err != nil {

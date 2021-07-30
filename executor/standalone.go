@@ -12,12 +12,18 @@ import (
 func StartClient() {
 	destination := "localhost:50000"
 	fmt.Println("Network to: " + destination)
-	packetExecutor := MakePacketExecutor()
 
 	conn, err := net.Dial("tcp", destination)
 	if err != nil {
 		log.Error("Could not connect: " + err.Error())
 	}
+	fmt.Println("Connected")
+
+	Loop(conn)
+}
+
+func Loop(conn net.Conn) {
+	packetExecutor := MakePacketExecutor()
 
 	for {
 		// Read

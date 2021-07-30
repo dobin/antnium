@@ -36,10 +36,6 @@ func MakeUpstream(config ClientConfig, campaign model.Campaign) Upstream {
 }
 
 func (d Upstream) start() {
-	err := d.sendPing()
-	if err != nil {
-		// Handle server not reachable
-	}
 	for {
 		// Sleep first
 		time.Sleep(d.state.getSleepDuration())
@@ -79,17 +75,6 @@ func (d Upstream) start() {
 			//return true // we still got a packet
 		}
 	}
-}
-
-func (d Upstream) sendPing() error {
-	arguments := make(model.PacketArgument)
-	response := make(model.PacketResponse)
-
-	response["hostname"] = d.config.Hostname
-	model.AddArrayToResponse("localIp", d.config.LocalIps, response)
-
-	packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
-	return d.sendPacket(packet)
 }
 
 func (d Upstream) GetPacket() (model.Packet, error) {

