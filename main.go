@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dobin/antnium/client"
+	"github.com/dobin/antnium/executor"
 	"github.com/dobin/antnium/server"
 )
 
@@ -14,6 +15,10 @@ func main() {
 
 	flagClient := flag.Bool("client", false, "IsClient")
 	flagClientAddr := flag.String("clientaddr", "", "Server URL for the client")
+
+	executorClient := flag.Bool("executorClient", false, "ExecutorClient")
+	executorServer := flag.Bool("executorServer", false, "ExecutorServer")
+
 	flag.Parse()
 
 	fmt.Println("Antnium 0.1")
@@ -21,8 +26,7 @@ func main() {
 	if *flagServer {
 		s := server.NewServer(*flagServerAddr)
 		s.Serve()
-	}
-	if *flagClient {
+	} else if *flagClient {
 		c := client.NewClient()
 
 		// Overwrite our server url
@@ -30,5 +34,9 @@ func main() {
 			c.Campaign.ServerUrl = *flagClientAddr
 		}
 		c.Start()
+	} else if *executorClient {
+		executor.StartClient()
+	} else if *executorServer {
+		server.StartServer()
 	}
 }
