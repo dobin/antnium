@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 )
 
@@ -30,7 +29,6 @@ func TestPacketToJson(t *testing.T) {
 		panic(err)
 	}
 	s := string(u)
-	fmt.Println(s)
 	if s != reference {
 		t.Errorf("Error jsonify: " + s)
 	}

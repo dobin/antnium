@@ -25,7 +25,6 @@ func (d *DownstreamClient) start() {
 
 	for {
 		packet := <-d.channel
-		log.Info("Downstream: Client")
 
 		err := d.packetExecutor.Execute(&packet)
 		if err != nil {
@@ -33,6 +32,7 @@ func (d *DownstreamClient) start() {
 				"packet": packet,
 				"error":  err,
 			}).Info("Error executing packet")
+			packet.Response["error"] = err.Error()
 		}
 
 		// Always send response, as it is syncronous

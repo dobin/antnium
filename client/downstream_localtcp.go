@@ -2,7 +2,6 @@ package client
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 
 	"github.com/dobin/antnium/executor"
@@ -31,7 +30,6 @@ func (d *DownstreamLocaltcp) start() {
 
 	for {
 		packet := <-d.channel // Wait for new packet for this downstream
-		fmt.Println("Downstream: LocalTcp")
 
 		// Send it to the downstream executor
 		packetEncoded, err := executor.EncodePacket(packet)
@@ -42,29 +40,20 @@ func (d *DownstreamLocaltcp) start() {
 		d.conn.Write([]byte("\n"))
 
 		// Wait for answer
-		fmt.Println("Receive:")
 		jsonStr, err := bufio.NewReader(d.conn).ReadString('\n')
 		if err != nil {
 			log.Error("Could not read: " + err.Error())
 		}
-		fmt.Println("Jsonstr: " + jsonStr)
-		packetDecoded, err := executor.DecodePacket(jsonStr)
+		packet, err = executor.DecodePacket(jsonStr)
 		if err != nil {
 			log.Error("Error: ", err.Error())
 		}
-		//fmt.Printf("%v\n", packetDecoded)
 
-		/*		log.Info("Downstream: TCP")
-				err := d.packetExecutor.Execute(&packet)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"packet": packet,
-						"error":  err,
-					}).Info("Error executing packet")
-				}
-		*/
-		// Always send response, as it is syncronous
-		d.channel <- packetDecoded
+		// Always send response, as it is synchronized
+		if err != nil {
+			packet.Response["error"] = err.Error()
+		}
+		d.channel <- packet
 	}
 }
 
@@ -73,14 +62,15 @@ func (d *DownstreamLocaltcp) startServer() {
 	ln, err := net.Listen("tcp", "127.0.0.1:50000")
 	if err != nil {
 		log.Error("Error: " + err.Error())
+		// TODO: Handle error
 	}
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Error("Error: " + err.Error())
+			// TODO: Handle error
 		}
 		d.conn = conn
-		//go handleConnection(conn)
 	}
 }

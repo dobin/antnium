@@ -1,8 +1,6 @@
 package client
 
 import (
-	"fmt"
-
 	"github.com/dobin/antnium/model"
 )
 
@@ -30,18 +28,14 @@ func (dm *DownstreamManager) start() {
 func (dm *DownstreamManager) GetFor(p model.Packet) chan model.Packet {
 	channelId, ok := p.Arguments["channelId"]
 	if !ok {
-		fmt.Println("-> Client")
 		return dm.downstreamClient.channel
 	}
 
 	if channelId == "client" {
-		fmt.Println("-> Client")
 		return dm.downstreamClient.channel
 	} else if channelId == "net#1" {
-		fmt.Println("-> TCP")
 		return dm.downstreamLocaltcp.channel
 	} else {
-		fmt.Println("-> Client")
 		return dm.downstreamClient.channel
 	}
 }

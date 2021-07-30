@@ -17,7 +17,6 @@ func main() {
 	flagClientAddr := flag.String("clientaddr", "", "Server URL for the client")
 
 	executorClient := flag.Bool("executorClient", false, "ExecutorClient")
-	executorServer := flag.Bool("executorServer", false, "ExecutorServer")
 
 	flag.Parse()
 
@@ -36,7 +35,5 @@ func main() {
 		c.Start()
 	} else if *executorClient {
 		executor.StartClient()
-	} else if *executorServer {
-		server.StartServer()
 	}
 }

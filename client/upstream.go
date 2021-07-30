@@ -35,12 +35,17 @@ func MakeUpstream(config ClientConfig, campaign model.Campaign) Upstream {
 	return u
 }
 
+func (d Upstream) SendPacket(packet model.Packet) error {
+	// Only used for ping
+	return d.sendPacket(packet)
+}
+
 func (d Upstream) start() {
 	for {
 		// Sleep first
 		time.Sleep(d.state.getSleepDuration())
 
-		// Try getting a packet
+		// Try getting a packet from server
 		packet, err := d.GetPacket()
 		if err != nil {
 			if err == ErrNoPacketsFound {
@@ -72,7 +77,6 @@ func (d Upstream) start() {
 				"packet": packet,
 				"error":  err,
 			}).Info("Error sending packet")
-			//return true // we still got a packet
 		}
 	}
 }
