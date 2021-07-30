@@ -3,7 +3,6 @@ package client
 import (
 	"errors"
 
-	"github.com/dobin/antnium/executor"
 	"github.com/dobin/antnium/model"
 )
 
@@ -13,31 +12,28 @@ type Client struct {
 	Config   ClientConfig
 	Campaign model.Campaign
 
-	packetExecutor executor.PacketExecutor
-	upstream       Upstream
-	downstream     Downstream
+	upstream          Upstream
+	downstreamManager DownstreamManager
 }
 
 func NewClient() Client {
 	config := MakeClientConfig()
 	campaign := model.MakeCampaign()
-	executor := executor.MakePacketExecutor()
 	upstream := MakeUpstream(config, campaign)
-	downstream := MakeDownstream()
+	downstreamManager := MakeDownstreamManager()
 
 	w := Client{
 		config,
 		campaign,
-		executor,
 		upstream,
-		downstream,
+		downstreamManager,
 	}
 	return w
 }
 
 func (s *Client) Start() {
-	// start Downstream thread
-	go s.downstream.start()
+	// start Downstream threads
+	s.downstreamManager.start()
 	// start Upstream thread
 	go s.upstream.start()
 
@@ -46,12 +42,12 @@ func (s *Client) Start() {
 		// Block until we receive a packet from server
 		p = <-s.upstream.channel
 
-		// Send it to the appropriate channel/downstream
-		// if...
-		s.downstream.channel <- p
-
+		// Select appropriate downstream channel
+		c := s.downstreamManager.GetFor(p)
+		// Send it to the downstream
+		c <- p
 		// Receive answer
-		p = <-s.downstream.channel
+		p = <-c
 
 		// Send answer back to server
 		s.upstream.channel <- p

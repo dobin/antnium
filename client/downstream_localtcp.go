@@ -6,21 +6,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Downstream struct {
+type DownstreamLocaltcp struct {
 	channel chan model.Packet
 
 	packetExecutor executor.PacketExecutor
 }
 
-func MakeDownstream() Downstream {
-	u := Downstream{
+func MakeDownstreamLocaltcp() DownstreamLocaltcp {
+	u := DownstreamLocaltcp{
 		make(chan model.Packet),
 		executor.MakePacketExecutor(),
 	}
 	return u
 }
 
-func (d Downstream) start() {
+func (d DownstreamLocaltcp) start() {
 	for {
 		packet := <-d.channel
 
