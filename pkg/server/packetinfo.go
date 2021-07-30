@@ -3,7 +3,7 @@ package server
 import (
 	"time"
 
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/model"
 )
 
 type BaseState int

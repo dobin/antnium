@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dobin/antnium/client"
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/client"
+	"github.com/dobin/antnium/pkg/model"
 )
 
 func TestServerClientIntegration(t *testing.T) {

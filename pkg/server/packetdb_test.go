@@ -3,7 +3,7 @@ package server
 import (
 	"testing"
 
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/model"
 )
 
 func TestPacketDb(t *testing.T) {

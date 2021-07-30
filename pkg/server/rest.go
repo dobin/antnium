@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"

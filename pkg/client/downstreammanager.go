@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/model"
 )
 
 type DownstreamManager struct {
@@ -21,8 +21,8 @@ func MakeDownstreamManager() DownstreamManager {
 }
 
 func (dm *DownstreamManager) start() {
-	go dm.downstreamClient.start()
-	go dm.downstreamLocaltcp.start()
+	go dm.downstreamClient.start()   // will endless loop
+	go dm.downstreamLocaltcp.start() // will endless loop
 }
 
 func (dm *DownstreamManager) GetFor(p model.Packet) chan model.Packet {

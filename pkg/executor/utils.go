@@ -3,7 +3,7 @@ package executor
 import (
 	"encoding/json"
 
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/encoding/charmap"
 )

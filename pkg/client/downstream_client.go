@@ -1,8 +1,8 @@
 package client
 
 import (
-	"github.com/dobin/antnium/executor"
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/executor"
+	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
 

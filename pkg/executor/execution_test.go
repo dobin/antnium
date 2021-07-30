@@ -3,7 +3,7 @@ package executor
 import (
 	"testing"
 
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/model"
 )
 
 func TestPacket(t *testing.T) {

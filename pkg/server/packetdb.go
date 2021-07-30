@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/model"
 )
 
 type PacketDb struct {

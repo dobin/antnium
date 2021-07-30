@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/dobin/antnium/model"
+	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
