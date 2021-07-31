@@ -49,12 +49,10 @@ func (s *Client) Start() {
 		// Block until we receive a packet from server
 		p = <-s.upstream.channel
 
-		// Select appropriate downstream channel
-		c := s.downstreamManager.GetFor(p)
-		// Send it to the downstream
-		c <- p
-		// Receive answer
-		p = <-c
+		p, err = s.downstreamManager.do(p)
+		if err != nil {
+			log.Error("Err: ", err.Error())
+		}
 
 		// Send answer back to server
 		s.upstream.channel <- p

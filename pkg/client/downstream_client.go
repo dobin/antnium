@@ -7,35 +7,25 @@ import (
 )
 
 type DownstreamClient struct {
-	channel chan model.Packet
-
 	packetExecutor executor.PacketExecutor
 }
 
 func MakeDownstreamClient() DownstreamClient {
 	u := DownstreamClient{
-		make(chan model.Packet),
 		executor.MakePacketExecutor(),
 	}
 	return u
 }
 
-func (d *DownstreamClient) start() {
-	log.Info("Start Downstream: Client")
-
-	for {
-		packet := <-d.channel
-
-		err := d.packetExecutor.Execute(&packet)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"packet": packet,
-				"error":  err,
-			}).Info("Error executing packet")
-			packet.Response["error"] = err.Error()
-		}
-
-		// Always send response, as it is syncronous
-		d.channel <- packet
+func (d *DownstreamClient) do(packet model.Packet) (model.Packet, error) {
+	err := d.packetExecutor.Execute(&packet)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"packet": packet,
+			"error":  err,
+		}).Info("Error executing packet")
+		packet.Response["error"] = err.Error()
+		return packet, err
 	}
+	return packet, nil
 }

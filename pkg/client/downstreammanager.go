@@ -21,22 +21,21 @@ func MakeDownstreamManager() DownstreamManager {
 }
 
 func (dm *DownstreamManager) start() {
-	go dm.downstreamClient.start()   // will endless loop
-	go dm.downstreamLocaltcp.start() // will endless loop
+	go dm.downstreamLocaltcp.startServer()
 }
 
-func (dm *DownstreamManager) GetFor(p model.Packet) chan model.Packet {
-	channelId, ok := p.Arguments["channelId"]
+func (dm *DownstreamManager) do(packet model.Packet) (model.Packet, error) {
+	channelId, ok := packet.Arguments["channelId"]
 	if !ok {
-		return dm.downstreamClient.channel
+		return dm.downstreamClient.do(packet)
 	}
 
 	if channelId == "client" {
-		return dm.downstreamClient.channel
+		return dm.downstreamClient.do(packet)
 	} else if channelId == "net#1" {
-		return dm.downstreamLocaltcp.channel
+		return dm.downstreamLocaltcp.do(packet)
 	} else {
-		return dm.downstreamClient.channel
+		return dm.downstreamClient.do(packet)
 	}
 }
 
