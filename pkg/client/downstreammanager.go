@@ -40,14 +40,9 @@ func (dm *DownstreamManager) start(client *Client) {
 }
 
 func (dm *DownstreamManager) do(packet model.Packet) (model.Packet, error) {
-	channelId, ok := packet.Arguments["channelId"]
-	if !ok {
+	if packet.DownstreamId == "client" {
 		return dm.downstreamClient.do(packet)
-	}
-
-	if channelId == "client" {
-		return dm.downstreamClient.do(packet)
-	} else if strings.HasPrefix(channelId, "net") { // net#1
+	} else if strings.HasPrefix(packet.DownstreamId, "net") { // net#1
 		return dm.downstreamLocaltcp.do(packet)
 	} else {
 		return dm.downstreamClient.do(packet)

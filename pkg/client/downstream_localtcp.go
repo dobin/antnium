@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/dobin/antnium/pkg/executor"
 	"github.com/dobin/antnium/pkg/model"
@@ -40,7 +41,24 @@ func (d *DownstreamLocaltcp) do(packet model.Packet) (model.Packet, error) {
 		return packet, fmt.Errorf("No downstream clients found")
 	}
 
-	return d.doConn(d.conns[0], packet)
+	split := strings.Split(packet.DownstreamId, "#")
+	if len(split) != 2 {
+
+	}
+	downstreamIdStr := split[1]
+	downstreamId, err := strconv.Atoi(downstreamIdStr)
+	if err != nil {
+		log.Error(err)
+	}
+	if downstreamId < 0 || downstreamId >= len(d.conns) {
+		log.Error("DownstreamId does not exist")
+		packet.Response["error"] = "DownstreamId does not exist"
+		return packet, fmt.Errorf("DownstreamId does not exist")
+	}
+
+	// If conn down...
+
+	return d.doConn(d.conns[downstreamId], packet)
 }
 
 func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.Packet, error) {

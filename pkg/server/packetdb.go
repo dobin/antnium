@@ -68,6 +68,9 @@ func (db *PacketDb) update(packet model.Packet) PacketInfo {
 
 	// Add new (client initiated)
 	fakePacketInfo := NewPacketInfo(packet, STATE_CLIENT)
+	fakePacketInfo.TimeRecorded = time.Now()
+	fakePacketInfo.TimeAnswered = time.Now()
+
 	db.add(fakePacketInfo)
 	return fakePacketInfo
 }

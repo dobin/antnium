@@ -6,11 +6,12 @@ type PacketArgument map[string]string
 type PacketResponse map[string]string
 
 type Packet struct {
-	ComputerId string         `json:"computerid"`
-	PacketId   string         `json:"packetid"`
-	PacketType string         `json:"packetType"`
-	Arguments  PacketArgument `json:"arguments"`
-	Response   PacketResponse `json:"response"`
+	ComputerId   string         `json:"computerid"`
+	PacketId     string         `json:"packetid"`
+	PacketType   string         `json:"packetType"`
+	Arguments    PacketArgument `json:"arguments"`
+	Response     PacketResponse `json:"response"`
+	DownstreamId string         `json:"downstreamId"`
 }
 
 func NewPacket(packet string, computerId string, packetId string, arguments PacketArgument, response PacketResponse) Packet {
@@ -20,6 +21,7 @@ func NewPacket(packet string, computerId string, packetId string, arguments Pack
 		packet,
 		arguments,
 		response,
+		"client", // sane default for now
 	}
 	return c
 }
