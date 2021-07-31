@@ -62,13 +62,12 @@ func (s *Server) sendPacket(rw http.ResponseWriter, r *http.Request) {
 
 	if packet.PacketType == "ping" {
 		s.handlePingPacket(packet)
+		fmt.Fprint(rw, "asdf")
+		return
 	}
 
-	packetInfo, err := s.packetDb.update(packet)
-	if err == nil {
-		// only broadcast if element has been found (against ping-packet spam)
-		s.adminWebSocket.broadcastPacket(packetInfo)
-	}
+	packetInfo := s.packetDb.update(packet)
+	s.adminWebSocket.broadcastPacket(packetInfo)
 
 	fmt.Fprint(rw, "asdf")
 }

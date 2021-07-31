@@ -34,7 +34,7 @@ func NewClient() Client {
 
 func (s *Client) Start() {
 	// start Downstream threads
-	s.downstreamManager.start()
+	s.downstreamManager.start(s)
 	// start Upstream thread
 	go s.upstream.start()
 
@@ -66,6 +66,21 @@ func (s *Client) sendPing() error {
 	model.AddArrayToResponse("localIp", s.Config.LocalIps, response)
 	model.AddArrayToResponse("downstreams", s.downstreamManager.GetList(), response)
 	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
+
+	err := s.upstream.SendPacket(packet)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SendDownstreams will notify server about any new downstreams
+func (s *Client) SendDownstreams(downstreamList []string) error {
+	arguments := make(model.PacketArgument)
+	response := make(model.PacketResponse)
+	model.AddArrayToResponse("name", downstreamList, response)
+	packet := model.NewPacket("downstreams", s.Config.ComputerId, "0", arguments, response)
 
 	err := s.upstream.SendPacket(packet)
 	if err != nil {

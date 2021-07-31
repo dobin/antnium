@@ -54,16 +54,20 @@ func (db *PacketDb) getPacketFor(computerId string) (*PacketInfo, error) {
 	return &PacketInfo{}, fmt.Errorf("Nothing found")
 }
 
-func (db *PacketDb) update(packet model.Packet) (PacketInfo, error) {
+func (db *PacketDb) update(packet model.Packet) PacketInfo {
+	// Update existing
 	for i, packetInfo := range db.packetInfo {
 		if packetInfo.Packet.PacketId == packet.PacketId {
 			db.packetInfo[i].State = STATE_ANSWERED
 			db.packetInfo[i].TimeAnswered = time.Now()
 			db.packetInfo[i].Packet.Response = packet.Response
 			db.packetInfo[i].Packet.ComputerId = packet.ComputerId
-			return db.packetInfo[i], nil
+			return db.packetInfo[i]
 		}
 	}
 
-	return PacketInfo{}, fmt.Errorf("packet not found")
+	// Add new (client initiated)
+	fakePacketInfo := NewPacketInfo(packet, STATE_CLIENT)
+	db.add(fakePacketInfo)
+	return fakePacketInfo
 }

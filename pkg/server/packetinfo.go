@@ -12,6 +12,7 @@ const (
 	STATE_RECORDED BaseState = iota
 	STATE_SENT
 	STATE_ANSWERED
+	STATE_CLIENT
 )
 
 type PacketInfo struct {
