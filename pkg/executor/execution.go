@@ -84,7 +84,10 @@ func (s *PacketExecutor) actionInteractiveShellIssue(packetArgument model.Packet
 		return ret
 	}
 
-	stdout, stderr := s.interactiveShell.issue(commandline)
+	stdout, stderr, err := s.interactiveShell.issue(commandline)
+	if err != nil {
+		ret["error"] = err.Error()
+	}
 
 	ret["stdout"] = stdout
 	ret["stderr"] = stderr

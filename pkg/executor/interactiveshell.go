@@ -119,7 +119,11 @@ func (interactiveShell *InteractiveShell) open() (string, string, error) {
 	return string(stdoutCut1) + string(stdoutCut2), string(""), nil
 }
 
-func (interactiveShell *InteractiveShell) issue(commandline string) (string, string) {
+func (interactiveShell *InteractiveShell) issue(commandline string) (string, string, error) {
+	if interactiveShell.stdin == nil {
+		return "", "", fmt.Errorf("Shell not open")
+	}
+
 	// Give command to packet
 	// Do it every time, or we will block! (even when empty "")
 	fmt.Fprintln(interactiveShell.stdin, commandline)
@@ -156,5 +160,5 @@ func (interactiveShell *InteractiveShell) issue(commandline string) (string, str
 	stdoutStr := windowsToString(stdoutBytes)
 	stderrStr := windowsToString(stderrBytes)
 
-	return stdoutStr, stderrStr
+	return stdoutStr, stderrStr, nil
 }
