@@ -43,12 +43,13 @@ func (d *DownstreamLocaltcp) do(packet model.Packet) (model.Packet, error) {
 
 	split := strings.Split(packet.DownstreamId, "#")
 	if len(split) != 2 {
-
+		return packet, fmt.Errorf("Wrong format")
 	}
 	downstreamIdStr := split[1]
 	downstreamId, err := strconv.Atoi(downstreamIdStr)
 	if err != nil {
 		log.Error(err)
+		return packet, fmt.Errorf("Invalid number")
 	}
 	if downstreamId < 0 || downstreamId >= len(d.conns) {
 		log.Error("DownstreamId does not exist")
@@ -57,7 +58,6 @@ func (d *DownstreamLocaltcp) do(packet model.Packet) (model.Packet, error) {
 	}
 
 	// If conn down...
-
 	return d.doConn(d.conns[downstreamId], packet)
 }
 

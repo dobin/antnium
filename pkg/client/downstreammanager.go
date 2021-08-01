@@ -30,16 +30,23 @@ func MakeDownstreamManager() DownstreamManager {
 	return downstreamManager
 }
 
-func (dm *DownstreamManager) start(client *Client) {
+// startListeners will set up all downstreams which have a listening component as threads
+func (dm *DownstreamManager) StartListeners(client *Client) {
+	// Localtcp thread, new clients via downstreamLocaltcpChannel
 	go dm.downstreamLocaltcp.startServer(dm.downstreamLocaltcpChannel)
+
+	// If no client is given, dont send it to upstream. For unittesting.
+	if client == nil {
+		return
+	}
 	go func() {
 		//downstreamList := <-dm.downstreamLocaltcpChannel
-		<-dm.downstreamLocaltcpChannel // Ignore it for now
-		client.SendDownstreams(dm.GetList())
+		<-dm.downstreamLocaltcpChannel       // Ignore new client for now
+		client.SendDownstreams(dm.GetList()) // notify server of new downstream executors
 	}()
 }
 
-func (dm *DownstreamManager) do(packet model.Packet) (model.Packet, error) {
+func (dm *DownstreamManager) Do(packet model.Packet) (model.Packet, error) {
 	if packet.DownstreamId == "client" {
 		return dm.downstreamClient.do(packet)
 	} else if strings.HasPrefix(packet.DownstreamId, "net") { // net#1

@@ -9,20 +9,28 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func StartClient() {
+type Executor struct {
+}
+
+func MakeExecutor() Executor {
+	executor := Executor{}
+	return executor
+}
+
+func (e *Executor) StartClient() {
 	destination := "localhost:50000"
-	fmt.Println("Network to: " + destination)
+	fmt.Println("Executor connect to: " + destination)
 
 	conn, err := net.Dial("tcp", destination)
 	if err != nil {
 		log.Error("Could not connect: " + err.Error())
 	}
-	fmt.Println("Connected")
+	log.Info("Executor connected")
 
-	Loop(conn)
+	e.Loop(conn)
 }
 
-func Loop(conn net.Conn) {
+func (e *Executor) Loop(conn net.Conn) {
 	packetExecutor := MakePacketExecutor()
 
 	for {

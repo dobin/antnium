@@ -16,7 +16,7 @@ type Client struct {
 	Campaign model.Campaign
 
 	upstream          Upstream
-	downstreamManager DownstreamManager
+	DownstreamManager DownstreamManager
 }
 
 func NewClient() Client {
@@ -35,10 +35,8 @@ func NewClient() Client {
 }
 
 func (s *Client) Start() {
-	// start Downstream threads
-	s.downstreamManager.start(s)
-	// start Upstream thread
-	go s.upstream.start()
+	s.DownstreamManager.StartListeners(s)
+	go s.upstream.Start()
 
 	err := s.sendPing()
 	if err != nil {
@@ -49,15 +47,15 @@ func (s *Client) Start() {
 	var p model.Packet
 	for {
 		// Block until we receive a packet from server
-		p = <-s.upstream.channel
+		p = <-s.upstream.Channel()
 
-		p, err = s.downstreamManager.do(p)
+		p, err = s.DownstreamManager.Do(p)
 		if err != nil {
 			log.Error("Err: ", err.Error())
 		}
 
 		// Send answer back to server
-		s.upstream.channel <- p
+		s.upstream.Channel() <- p
 	}
 }
 
@@ -66,7 +64,7 @@ func (s *Client) sendPing() error {
 	response := make(model.PacketResponse)
 	response["hostname"] = s.Config.Hostname
 	model.AddArrayToResponse("localIp", s.Config.LocalIps, response)
-	model.AddArrayToResponse("downstreams", s.downstreamManager.GetList(), response)
+	model.AddArrayToResponse("downstreams", s.DownstreamManager.GetList(), response)
 	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
 
 	err := s.upstream.SendPacket(packet)
@@ -77,7 +75,7 @@ func (s *Client) sendPing() error {
 	return nil
 }
 
-// SendDownstreams will notify server about any new downstreams
+// SendDownstreams is used to notify server about any new downstreams
 func (s *Client) SendDownstreams(downstreamList []string) error {
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
