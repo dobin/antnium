@@ -18,12 +18,12 @@ type UpstreamHttp struct {
 	state ClientState
 	coder model.Coder
 
-	config   ClientConfig
-	campaign model.Campaign
+	config   *ClientConfig
+	campaign *model.Campaign
 }
 
-func MakeUpstream(config ClientConfig, campaign model.Campaign) UpstreamHttp {
-	coder := model.MakeCoder(campaign)
+func MakeUpstream(config *ClientConfig, campaign *model.Campaign) UpstreamHttp {
+	coder := model.MakeCoder(*campaign)
 
 	u := UpstreamHttp{
 		make(chan model.Packet),

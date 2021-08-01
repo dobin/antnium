@@ -31,15 +31,18 @@ func TestServerClientIntegration(t *testing.T) {
 	c := client.NewClient()
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Config.ComputerId = computerId
-	packet, err := c.GetPacket()
+	packet, err := c.Upstream.GetPacket()
 	if err != nil {
 		t.Errorf("Error when receiving packet: " + err.Error())
+		return
 	}
 	if packet.PacketId != packetId {
 		t.Errorf("Packet received, but wrong packetid: %s", packet.PacketId)
+		return
 	}
 	if packet.Arguments["arg0"] != "value0" {
 		t.Errorf("Packet received, but wrong args: %v", packet.Arguments)
+		return
 	}
 }
 
@@ -69,7 +72,6 @@ func TestServerAuthAdmin(t *testing.T) {
 
 func TestServerAuthClient(t *testing.T) {
 	var err error
-	var url string
 	packetId := "packetid-42"
 	computerId := "computerid-23"
 
@@ -87,28 +89,12 @@ func TestServerAuthClient(t *testing.T) {
 
 	go s.Serve()
 
-	// Create a default (non authenticated) HTTP client
-	unauthHttp := &http.Client{
-		Timeout: 1 * time.Second,
-	}
-
 	c := client.NewClient()
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Config.ComputerId = computerId
 
-	// Test Client: No key
-	url = c.PacketGetUrl()
-	r, _ := http.NewRequest("GET", url, nil)
-	resp, err := unauthHttp.Do(r)
-	if err != nil {
-		t.Errorf("Error accessing server api with url: " + url)
-	}
-	if resp.StatusCode == 200 {
-		t.Errorf("Could access server API though i should not: " + url)
-	}
-
 	// Test Client: Correct key
-	packet, err = c.GetPacket()
+	packet, err = c.Upstream.GetPacket()
 	if err != nil {
 		t.Errorf("Could not get packet: " + err.Error())
 	}
@@ -121,6 +107,25 @@ func TestServerAuthClient(t *testing.T) {
 	if packet.PacketId != packetId {
 		t.Errorf("Recv packet err")
 	}
+
+	// Test Client: Wrong key
+	origApiKey := c.Campaign.ApiKey
+	c.Campaign.ApiKey = "not42"
+	packet, err = c.Upstream.GetPacket()
+	if err == nil {
+		t.Errorf("Could get packet with wrong apikey: " + err.Error())
+	}
+	c.Campaign.ApiKey = origApiKey
+
+	/* Need to add at least one command to decrypt
+	origEncKey := c.Campaign.EncKey
+	c.Campaign.EncKey = []byte("not42")
+	packet, err = c.Upstream.GetPacket()
+	if err != nil {
+		t.Errorf("Could get packet with wrong enckey: " + err.Error())
+	}
+	c.Campaign.EncKey = origEncKey
+	*/
 
 	// Test: Static
 	/*

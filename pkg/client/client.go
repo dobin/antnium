@@ -12,22 +12,22 @@ import (
 var ErrNoPacketsFound = errors.New("Server did not return any packets")
 
 type Client struct {
-	Config   ClientConfig
-	Campaign model.Campaign
+	Config   *ClientConfig
+	Campaign *model.Campaign
 
-	upstream          Upstream
+	Upstream          Upstream
 	DownstreamManager DownstreamManager
 }
 
 func NewClient() Client {
 	config := MakeClientConfig()
 	campaign := model.MakeCampaign()
-	upstream := MakeUpstream(config, campaign)
+	upstream := MakeUpstream(&config, &campaign)
 	downstreamManager := MakeDownstreamManager()
 
 	w := Client{
-		config,
-		campaign,
+		&config,
+		&campaign,
 		upstream,
 		downstreamManager,
 	}
@@ -36,7 +36,7 @@ func NewClient() Client {
 
 func (s *Client) Start() {
 	s.DownstreamManager.StartListeners(s)
-	go s.upstream.Start()
+	go s.Upstream.Start()
 
 	err := s.sendPing()
 	if err != nil {
@@ -47,7 +47,7 @@ func (s *Client) Start() {
 	var p model.Packet
 	for {
 		// Block until we receive a packet from server
-		p = <-s.upstream.Channel()
+		p = <-s.Upstream.Channel()
 
 		p, err = s.DownstreamManager.Do(p)
 		if err != nil {
@@ -55,7 +55,7 @@ func (s *Client) Start() {
 		}
 
 		// Send answer back to server
-		s.upstream.Channel() <- p
+		s.Upstream.Channel() <- p
 	}
 }
 
@@ -67,7 +67,7 @@ func (s *Client) sendPing() error {
 	model.AddArrayToResponse("downstreams", s.DownstreamManager.GetList(), response)
 	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
 
-	err := s.upstream.SendPacket(packet)
+	err := s.Upstream.SendPacket(packet)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (s *Client) SendDownstreams(downstreamList []string) error {
 
 	packet := model.NewPacket("downstreams", s.Config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
 
-	err := s.upstream.SendPacket(packet)
+	err := s.Upstream.SendPacket(packet)
 	if err != nil {
 		return err
 	}

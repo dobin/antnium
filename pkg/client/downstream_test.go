@@ -25,7 +25,7 @@ func TestDownstreamClient(t *testing.T) {
 func TestDownstreamLocaltcp(t *testing.T) {
 	// Test Localtcp Downstream
 	client := NewClient()
-	client.upstream = fakeUpstream{} // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
+	client.Upstream = fakeUpstream{} // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
 	client.DownstreamManager.StartListeners(&client)
 
 	// Downstream did not yet connect, this should result an error
@@ -71,6 +71,9 @@ func (d fakeUpstream) Channel() chan model.Packet {
 }
 func (d fakeUpstream) SendPacket(packet model.Packet) error {
 	return nil
+}
+func (d fakeUpstream) GetPacket() (model.Packet, error) {
+	return model.Packet{}, nil
 }
 
 func makeTestPacket() model.Packet {
