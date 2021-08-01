@@ -116,13 +116,18 @@ func (s *PacketExecutor) actionExec(packetArgument model.PacketArgument) model.P
 
 	// Execute and return result
 	log.Infof("Executing: %s %v", executable, args)
-	packet := exec.Command(executable, args...)
-	stdout, err := packet.Output()
+	cmd := exec.Command(executable, args...)
+	stdout, err := cmd.Output()
 	if err != nil {
 		// If program didnt exit nicely
 		ret["error"] = err.Error()
 	} else {
-		ret["stdout"] = windowsToString(stdout)
+		if len(stdout) == 0 {
+			ret["stdout"] = "<no stdout, success>"
+		} else {
+			ret["stdout"] = windowsToString(stdout)
+		}
+
 	}
 	return ret
 }
