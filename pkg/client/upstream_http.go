@@ -23,7 +23,7 @@ type UpstreamHttp struct {
 }
 
 func MakeUpstream(config *ClientConfig, campaign *model.Campaign) UpstreamHttp {
-	coder := model.MakeCoder(*campaign)
+	coder := model.MakeCoder(campaign)
 
 	u := UpstreamHttp{
 		make(chan model.Packet),

@@ -6,7 +6,7 @@ import (
 
 func TestEncodeDecode(t *testing.T) {
 	campaign := MakeCampaign()
-	coder := MakeCoder(campaign)
+	coder := MakeCoder(&campaign)
 
 	packetId := "1234"
 	arguments := make(PacketArgument)
@@ -30,9 +30,9 @@ func TestEncodeDecode(t *testing.T) {
 	}
 }
 
-func TestEncryption(t *testing.T) {
+func TestEncryptionSuccess(t *testing.T) {
 	campaign := MakeCampaign()
-	coder := MakeCoder(campaign)
+	coder := MakeCoder(&campaign)
 
 	reference := "verysecret"
 
@@ -47,5 +47,22 @@ func TestEncryption(t *testing.T) {
 
 	if string(decryptedData) != reference {
 		t.Errorf("Comparison error")
+	}
+}
+
+func TestEncryptionFail(t *testing.T) {
+	campaign := MakeCampaign()
+	coder := MakeCoder(&campaign)
+
+	reference := "verysecret"
+
+	encryptedData, err := coder.encryptData([]byte(reference))
+	if err != nil {
+		t.Errorf("Encrypt error")
+	}
+	coder.campaign.EncKey = []byte("12345678123456781234567812345678")
+	_, err = coder.decryptData(encryptedData)
+	if err == nil {
+		t.Errorf("Decrypt error, was able to decrypt with wrong key")
 	}
 }

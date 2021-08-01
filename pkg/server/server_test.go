@@ -63,10 +63,12 @@ func TestServerAuthAdmin(t *testing.T) {
 	r, _ := http.NewRequest("GET", "http://127.0.0.1:55002/admin/packets", nil)
 	resp, err := unauthHttp.Do(r)
 	if err != nil {
-		panic(err)
+		t.Errorf("HTTP get error: " + err.Error())
+		return
 	}
 	if resp.StatusCode == 200 {
 		t.Errorf("Could access admin API without authentication")
+		return
 	}
 }
 
@@ -93,19 +95,34 @@ func TestServerAuthClient(t *testing.T) {
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Config.ComputerId = computerId
 
-	// Test Client: Correct key
+	// Try first with invalid key (consumes one packet)
+	origEncKey := c.Campaign.EncKey
+	c.Campaign.EncKey = []byte("12345678123456781234567812345678")
+	packet, err = c.Upstream.GetPacket()
+	if err == nil {
+		t.Errorf("Could get packet with wrong enckey! %v", packet)
+		return
+	}
+	c.Campaign.EncKey = origEncKey
+
+	// Test Client: Correct key (consumes one packet)
+	s.packetDb.add(packetInfo) // changing var of a thread, dangerous but works
 	packet, err = c.Upstream.GetPacket()
 	if err != nil {
 		t.Errorf("Could not get packet: " + err.Error())
+		return
 	}
 	if packet.PacketType != "test" {
 		t.Errorf("Recv packet err")
+		return
 	}
 	if packet.ComputerId != computerId {
 		t.Errorf("Recv packet err")
+		return
 	}
 	if packet.PacketId != packetId {
 		t.Errorf("Recv packet err")
+		return
 	}
 
 	// Test Client: Wrong key
@@ -113,19 +130,10 @@ func TestServerAuthClient(t *testing.T) {
 	c.Campaign.ApiKey = "not42"
 	packet, err = c.Upstream.GetPacket()
 	if err == nil {
-		t.Errorf("Could get packet with wrong apikey: " + err.Error())
+		t.Errorf("Could get packet with wrong apikey!")
+		return
 	}
 	c.Campaign.ApiKey = origApiKey
-
-	/* Need to add at least one command to decrypt
-	origEncKey := c.Campaign.EncKey
-	c.Campaign.EncKey = []byte("not42")
-	packet, err = c.Upstream.GetPacket()
-	if err != nil {
-		t.Errorf("Could get packet with wrong enckey: " + err.Error())
-	}
-	c.Campaign.EncKey = origEncKey
-	*/
 
 	// Test: Static
 	/*

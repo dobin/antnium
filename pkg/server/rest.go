@@ -5,37 +5,11 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
-	"time"
 
-	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 )
-
-type Server struct {
-	srvaddr        string
-	campgain       model.Campaign
-	coder          model.Coder
-	packetDb       PacketDb
-	clientInfoDb   ClientInfoDb
-	adminWebSocket AdminWebSocket
-}
-
-func NewServer(srvAddr string) Server {
-	campaign := model.MakeCampaign()
-	coder := model.MakeCoder(campaign)
-	w := Server{
-		srvAddr,
-		campaign,
-		coder,
-		MakePacketDb(), MakeClientInfoDb(), MakeAdminWebSocket(campaign.AdminApiKey)}
-
-	// Init random for packet id generation
-	// Doesnt need to be secure
-	rand.Seed(time.Now().Unix())
-	return w
-}
 
 func (s *Server) getRandomPacketId() string {
 	return strconv.Itoa(rand.Int())

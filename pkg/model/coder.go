@@ -14,10 +14,10 @@ import (
 )
 
 type Coder struct {
-	campaign Campaign
+	campaign *Campaign
 }
 
-func MakeCoder(campaign Campaign) Coder {
+func MakeCoder(campaign *Campaign) Coder {
 	w := Coder{campaign}
 	return w
 }
