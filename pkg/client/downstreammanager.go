@@ -40,9 +40,13 @@ func (dm *DownstreamManager) StartListeners(client *Client) {
 		return
 	}
 	go func() {
-		//downstreamList := <-dm.downstreamLocaltcpChannel
-		<-dm.downstreamLocaltcpChannel       // Ignore new client for now
-		client.SendDownstreams(dm.GetList()) // notify server of new downstream executors
+		for {
+			//downstreamList := <-dm.downstreamLocaltcpChannel
+			<-dm.downstreamLocaltcpChannel       // Ignore new client for now
+			client.SendDownstreams(dm.GetList()) // notify server of new downstream executors
+
+			// TODO quit thread
+		}
 	}()
 }
 

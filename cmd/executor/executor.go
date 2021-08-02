@@ -10,5 +10,5 @@ func main() {
 	fmt.Println("Antnium 0.1")
 
 	executor := executor.MakeExecutor()
-	executor.StartClient()
+	executor.StartClient("")
 }
