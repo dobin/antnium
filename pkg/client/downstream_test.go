@@ -23,8 +23,14 @@ func TestDownstreamClient(t *testing.T) {
 }
 
 func TestDownstreamLocaltcp(t *testing.T) {
+	port := "50010"
+	downstreamTcpAddr := "localhost:50011"
+
 	// Test Localtcp Downstream
 	client := NewClient()
+	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
+	client.DownstreamManager.downstreamLocaltcp.listenAddr = downstreamTcpAddr
+
 	client.Upstream = fakeUpstream{} // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
 	client.DownstreamManager.StartListeners(&client)
 
@@ -38,7 +44,7 @@ func TestDownstreamLocaltcp(t *testing.T) {
 
 	// Connect downstream
 	executor := executor.MakeExecutor()
-	go executor.StartClient()
+	go executor.StartClient(downstreamTcpAddr)
 	// Rudimentary way to wait for client to connect
 	n := 0
 	for len(client.DownstreamManager.GetList()) == 1 {

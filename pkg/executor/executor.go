@@ -17,8 +17,10 @@ func MakeExecutor() Executor {
 	return executor
 }
 
-func (e *Executor) StartClient() {
-	destination := "localhost:50000"
+func (e *Executor) StartClient(destination string) {
+	if destination == "" {
+		destination = "localhost:50000"
+	}
 	fmt.Println("Executor connect to: " + destination)
 
 	conn, err := net.Dial("tcp", destination)

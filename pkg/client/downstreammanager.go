@@ -20,7 +20,7 @@ type DownstreamManager struct {
 
 func MakeDownstreamManager() DownstreamManager {
 	downstreamClient := MakeDownstreamClient()
-	downstreamLocaltcp := MakeDownstreamLocaltcp()
+	downstreamLocaltcp := MakeDownstreamLocaltcp("")
 
 	downstreamManager := DownstreamManager{
 		downstreamClient,

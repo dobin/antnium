@@ -13,12 +13,19 @@ import (
 )
 
 type DownstreamLocaltcp struct {
+	listenAddr     string
 	packetExecutor executor.PacketExecutor
 	conns          []net.Conn
 }
 
-func MakeDownstreamLocaltcp() DownstreamLocaltcp {
+func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
+	// Default
+	if listenAddr == "" {
+		listenAddr = "localhost:50000"
+	}
+
 	u := DownstreamLocaltcp{
+		listenAddr,
 		executor.MakePacketExecutor(),
 		nil,
 	}
@@ -95,8 +102,8 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 }
 
 func (d *DownstreamLocaltcp) startServer(c chan []string) {
-	log.Info("Start Downstream: LocalTcp")
-	ln, err := net.Listen("tcp", "127.0.0.1:50000")
+	log.Info("Start Downstream: LocalTcp on " + d.listenAddr)
+	ln, err := net.Listen("tcp", d.listenAddr)
 	if err != nil {
 		log.Error("Error: " + err.Error())
 		// TODO: Handle error

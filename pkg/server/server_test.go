@@ -78,7 +78,7 @@ func TestServerAuthClient(t *testing.T) {
 	computerId := "computerid-23"
 
 	// Start server in the background
-	port := "55000"
+	port := "55003"
 	s := NewServer("127.0.0.1:" + port)
 
 	// Make a example packet the client should receive
