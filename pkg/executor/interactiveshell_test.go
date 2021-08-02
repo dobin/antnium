@@ -19,22 +19,32 @@ func TestInteractiveShell(t *testing.T) {
 		return
 	}
 
-	stdout, stderr = interactiveShell.issue("hostname")
-	fmt.Printf("%s%s", stdout, stderr)
+	stdout, stderr, err = interactiveShell.issue("hostname")
+	if err != nil {
+		t.Errorf("Packet 1 error")
+		return
+	}
 	if !strings.Contains(stdout, "unreal") {
 		t.Errorf("Packet 1 error")
 		return
 	}
 
-	stdout, stderr = interactiveShell.issue("whoami")
+	stdout, stderr, err = interactiveShell.issue("whoami")
+	if err != nil {
+		t.Errorf("Packet 1 error")
+		return
+	}
 	if !strings.Contains(stdout, "dobin") {
 		t.Errorf("Packet 1 error")
 		return
 	}
 	fmt.Printf("%s%s", stdout, stderr)
 
-	stdout, stderr = interactiveShell.issue("meh")
-	fmt.Printf("%s%s", stdout, stderr)
+	stdout, stderr, err = interactiveShell.issue("meh")
+	if err != nil {
+		t.Errorf("Packet 1 error")
+		return
+	}
 	if !strings.Contains(stderr, "is not recognized") {
 		t.Errorf("Packet 1 error")
 		return
