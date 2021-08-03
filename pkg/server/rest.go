@@ -26,10 +26,15 @@ func (s *Server) Serve() {
 	adminRouter.HandleFunc("/clients", s.adminListClients)
 	adminRouter.HandleFunc("/addTestPacket", s.adminAddTestPacket)
 	adminRouter.HandleFunc("/addPacket", s.adminAddPacket)
-	adminRouter.HandleFunc("/campaign", s.getCampaign)
-	go s.adminWebSocket.Distributor()
+	adminRouter.HandleFunc("/campaign", s.adminGetCampaign)
+
+	adminRouter.HandleFunc("/uploads", s.adminGetUploads)
+	adminRouter.HandleFunc("/statics", s.adminGetStatics)
+
 	adminRouter.PathPrefix("/upload").Handler(http.StripPrefix("/admin/upload/",
 		http.FileServer(http.Dir("./upload/"))))
+
+	go s.adminWebSocket.Distributor()
 	// While technically part of admin, the adminWebsocket cannot be authenticated
 	// via HTTP headers. Make it public. Authenticate in the handler.
 	myRouter.HandleFunc("/ws", s.adminWebSocket.wsHandler)

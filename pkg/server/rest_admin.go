@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
@@ -96,11 +97,68 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 	s.adminWebSocket.broadcastPacket(packetInfo)
 }
 
-func (s *Server) getCampaign(rw http.ResponseWriter, r *http.Request) {
+func (s *Server) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
 	json, err := json.Marshal(s.campgain)
 	if err != nil {
 		log.Error("Could not JSON marshal")
 		return
 	}
 	fmt.Fprint(rw, string(json))
+}
+
+type DirEntry struct {
+	Name     string    `json:"name"`
+	Size     int64     `json:"size"`
+	Mode     string    `json:"mode"`
+	Modified time.Time `json:"modified"`
+	IsDir    bool      `json:"isDir"`
+}
+
+func (s *Server) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
+	dirList, err := listDirectory("./upload")
+	if err != nil {
+		log.Error("Could not: ", err)
+		return
+	}
+	json, err := json.Marshal(dirList)
+	if err != nil {
+		log.Error("Could not JSON marshal", err)
+		return
+	}
+	fmt.Fprint(rw, string(json))
+}
+
+func (s *Server) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
+	dirList, err := listDirectory("./static")
+	if err != nil {
+		log.Error("Could not: ", err)
+		return
+	}
+	json, err := json.Marshal(dirList)
+	if err != nil {
+		log.Error("Could not JSON marshal", err)
+		return
+	}
+	fmt.Fprint(rw, string(json))
+}
+
+func listDirectory(path string) ([]DirEntry, error) {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	dirList := make([]DirEntry, 0)
+	for _, file := range files {
+		dl := DirEntry{
+			file.Name(),
+			file.Size(),
+			"", // Mode()
+			file.ModTime(),
+			file.IsDir(),
+		}
+		dirList = append(dirList, dl)
+	}
+
+	return dirList, err
 }
