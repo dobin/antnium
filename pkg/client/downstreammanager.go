@@ -1,18 +1,24 @@
 package client
 
 import (
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/dobin/antnium/pkg/model"
+	log "github.com/sirupsen/logrus"
 )
 
+// Only used to translate downstream specific downstreaminfos from children
+// into a more managable struct.
 type DownstreamInfo struct {
 	Name string
 	Info string
 }
 
 type DownstreamManager struct {
-	downstreamClient DownstreamClient
+	downstreamClient     DownstreamClient
+	downstreamClientInfo string
 
 	downstreamLocaltcp        DownstreamLocaltcp
 	downstreamLocaltcpChannel chan struct{} // Notify only
@@ -24,6 +30,8 @@ func MakeDownstreamManager() DownstreamManager {
 
 	downstreamManager := DownstreamManager{
 		downstreamClient,
+		"client.exe",
+
 		downstreamLocaltcp,
 		make(chan struct{}),
 	}
@@ -32,6 +40,16 @@ func MakeDownstreamManager() DownstreamManager {
 
 // startListeners will set up all downstreams which have a listening component as threads
 func (dm *DownstreamManager) StartListeners(client *Client) {
+
+	// Do it here for now, as it is always executed
+	ex, err := os.Executable()
+	if err != nil {
+		log.Error("Error: " + err.Error())
+	}
+	pid := strconv.Itoa(os.Getpid())
+	line := ex + ":" + pid + "\n"
+	dm.downstreamClientInfo = line
+
 	// Thread: new downstreams via downstreamLocaltcpChannel
 	go dm.downstreamLocaltcp.startServer(dm.downstreamLocaltcpChannel)
 
@@ -63,7 +81,7 @@ func (dm *DownstreamManager) SendDownstreams(client *Client) {
 	downstreams := make([]DownstreamInfo, 0)
 	downstreamInfoClient := DownstreamInfo{
 		"client",
-		"client.exe",
+		dm.downstreamClientInfo,
 	}
 	downstreamInfoTcp := dm.downstreamLocaltcp.DownstreamList()
 
