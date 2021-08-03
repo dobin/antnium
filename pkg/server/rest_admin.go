@@ -98,7 +98,7 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
-	json, err := json.Marshal(s.campgain)
+	json, err := json.Marshal(s.campaign)
 	if err != nil {
 		log.Error("Could not JSON marshal")
 		return

