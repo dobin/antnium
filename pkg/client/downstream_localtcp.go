@@ -5,17 +5,23 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 
 	"github.com/dobin/antnium/pkg/executor"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
 
+type DownstreamInfoTcp struct {
+	Name string
+	Info string
+	conn net.Conn
+}
+type DownstreamInfoTcpMap map[string]DownstreamInfoTcp
+
 type DownstreamLocaltcp struct {
 	listenAddr     string
 	packetExecutor executor.PacketExecutor
-	conns          []net.Conn
+	downstreams    DownstreamInfoTcpMap
 }
 
 func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
@@ -27,45 +33,19 @@ func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
 	u := DownstreamLocaltcp{
 		listenAddr,
 		executor.MakePacketExecutor(),
-		nil,
+		make(DownstreamInfoTcpMap, 0),
 	}
 	return u
 }
 
-func (d *DownstreamLocaltcp) getList() []string {
-	ret := make([]string, 0)
-	for i, _ := range d.conns {
-		name := "net#" + strconv.Itoa(i)
-		ret = append(ret, name)
-	}
-	return ret
-}
-
 func (d *DownstreamLocaltcp) do(packet model.Packet) (model.Packet, error) {
-	if len(d.conns) == 0 {
-		log.Error("No downstream clients")
-		packet.Response["error"] = "No downstream clients found"
-		return packet, fmt.Errorf("No downstream clients found")
+	downstreamInfo, ok := d.downstreams[packet.DownstreamId]
+	if !ok {
+		log.Errorf("Did not find downstream: %s in %v", packet.DownstreamId, d.downstreams)
+		return model.Packet{}, fmt.Errorf("Did not find: %s", packet.DownstreamId)
 	}
 
-	split := strings.Split(packet.DownstreamId, "#")
-	if len(split) != 2 {
-		return packet, fmt.Errorf("Wrong format")
-	}
-	downstreamIdStr := split[1]
-	downstreamId, err := strconv.Atoi(downstreamIdStr)
-	if err != nil {
-		log.Error(err)
-		return packet, fmt.Errorf("Invalid number")
-	}
-	if downstreamId < 0 || downstreamId >= len(d.conns) {
-		log.Error("DownstreamId does not exist")
-		packet.Response["error"] = "DownstreamId does not exist"
-		return packet, fmt.Errorf("DownstreamId does not exist")
-	}
-
-	// If conn down...
-	return d.doConn(d.conns[downstreamId], packet)
+	return d.doConn(downstreamInfo.conn, packet)
 }
 
 func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.Packet, error) {
@@ -101,7 +81,7 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 	return packet, nil
 }
 
-func (d *DownstreamLocaltcp) startServer(c chan []string) {
+func (d *DownstreamLocaltcp) startServer(downstreamLocaltcpChannel chan struct{}) {
 	log.Info("Start Downstream: LocalTcp on " + d.listenAddr)
 	ln, err := net.Listen("tcp", d.listenAddr)
 	if err != nil {
@@ -109,6 +89,7 @@ func (d *DownstreamLocaltcp) startServer(c chan []string) {
 		// TODO: Handle error
 	}
 
+	n := 0
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -116,9 +97,37 @@ func (d *DownstreamLocaltcp) startServer(c chan []string) {
 			// TODO: Handle error
 			continue
 		}
-		d.conns = append(d.conns, conn)
+
+		// receive info first or fail
+		// TODO
+
+		// Add it to local datastructure
+		name := "net#" + strconv.Itoa(n)
+		info := ""
+		downstreamInfoTcp := DownstreamInfoTcp{
+			name,
+			info,
+			conn,
+		}
+		d.downstreams[name] = downstreamInfoTcp
 
 		// Notify about new downstream
-		c <- d.getList()
+		downstreamLocaltcpChannel <- struct{}{}
+
+		n += 1
 	}
+}
+
+func (d *DownstreamLocaltcp) DownstreamList() []DownstreamInfo {
+	ret := make([]DownstreamInfo, 0)
+
+	for _, downstreamInfoTcp := range d.downstreams {
+		d := DownstreamInfo{
+			downstreamInfoTcp.Name,
+			downstreamInfoTcp.Info,
+		}
+		ret = append(ret, d)
+	}
+
+	return ret
 }

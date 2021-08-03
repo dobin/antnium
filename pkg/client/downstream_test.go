@@ -39,7 +39,8 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	packet.DownstreamId = "net#0"
 	packet, err := client.DownstreamManager.Do(packet)
 	if err == nil {
-		t.Errorf("Could not do packet")
+		t.Errorf("Could do packet with net#0, even though it should not exist")
+		return
 	}
 
 	// Connect downstream
@@ -47,23 +48,26 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	go executor.StartClient(downstreamTcpAddr)
 	// Rudimentary way to wait for client to connect
 	n := 0
-	for len(client.DownstreamManager.GetList()) == 1 {
+	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 1 {
 		if n == 10 {
-			t.Error("Waiting 1s for downstream to connect, which didnt happen")
+			t.Error("Waiting 1s for tcp downstream to connect, which didnt happen")
 			return
 		}
 		time.Sleep(100 * time.Millisecond)
 		n += 1
 	}
+
 	// Check if it works
 	packet = makeTestPacket()
 	packet.DownstreamId = "net#0"
 	packet, err = client.DownstreamManager.Do(packet)
 	if err != nil {
-		t.Errorf("Could not do packet")
+		t.Errorf("Could not do packet: %s", err.Error())
+		return
 	}
 	if !strings.Contains(packet.Response["stdout"], "unreal") {
-		t.Errorf("Wrong output")
+		t.Errorf("Wrong output, got: %v", packet.Response)
+		return
 	}
 }
 

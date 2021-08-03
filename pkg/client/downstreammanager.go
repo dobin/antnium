@@ -7,15 +7,15 @@ import (
 )
 
 type DownstreamInfo struct {
-	Name    string
-	Details string
+	Name string
+	Info string
 }
 
 type DownstreamManager struct {
 	downstreamClient DownstreamClient
 
 	downstreamLocaltcp        DownstreamLocaltcp
-	downstreamLocaltcpChannel chan []string
+	downstreamLocaltcpChannel chan struct{} // Notify only
 }
 
 func MakeDownstreamManager() DownstreamManager {
@@ -25,27 +25,26 @@ func MakeDownstreamManager() DownstreamManager {
 	downstreamManager := DownstreamManager{
 		downstreamClient,
 		downstreamLocaltcp,
-		make(chan []string),
+		make(chan struct{}),
 	}
 	return downstreamManager
 }
 
 // startListeners will set up all downstreams which have a listening component as threads
 func (dm *DownstreamManager) StartListeners(client *Client) {
-	// Localtcp thread, new clients via downstreamLocaltcpChannel
+	// Thread: new downstreams via downstreamLocaltcpChannel
 	go dm.downstreamLocaltcp.startServer(dm.downstreamLocaltcpChannel)
 
-	// If no client is given, dont send it to upstream. For unittesting.
-	if client == nil {
-		return
-	}
+	// Thread: receive new downstreams via local tcp
 	go func() {
 		for {
-			//downstreamList := <-dm.downstreamLocaltcpChannel
-			<-dm.downstreamLocaltcpChannel       // Ignore new client for now
-			client.SendDownstreams(dm.GetList()) // notify server of new downstream executors
+			// Wait for newly announced TCP downstreams
+			<-dm.downstreamLocaltcpChannel
 
-			// TODO quit thread
+			// Notify server
+			dm.SendDownstreams(client)
+
+			// TODO when to quit thread
 		}
 	}()
 }
@@ -60,11 +59,17 @@ func (dm *DownstreamManager) Do(packet model.Packet) (model.Packet, error) {
 	}
 }
 
-func (dm *DownstreamManager) GetList() []string {
-	ret := make([]string, 0)
+func (dm *DownstreamManager) SendDownstreams(client *Client) {
+	downstreams := make([]DownstreamInfo, 0)
+	downstreamInfoClient := DownstreamInfo{
+		"client",
+		"client.exe",
+	}
+	downstreamInfoTcp := dm.downstreamLocaltcp.DownstreamList()
 
-	ret = append(ret, "client")
-	ret = append(ret, dm.downstreamLocaltcp.getList()...)
+	downstreams = append(downstreams, downstreamInfoClient)
+	downstreams = append(downstreams, downstreamInfoTcp...)
 
-	return ret
+	// Notify server
+	client.SendDownstreams(downstreams) // notify server of new downstream executors
 }

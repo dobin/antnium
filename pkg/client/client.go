@@ -64,7 +64,6 @@ func (s *Client) sendPing() error {
 	response := make(model.PacketResponse)
 	response["hostname"] = s.Config.Hostname
 	model.AddArrayToResponse("localIp", s.Config.LocalIps, response)
-	model.AddArrayToResponse("downstreams", s.DownstreamManager.GetList(), response)
 	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
 
 	err := s.Upstream.SendPacket(packet)
@@ -76,10 +75,15 @@ func (s *Client) sendPing() error {
 }
 
 // SendDownstreams is used to notify server about any new downstreams
-func (s *Client) SendDownstreams(downstreamList []string) error {
+func (s *Client) SendDownstreams(downstreams []DownstreamInfo) error {
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
-	model.AddArrayToResponse("name", downstreamList, response)
+
+	for idx, downstreamInfo := range downstreams {
+		idxStr := strconv.Itoa(idx)
+		response["name"+idxStr] = downstreamInfo.Name
+		response["info"+idxStr] = downstreamInfo.Info
+	}
 
 	packet := model.NewPacket("downstreams", s.Config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
 
