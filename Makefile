@@ -11,6 +11,8 @@ executor:
 	go build .\cmd\executor\executor.go 
 	./executor.exe
 
+test:
+	go test .\...
 
 prodclient:
 	go build -ldflags="-s -w" .\cmd\client\client.go
