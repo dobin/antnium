@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"path/filepath"
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
@@ -39,9 +38,8 @@ func (e *Executor) StartClient(destination string) {
 		log.Error("Error: " + err.Error())
 		return
 	}
-	exPath := filepath.Dir(ex)
 	pid := strconv.Itoa(os.Getpid())
-	line := exPath + ":" + pid + "\n"
+	line := ex + ":" + pid + "\n"
 	_, err = conn.Write([]byte(line))
 	if err != nil {
 		log.Error("Error")
