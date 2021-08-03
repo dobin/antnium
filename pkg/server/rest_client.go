@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
@@ -97,7 +98,12 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filename := "upload/" + packetId
+	basename := filepath.Base(packetInfo.Packet.Arguments["source"])
+	filename := fmt.Sprintf("upload/%s.%s.%s",
+		packetInfo.Packet.ComputerId,
+		packetInfo.Packet.PacketId,
+		basename,
+	)
 
 	out, err := os.Create(filename)
 	if err != nil {
