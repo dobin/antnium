@@ -98,12 +98,16 @@ func (d *DownstreamLocaltcp) startServer(downstreamLocaltcpChannel chan struct{}
 			continue
 		}
 
-		// receive info first or fail
-		// TODO
+		// receive info line first or fail
+		infoStr, err := bufio.NewReader(conn).ReadString('\n')
+		if err != nil {
+			log.Error("Could not read: " + err.Error())
+			continue
+		}
 
 		// Add it to local datastructure
 		name := "net#" + strconv.Itoa(n)
-		info := ""
+		info := infoStr
 		downstreamInfoTcp := DownstreamInfoTcp{
 			name,
 			info,

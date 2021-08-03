@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
+	"path/filepath"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -26,8 +29,25 @@ func (e *Executor) StartClient(destination string) {
 	conn, err := net.Dial("tcp", destination)
 	if err != nil {
 		log.Error("Could not connect: " + err.Error())
+		return
 	}
 	log.Info("Executor connected")
+
+	// Send initial line
+	ex, err := os.Executable()
+	if err != nil {
+		log.Error("Error: " + err.Error())
+		return
+	}
+	exPath := filepath.Dir(ex)
+	pid := strconv.Itoa(os.Getpid())
+	line := exPath + ":" + pid + "\n"
+	_, err = conn.Write([]byte(line))
+	if err != nil {
+		log.Error("Error")
+		return
+	}
+	// no answer required
 
 	e.Loop(conn)
 }
