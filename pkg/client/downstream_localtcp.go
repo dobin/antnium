@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"sync"
 
 	"github.com/dobin/antnium/pkg/executor"
 	"github.com/dobin/antnium/pkg/model"
@@ -19,9 +20,11 @@ type DownstreamInfoTcp struct {
 type DownstreamInfoTcpMap map[string]DownstreamInfoTcp
 
 type DownstreamLocaltcp struct {
-	listenAddr     string
+	listenAddr     string // which TCP port address we listen on
 	packetExecutor executor.PacketExecutor
-	downstreams    DownstreamInfoTcpMap
+
+	downstreams      DownstreamInfoTcpMap // all ever accepted connections
+	downstreamsMutex *sync.Mutex          // downstreams map updated via startServer() thread
 }
 
 func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
@@ -34,12 +37,15 @@ func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
 		listenAddr,
 		executor.MakePacketExecutor(),
 		make(DownstreamInfoTcpMap, 0),
+		&sync.Mutex{},
 	}
 	return u
 }
 
 func (d *DownstreamLocaltcp) do(packet model.Packet) (model.Packet, error) {
+	d.downstreamsMutex.Lock()
 	downstreamInfo, ok := d.downstreams[packet.DownstreamId]
+	d.downstreamsMutex.Unlock()
 	if !ok {
 		log.Errorf("Did not find downstream: %s in %v", packet.DownstreamId, d.downstreams)
 		return model.Packet{}, fmt.Errorf("Did not find: %s", packet.DownstreamId)
@@ -81,6 +87,23 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 	return packet, nil
 }
 
+func (d *DownstreamLocaltcp) DownstreamList() []DownstreamInfo {
+	ret := make([]DownstreamInfo, 0)
+
+	d.downstreamsMutex.Lock()
+	for _, downstreamInfoTcp := range d.downstreams {
+		d := DownstreamInfo{
+			downstreamInfoTcp.Name,
+			downstreamInfoTcp.Info,
+		}
+		ret = append(ret, d)
+	}
+	d.downstreamsMutex.Unlock()
+
+	return ret
+}
+
+// startServer is a thread which handles incoming downstream clients and notify parent via channel
 func (d *DownstreamLocaltcp) startServer(downstreamLocaltcpChannel chan struct{}) {
 	log.Info("Start Downstream: LocalTcp on " + d.listenAddr)
 	ln, err := net.Listen("tcp", d.listenAddr)
@@ -113,25 +136,14 @@ func (d *DownstreamLocaltcp) startServer(downstreamLocaltcpChannel chan struct{}
 			info,
 			conn,
 		}
+
+		d.downstreamsMutex.Lock()
 		d.downstreams[name] = downstreamInfoTcp
+		d.downstreamsMutex.Unlock()
 
 		// Notify about new downstream
 		downstreamLocaltcpChannel <- struct{}{}
 
 		n += 1
 	}
-}
-
-func (d *DownstreamLocaltcp) DownstreamList() []DownstreamInfo {
-	ret := make([]DownstreamInfo, 0)
-
-	for _, downstreamInfoTcp := range d.downstreams {
-		d := DownstreamInfo{
-			downstreamInfoTcp.Name,
-			downstreamInfoTcp.Info,
-		}
-		ret = append(ret, d)
-	}
-
-	return ret
 }
