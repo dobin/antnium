@@ -51,21 +51,23 @@ func (d *DownstreamLocaltcp) do(packet model.Packet) (model.Packet, error) {
 		return model.Packet{}, fmt.Errorf("Did not find: %s", packet.DownstreamId)
 	}
 
-	return d.doConn(downstreamInfo.conn, packet)
+	packet, err := d.doConn(downstreamInfo.conn, packet)
+	if err != nil {
+		log.Error("Error: ", err.Error())
+		// Add error to packet response
+		packet.Response["error"] = err.Error()
+	}
+	return packet, err
 }
 
 func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.Packet, error) {
 	// Send it to the downstream executor
 	packetEncoded, err := executor.EncodePacket(packet)
 	if err != nil {
-		log.Error("Error: ", err.Error())
-		packet.Response["error"] = err.Error()
 		return packet, err
 	}
 	_, err = conn.Write(packetEncoded)
 	if err != nil {
-		log.Error("Could not write: " + err.Error())
-		packet.Response["error"] = err.Error()
 		return packet, err
 	}
 	conn.Write([]byte("\n"))
@@ -73,14 +75,10 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 	// Wait for answer
 	jsonStr, err := bufio.NewReader(conn).ReadString('\n')
 	if err != nil {
-		log.Error("Could not read: " + err.Error())
-		packet.Response["error"] = err.Error()
 		return packet, err
 	}
 	packet, err = executor.DecodePacket(jsonStr)
 	if err != nil {
-		log.Error("Error: ", err.Error())
-		packet.Response["error"] = err.Error()
 		return packet, err
 	}
 

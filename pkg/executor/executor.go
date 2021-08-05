@@ -63,15 +63,14 @@ func (e *Executor) Loop(conn net.Conn) {
 			log.Error("Could not read: " + err.Error())
 			break
 		}
-
-		fmt.Println("Jsonstr: " + jsonStr)
 		packet, err := DecodePacket(jsonStr)
 		if err != nil {
 			log.Error("Error: ", err.Error())
+			continue
 		}
 
 		// Execute
-		err = packetExecutor.Execute(&packet)
+		packet, err = packetExecutor.Execute(packet)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"packet": packet,
@@ -86,7 +85,6 @@ func (e *Executor) Loop(conn net.Conn) {
 		if err != nil {
 			log.Error("Error: ", err.Error())
 		}
-
 		n, err := conn.Write(packetEncoded)
 		if err != nil {
 			log.Error("Error")
@@ -95,6 +93,5 @@ func (e *Executor) Loop(conn net.Conn) {
 		}
 		conn.Write([]byte("\n"))
 		fmt.Printf("Written: %d bytes", n)
-
 	}
 }
