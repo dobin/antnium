@@ -43,6 +43,61 @@ func NewServer(srvAddr string) Server {
 	return w
 }
 
+func (s *Server) DbLoad() error {
+	// Packets
+	packetsBytes, err := ioutil.ReadFile("db.packets.json")
+	if err != nil {
+		return fmt.Errorf("Read file error: %s", err.Error())
+	}
+	var packetInfos []PacketInfo
+	err = json.Unmarshal(packetsBytes, &packetInfos)
+	if err != nil {
+		return fmt.Errorf("Read file decode error: %s", err.Error())
+	}
+	s.packetDb.Set(packetInfos)
+
+	// Clients
+	clientsBytes, err := ioutil.ReadFile("db.clients.json")
+	if err != nil {
+		return fmt.Errorf("Read file error: %s", err.Error())
+	}
+	var clients map[string]*ClientInfo
+	err = json.Unmarshal(clientsBytes, &clients)
+	if err != nil {
+		return fmt.Errorf("Read file decode error: %s", err.Error())
+	}
+	s.clientInfoDb.Set(clients)
+
+	return nil
+}
+
+func (s *Server) DumpDbPackets() {
+	log.Debug("DB Dump: Packets")
+	packets := s.packetDb.getAll()
+	packetBytes, err := json.Marshal(packets)
+	if err != nil {
+		log.Errorf("could not marshal config json: %v", err)
+	}
+
+	err = ioutil.WriteFile("db.packets.json", packetBytes, 0644)
+	if err != nil {
+		log.Errorf("could not marshal config json: %v", err)
+	}
+}
+
+func (s *Server) DumpDbClients() {
+	log.Debug("DB Dump: Clients")
+	clients := s.clientInfoDb.getAll()
+	clientsBytes, err := json.Marshal(clients)
+	if err != nil {
+		log.Errorf("could not marshal config json: %v", err)
+	}
+	err = ioutil.WriteFile("db.clients.json", clientsBytes, 0644)
+	if err != nil {
+		log.Errorf("could not marshal config json: %v", err)
+	}
+}
+
 func (s *Server) PeriodicDbDump() {
 	dbDumpInterval := 1 * time.Minute
 
@@ -56,26 +111,14 @@ func (s *Server) PeriodicDbDump() {
 			log.Errorf("could not marshal config json: %v", err)
 		}
 		if len(packetBytes) != lastPacketsSize {
-			fmt.Println("Write1")
-			err = ioutil.WriteFile("db.packets.json", packetBytes, 0644)
-			if err != nil {
-				log.Errorf("could not marshal config json: %v", err)
-			}
+			s.DumpDbPackets()
 			lastPacketsSize = len(packetBytes)
 		}
 
 		// Clients
 		clients := s.clientInfoDb.getAll()
 		if len(clients) != lastClientsLen {
-			clientsBytes, err := json.Marshal(clients)
-			if err != nil {
-				log.Errorf("could not marshal config json: %v", err)
-			}
-			fmt.Println("Write2")
-			err = ioutil.WriteFile("db.clients.json", clientsBytes, 0644)
-			if err != nil {
-				log.Errorf("could not marshal config json: %v", err)
-			}
+			s.DumpDbClients()
 			lastClientsLen = len(clients)
 		}
 

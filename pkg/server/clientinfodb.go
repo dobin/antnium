@@ -54,3 +54,7 @@ func (db *ClientInfoDb) getAsList() []ClientInfo {
 func (db *ClientInfoDb) getAll() map[string]*ClientInfo {
 	return db.clientInfoDb
 }
+
+func (db *ClientInfoDb) Set(clients map[string]*ClientInfo) {
+	db.clientInfoDb = clients
+}

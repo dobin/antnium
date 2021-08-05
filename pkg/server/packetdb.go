@@ -28,6 +28,10 @@ func (db *PacketDb) getAll() []PacketInfo {
 	return db.packetInfo
 }
 
+func (db *PacketDb) Set(packetInfos []PacketInfo) {
+	db.packetInfo = packetInfos
+}
+
 func (db *PacketDb) ByPacketId(packetId string) (PacketInfo, error) {
 	for _, packetInfo := range db.packetInfo {
 		if packetInfo.Packet.PacketId == packetId {
