@@ -50,3 +50,7 @@ func (db *ClientInfoDb) getAsList() []ClientInfo {
 	}
 	return v
 }
+
+func (db *ClientInfoDb) getAll() map[string]*ClientInfo {
+	return db.clientInfoDb
+}

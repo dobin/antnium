@@ -14,5 +14,7 @@ func main() {
 	fmt.Println("Antnium 0.1")
 
 	s := server.NewServer(*flagServerAddr)
+	// start DB backups
+	go s.PeriodicDbDump()
 	s.Serve()
 }
