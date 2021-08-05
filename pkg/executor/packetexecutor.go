@@ -125,12 +125,10 @@ func (s *PacketExecutor) actionExec(packetArgument model.PacketArgument) (model.
 	}
 	executable, args, err := MakePacketArgumentFrom(packetArgument)
 	if err != nil {
-		ret["error"] = err.Error()
 		return ret, fmt.Errorf("Invalid packet arguments")
 	}
 
 	// Execute and return result
-	log.Infof("Executing: %s %v", executable, args)
 	cmd := exec.Command(executable, args...)
 	stdout, err := cmd.CombinedOutput() // also includes stderr for now
 	if err != nil {
