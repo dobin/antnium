@@ -1,4 +1,4 @@
-# antanium 
+# Antnium 
 
 ```
 Anti Tanium
@@ -14,11 +14,18 @@ There are two components:
 Configure your campaign in: 
 * model/campaign.go 
 
-Compile client and server: 
-* make 
+Compile client, server and executor: 
+* make compile
 
-And deploy them. 
+Which produces: 
+* client.exe
+* server.exe
+* executor.exe
 
+
+Deploy server on the URL you defined in the campaign. Start a client somewhere. 
+
+Default server address is `127.0.0.1:4444`. 
 
 ## Client 
 
@@ -27,14 +34,26 @@ Commands:
 * fileupload: upload a file 
 * filedownload: download a file 
 * dir: directory content
-* test: test (e.g. unit- or integration tests)
-* ping: announce we are still alive, send info, get new commands (sent without request from server)
+
+For a complete list, see `doc/protocol.md`.
 
 ## Server
 
 * Runs on a specific port
 * uploads files from client via REST to `./upload/`
 * serves directory `./static/`
+
+## DB
+
+The server stores its data in the files: 
+* db.packets.json
+* db.clients.json
+regularly. It will load it on start automatically. 
+
+Use: 
+* `server.exe --dbReadOnly` to only read but not update
+* `server.exe --dbWriteOnly` to only write but not read
+
 
 
 ## Security 
