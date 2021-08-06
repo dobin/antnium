@@ -11,36 +11,62 @@ There are two components:
 
 ## Quick How to use
 
-Decide on a C2 IP or domain. We use `127.0.0.1:8080` here. 
+Download and install go (and git) for Windows, or Linux.
+
+Decide on a C2 IP or domain. We use `127.0.0.1:8080` here, as we start both client and server
+on the same host. 
 
 Configure your campaign in `model/campaign.go`, minimum: 
 * `serverUrl = "http://127.0.0.1:8080"`
 
+Access the WebUI by opening the following URL in the browser after starting the server:
+```
+http://localhost:8080/
+```
+Select the client in the ui. 
+
+## Windows
+
+Go: https://golang.org/doc/install
+
 Compile client and server: 
 ```
-go get all
-make compile
+> go get all
+> go build cmd\server\server.go 
+> go build cmd\client\client.go
 ```
 
 Start server:
 ```
-server.exe --listenaddr 0.0.0.0:8080
-```
-
-Access the WebUI by opening the following URL in the browser:
-```
-http://localhost:8080/
+> .\server.exe --listenaddr localhost:8080
 ```
 
 Start client:
 ```
-client.exe
+> .\client.exe
 ```
 
 
+## Linux
+
+Compile client and server: 
+```
+$ go get all
+$ go build cmd/server/server.go 
+$ go build cmd/client/client.go
+```
+
+Start server:
+```
+$ ./server --listenaddr localhost:8080
+```
+
+Start client:
+```
+$ ./client
+```
 
 
-Start a client on your target. 
 
 ### Notes on deployment
 
@@ -49,7 +75,7 @@ A campaign has individual encryption and authentication keys, which are shared b
 server and client. 
 
 * Replace `127.0.0.1:8080` with your domain, e.g. `totallynotmalware.ch`.
-* Put server behind a reverse proxy.
+* Put server behind a reverse proxy or in a docker
 
 
 ## Install 
@@ -58,7 +84,6 @@ server and client.
 $ git clone https://github.com/dobin/antnium
 $ cd antnium
 $ go get all
-$ make compile
 ```
 
 ### Server
@@ -79,11 +104,14 @@ Result is `server.exe`. Make sure to run it in the directory where you have or e
 * upload/
 * static/
 * db.*.json
+as working directory.
+
 
 ### Client
 
-Configure your campaign in `model/campaign.go`: 
-* `serverUrl = "http://totallynotmalware.ch"`
+Works on: 
+* Windows 10
+
 
 Compile on windows:
 ```
