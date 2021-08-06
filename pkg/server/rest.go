@@ -57,10 +57,20 @@ func (s *Server) Serve() {
 		AllowedHeaders:   []string{"Authorization"},
 		AllowCredentials: true,
 	})
+	myRouter.Use(loggingMiddleware)
 	handler := c.Handler(myRouter)
 
 	fmt.Println("Starting webserver on " + s.srvaddr)
 	log.Fatal(http.ListenAndServe(s.srvaddr, handler))
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Do stuff here
+		log.Info(r.RequestURI)
+		// Call the next handler, which can be another middleware in the chain, or the final handler.
+		next.ServeHTTP(w, r)
+	})
 }
 
 func GetClientMiddleware(key string) func(http.Handler) http.Handler {
