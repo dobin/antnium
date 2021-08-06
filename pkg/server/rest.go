@@ -50,10 +50,13 @@ func (s *Server) Serve() {
 	// Authentication based on known filenames
 	myRouter.PathPrefix(s.campaign.FileDownloadPath).Handler(
 		http.StripPrefix(s.campaign.FileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
+	// Authentication based on its a random directory name
+	myRouter.PathPrefix("/webui").Handler(
+		http.StripPrefix("/webui", http.FileServer(http.Dir("./webui/")))) // /static
 
 	// Allow CORS
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:4200"},
+		AllowedOrigins:   []string{"http://localhost:4200", "http://localhost:8080", s.campaign.ServerUrl},
 		AllowedHeaders:   []string{"Authorization"},
 		AllowCredentials: true,
 	})

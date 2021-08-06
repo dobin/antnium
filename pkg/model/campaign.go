@@ -18,13 +18,15 @@ type Campaign struct {
 	PacketGetPath    string `json:"PacketGetPath"`
 	FileUploadPath   string `json:"FileUploadPath"`
 	FileDownloadPath string `json:"FileDownloadPath"`
+
+	WebuiPath string
 }
 
 func MakeCampaign() Campaign {
 	apiKey := "Secret-Api-Key"
 	adminApiKey := "Secret-AdminApi-Key"
 	encKey := "Secret-Enc-Key"
-	proxyPath := "" // If a reverse-proxy serves the server on this URL
+	serverUrl := "http://localhost:8080"
 
 	// Generate the actual AES key based on encKey
 	key, err := scrypt.Key([]byte(encKey), []byte("antnium-salt"), 2048, 8, 1, 32)
@@ -38,11 +40,12 @@ func MakeCampaign() Campaign {
 		key,
 		true,
 		true,
-		"http://localhost:4444" + proxyPath,
-		proxyPath + "/send",
-		proxyPath + "/get/",
-		proxyPath + "/upload/",
-		proxyPath + "/static/",
+		serverUrl,
+		"/send",
+		"/get/",
+		"/upload/",
+		"/static/",
+		"/webui",
 	}
 	return c
 }

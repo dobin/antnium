@@ -1,19 +1,22 @@
 
 runserver: 
-	go build cmd\server\server.go 
-	./server.exe 
+	go run cmd\server\server.go --listenaddr 127.0.0.1:8080
 
 runclient: 
-	go build cmd\client\client.go
-	./client.exe
+	go run cmd\client\client.go
 
 runexecutor:
-	go build cmd\executor\executor.go 
-	./executor.exe
+	go run cmd\executor\executor.go 
 
-compile: 
-	go build cmd\client\client.go
+compile: server client executor
+	
+server:
 	go build cmd\server\server.go 
+
+client:
+	go build cmd\client\client.go
+
+executor:
 	go build cmd\executor\executor.go 
 
 test:

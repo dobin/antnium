@@ -16,13 +16,13 @@ func cleanup(s *server.Server) {
 }
 
 func main() {
-	flagServerAddr := flag.String("serveraddr", "127.0.0.1:4444", "Server listen address")
+	flagListenAddr := flag.String("listenaddr", "0.0.0.0:8080", "Server listen address")
 	flagDbReadOnly := flag.Bool("dbReadOnly", false, "Only load DB, dont write / update (dont touch DB files)")
 	flagDbWriteOnly := flag.Bool("dbWriteOnly", false, "Only write in DB, dont load it on start (overwrite)")
 	flag.Parse()
 
 	fmt.Println("Antnium 0.1")
-	s := server.NewServer(*flagServerAddr)
+	s := server.NewServer(*flagListenAddr)
 
 	if !*flagDbWriteOnly {
 		fmt.Println("Load DB")
