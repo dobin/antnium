@@ -48,10 +48,12 @@ var upgrader = websocket.Upgrader{
 
 type AuthToken string
 
+// wsHandler is the entry point for new websocket connections
 func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("Websocket: ", err)
+		return
 	}
 
 	// WebSocket Authentication
