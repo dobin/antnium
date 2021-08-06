@@ -24,7 +24,7 @@ func MakeCampaign() Campaign {
 	apiKey := "Secret-Api-Key"
 	adminApiKey := "Secret-AdminApi-Key"
 	encKey := "Secret-Enc-Key"
-	proxyPath := "/antnium" // If a reverse-proxy serves the server on this URL
+	proxyPath := "" // If a reverse-proxy serves the server on this URL
 
 	// Generate the actual AES key based on encKey
 	key, err := scrypt.Key([]byte(encKey), []byte("antnium-salt"), 2048, 8, 1, 32)
