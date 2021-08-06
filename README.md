@@ -25,7 +25,7 @@ Which produces:
 
 Deploy server on the URL you defined in the campaign. Start a client somewhere. 
 
-Default server address is `127.0.0.1:4444`. 
+Default server listening address is `127.0.0.1:4444`. Change it with `server.exe -serveraddr ip:port`
 
 ## Client 
 
