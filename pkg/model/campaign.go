@@ -12,7 +12,7 @@ type Campaign struct {
 	WithZip     bool   `json:"WithZip"`
 	WithEnc     bool   `json:"WithEnc"`
 
-	ServerUrl string `json:"ServerUrl"`
+	ServerUrl string `json:"ServerUrl"` // URL of the server, as viewed from the clients
 
 	PacketSendPath   string `json:"PacketSendPath"`
 	PacketGetPath    string `json:"PacketGetPath"`
@@ -24,6 +24,7 @@ func MakeCampaign() Campaign {
 	apiKey := "Secret-Api-Key"
 	adminApiKey := "Secret-AdminApi-Key"
 	encKey := "Secret-Enc-Key"
+	proxyPath := "/antnium" // If a reverse-proxy serves the server on this URL
 
 	// Generate the actual AES key based on encKey
 	key, err := scrypt.Key([]byte(encKey), []byte("antnium-salt"), 2048, 8, 1, 32)
@@ -37,11 +38,11 @@ func MakeCampaign() Campaign {
 		key,
 		true,
 		true,
-		"http://localhost:4444",
-		"/send",
-		"/get/",
-		"/upload/",
-		"/static/",
+		"http://localhost:4444" + proxyPath,
+		proxyPath + "/send",
+		proxyPath + "/get/",
+		proxyPath + "/upload/",
+		proxyPath + "/static/",
 	}
 	return c
 }
