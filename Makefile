@@ -18,7 +18,9 @@ server:
 	go build cmd/server/server.go 
 
 client:
-	go build cmd/client/client.go
+	GOOS=linux GOARCH=amd64 go build -o client.elf cmd/client/client.go
+	GOOS=windows GOARCH=amd64 go build -o client.exe cmd/client/client.go
+	
 
 executor:
 	go build cmd/executor/executor.go 
