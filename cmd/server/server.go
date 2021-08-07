@@ -54,6 +54,13 @@ func main() {
 
 	if !*flagDbReadOnly {
 		fmt.Println("Periodic DB dump enabled")
+		// Test DB dump
+		err := s.DumpDbClients()
+		if err != nil {
+			log.Errorf("Could not write DB file in current directory, write access? %s", err.Error())
+			return
+		}
+
 		// start DB backups
 		go s.PeriodicDbDump()
 	}

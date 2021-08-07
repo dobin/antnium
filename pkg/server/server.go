@@ -80,31 +80,39 @@ func (s *Server) DbLoad() error {
 	return nil
 }
 
-func (s *Server) DumpDbPackets() {
+func (s *Server) DumpDbPackets() error {
 	log.Debug("DB Dump: Packets")
 	packets := s.packetDb.getAll()
 	packetBytes, err := json.Marshal(packets)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
+		return err
 	}
 
 	err = ioutil.WriteFile("db.packets.json", packetBytes, 0644)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
+		return err
 	}
+
+	return nil
 }
 
-func (s *Server) DumpDbClients() {
+func (s *Server) DumpDbClients() error {
 	log.Debug("DB Dump: Clients")
 	clients := s.clientInfoDb.getAll()
 	clientsBytes, err := json.Marshal(clients)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
+		return err
 	}
 	err = ioutil.WriteFile("db.clients.json", clientsBytes, 0644)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
+		return err
 	}
+
+	return nil
 }
 
 func (s *Server) PeriodicDbDump() {
@@ -120,18 +128,17 @@ func (s *Server) PeriodicDbDump() {
 			log.Errorf("could not marshal config json: %v", err)
 		}
 		if len(packetBytes) != lastPacketsSize {
-			s.DumpDbPackets()
+			s.DumpDbPackets() // ignore err
 			lastPacketsSize = len(packetBytes)
 		}
 
 		// Clients
 		clients := s.clientInfoDb.getAll()
 		if len(clients) != lastClientsLen {
-			s.DumpDbClients()
+			s.DumpDbClients() // ignore err
 			lastClientsLen = len(clients)
 		}
 
 		time.Sleep(dbDumpInterval)
 	}
-
 }
