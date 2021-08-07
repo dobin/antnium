@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/dobin/antnium/pkg/model"
@@ -45,28 +46,36 @@ func NewServer(srvAddr string) Server {
 
 func (s *Server) DbLoad() error {
 	// Packets
-	packetsBytes, err := ioutil.ReadFile("db.packets.json")
-	if err != nil {
-		return fmt.Errorf("Read file error: %s", err.Error())
+	dbPackets := "db.packets.json"
+	if _, err := os.Stat(dbPackets); !os.IsNotExist(err) {
+		packetsBytes, err := ioutil.ReadFile(dbPackets)
+		if err != nil {
+			return fmt.Errorf("Read file error: %s", err.Error())
+		}
+		var packetInfos []PacketInfo
+		err = json.Unmarshal(packetsBytes, &packetInfos)
+		if err != nil {
+			return fmt.Errorf("Read file decode error: %s", err.Error())
+		}
+		s.packetDb.Set(packetInfos)
+		fmt.Printf("Loaded %d packets from %s\n", len(packetInfos), dbPackets)
 	}
-	var packetInfos []PacketInfo
-	err = json.Unmarshal(packetsBytes, &packetInfos)
-	if err != nil {
-		return fmt.Errorf("Read file decode error: %s", err.Error())
-	}
-	s.packetDb.Set(packetInfos)
 
 	// Clients
-	clientsBytes, err := ioutil.ReadFile("db.clients.json")
-	if err != nil {
-		return fmt.Errorf("Read file error: %s", err.Error())
+	dbClients := "db.clients.json"
+	if _, err := os.Stat(dbClients); !os.IsNotExist(err) {
+		clientsBytes, err := ioutil.ReadFile(dbClients)
+		if err != nil {
+			return fmt.Errorf("Read file error: %s", err.Error())
+		}
+		var clients map[string]*ClientInfo
+		err = json.Unmarshal(clientsBytes, &clients)
+		if err != nil {
+			return fmt.Errorf("Read file decode error: %s", err.Error())
+		}
+		s.clientInfoDb.Set(clients)
+		fmt.Printf("Loaded %d clients from %s\n", len(clients), dbClients)
 	}
-	var clients map[string]*ClientInfo
-	err = json.Unmarshal(clientsBytes, &clients)
-	if err != nil {
-		return fmt.Errorf("Read file decode error: %s", err.Error())
-	}
-	s.clientInfoDb.Set(clients)
 
 	return nil
 }

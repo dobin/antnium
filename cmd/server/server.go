@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/dobin/antnium/pkg/server"
+	log "github.com/sirupsen/logrus"
 )
 
 func cleanup(s *server.Server) {
@@ -24,9 +25,18 @@ func main() {
 	fmt.Println("Antnium 0.1")
 	s := server.NewServer(*flagListenAddr)
 
+	// Check prerequisites
+	if _, err := os.Stat("./static/"); os.IsNotExist(err) {
+		log.Errorf("Could not find required direcotry: %s", "./static/")
+		return
+	}
+	if _, err := os.Stat("./upload/"); os.IsNotExist(err) {
+		log.Errorf("Could not find required direcotry: %s", "./upload/")
+		return
+	}
+
 	if !*flagDbWriteOnly {
-		fmt.Println("Load DB")
-		// catch ctrl-c
+		// catch ctrl-c so we can save the DB
 		c := make(chan os.Signal)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		go func() {
@@ -36,11 +46,14 @@ func main() {
 		}()
 
 		// Load DB if any
-		s.DbLoad()
+		err := s.DbLoad()
+		if err != nil {
+			log.Errorf("%s\n", err.Error())
+		}
 	}
 
 	if !*flagDbReadOnly {
-		fmt.Println("DB Dumper")
+		fmt.Println("Periodic DB dump enabled")
 		// start DB backups
 		go s.PeriodicDbDump()
 	}
