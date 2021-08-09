@@ -1,8 +1,10 @@
 package client
 
 import (
+	"crypto/tls"
 	"errors"
 	"math/rand"
+	"net/http"
 	"strconv"
 
 	"github.com/dobin/antnium/pkg/model"
@@ -35,6 +37,12 @@ func NewClient() Client {
 }
 
 func (s *Client) Start() {
+	if s.Config.insecureTls {
+		// Enable SkipVerify on all instances of http
+		// https://stackoverflow.com/questions/12122159/how-to-do-a-https-request-with-bad-certificate
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
 	s.DownstreamManager.StartListeners(s)
 	go s.Upstream.Start()
 

@@ -12,6 +12,8 @@ type ClientConfig struct {
 	ComputerId string //
 	Hostname   string
 	LocalIps   []string
+
+	insecureTls bool // If we should accept invalid TLS certs
 }
 
 func MakeClientConfig() ClientConfig {
@@ -63,6 +65,7 @@ func MakeClientConfig() ClientConfig {
 		xid.New().String(),
 		hostname,
 		localIps,
+		true,
 	}
 	return db
 }
