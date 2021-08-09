@@ -90,6 +90,7 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		}).Info("Error add packet")
 		return
 	}
+	log.Infof("<- Admin: %v", packet)
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
 	packetInfo = s.packetDb.add(packetInfo) // Get updated one
 

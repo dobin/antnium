@@ -52,7 +52,7 @@ type AuthToken string
 func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Errorf("Websocket: ", err)
+		log.Errorf("Websocket: %s", err.Error())
 		return
 	}
 

@@ -62,9 +62,9 @@ func (s *Server) sendPacket(rw http.ResponseWriter, r *http.Request) {
 		s.clientInfoDb.updateFromPing(packet.ComputerId, r.RemoteAddr, packet.Response)
 		fmt.Fprint(rw, "asdf")
 		return
-	} else {
-		s.clientInfoDb.updateFor(packet.ComputerId, r.RemoteAddr)
 	}
+
+	s.clientInfoDb.updateFor(packet.ComputerId, r.RemoteAddr)
 
 	packetInfo := s.packetDb.update(packet)
 	s.adminWebSocket.broadcastPacket(packetInfo)
