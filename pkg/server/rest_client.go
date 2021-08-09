@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -59,26 +58,18 @@ func (s *Server) sendPacket(rw http.ResponseWriter, r *http.Request) {
 		"packet": packet,
 	}).Info("Send packet")
 
-	s.clientInfoDb.updateFor(packet.ComputerId, r.RemoteAddr)
-
 	if packet.PacketType == "ping" {
-		s.handlePingPacket(packet)
+		s.clientInfoDb.updateFromPing(packet.ComputerId, r.RemoteAddr, packet.Response)
 		fmt.Fprint(rw, "asdf")
 		return
+	} else {
+		s.clientInfoDb.updateFor(packet.ComputerId, r.RemoteAddr)
 	}
 
 	packetInfo := s.packetDb.update(packet)
 	s.adminWebSocket.broadcastPacket(packetInfo)
 
 	fmt.Fprint(rw, "asdf")
-}
-
-func (s *Server) handlePingPacket(packet model.Packet) {
-
-	hostname, _ := packet.Response["hostname"]
-	localIps := model.ResponseToArray("localIp", packet.Response)
-
-	s.clientInfoDb.updateMore(packet.ComputerId, hostname, localIps)
 }
 
 func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {

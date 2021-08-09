@@ -3,7 +3,9 @@ package client
 import (
 	"net"
 	"os"
+	"runtime"
 
+	"github.com/mitchellh/go-ps"
 	"github.com/rs/xid"
 	log "github.com/sirupsen/logrus"
 )
@@ -12,8 +14,10 @@ type ClientConfig struct {
 	ComputerId string //
 	Hostname   string
 	LocalIps   []string
+	Arch       string
+	Processes  []string
 
-	insecureTls bool // If we should accept invalid TLS certs
+	InsecureTls bool // If we should accept invalid TLS certs
 }
 
 func MakeClientConfig() ClientConfig {
@@ -50,13 +54,26 @@ func MakeClientConfig() ClientConfig {
 		}
 	}
 
+	// Arch
+	arch := "unknown"
+	if runtime.GOOS == "windows" {
+		arch = "windows"
+	} else if runtime.GOOS == "linux" {
+		arch = "linux"
+	}
+
+	// Process list
+	// May be detectable? https://github.com/mitchellh/go-ps
+	processList := make([]string, 0)
+	processes, err := ps.Processes()
+	if err == nil {
+		for _, process := range processes {
+			processList = append(processList, process.Executable())
+		}
+	}
+
 	// Env
-	/*
-			for _, e := range os.Environ() {
-		        pair := strings.SplitN(e, "=", 2)
-		        fmt.Println(pair[0])
-		    }
-	*/
+	//envList := os.Environ()
 
 	// Machine ID
 	// https://github.com/denisbrodbeck/machineid
@@ -65,6 +82,8 @@ func MakeClientConfig() ClientConfig {
 		xid.New().String(),
 		hostname,
 		localIps,
+		arch,
+		processList,
 		true,
 	}
 	return db

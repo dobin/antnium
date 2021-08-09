@@ -3,7 +3,7 @@ package server
 import (
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/dobin/antnium/pkg/model"
 )
 
 type ClientInfoDb struct {
@@ -20,27 +20,55 @@ func MakeClientInfoDb() ClientInfoDb {
 
 func (db *ClientInfoDb) updateFor(computerId string, ip string) {
 	if _, ok := db.clientInfoDb[computerId]; !ok {
+		// Init, without ping (misses a lot of data)
 		db.clientInfoDb[computerId] = &ClientInfo{
 			computerId,
 			time.Now(),
 			time.Now(),
 			ip,
+
 			"",
 			nil,
+			"",
+			nil,
+			"",
 		}
 	} else {
+		// Update
 		db.clientInfoDb[computerId].LastSeen = time.Now()
 		db.clientInfoDb[computerId].LastIp = ip
 	}
 }
 
-func (db *ClientInfoDb) updateMore(computerId, hostname string, localIps []string) {
-	if _, ok := db.clientInfoDb[computerId]; ok {
-		db.clientInfoDb[computerId].Hostname = hostname
-		db.clientInfoDb[computerId].LocalIps = localIps
-	} else {
-		log.Error("Client not found in clientdb")
+func (db *ClientInfoDb) updateFromPing(computerId, ip string, response model.PacketResponse) {
+	if _, ok := db.clientInfoDb[computerId]; !ok {
+		// Init
+		db.clientInfoDb[computerId] = &ClientInfo{
+			computerId,
+			time.Now(),
+			time.Now(),
+			ip,
+
+			"",
+			nil,
+			"",
+			nil,
+			"",
+		}
 	}
+
+	// Add all relevant data from packet
+	hostname, _ := response["hostname"]
+	localIps := model.ResponseToArray("localIp", response)
+	arch := response["arch"]
+	processes := model.ResponseToArray("processes", response)
+	InsecureTls := response["InsecureTls"]
+
+	db.clientInfoDb[computerId].Hostname = hostname
+	db.clientInfoDb[computerId].LocalIps = localIps
+	db.clientInfoDb[computerId].Arch = arch
+	db.clientInfoDb[computerId].Processes = processes
+	db.clientInfoDb[computerId].InsecureTls = InsecureTls
 }
 
 func (db *ClientInfoDb) getAsList() []ClientInfo {

