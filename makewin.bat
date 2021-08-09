@@ -8,6 +8,7 @@ IF "%1"=="runserver" (
     go run cmd\executor\executor.go 
 ) ELSE IF "%1"=="server" (
     go build cmd\server\server.go 
+    REM Doesnt work
     REM SET GOOS=linux
     REM go build -o server.elf cmd\server\server.go 
 ) ELSE IF "%1"=="client" (
