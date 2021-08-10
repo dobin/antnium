@@ -53,7 +53,7 @@ func (dm *DownstreamManager) StartListeners(client *Client) {
 	// Thread: new downstreams via downstreamLocaltcpChannel
 	go dm.downstreamLocaltcp.startServer(dm.downstreamLocaltcpChannel)
 
-	// Thread: receive new downstreams via local tcp
+	// Thread: receive new downstreams via local tcp, lifetime: app
 	go func() {
 		for {
 			// Wait for newly announced TCP downstreams

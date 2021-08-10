@@ -43,6 +43,7 @@ func (d UpstreamHttp) SendPacket(packet model.Packet) error {
 	return d.sendPacket(packet)
 }
 
+// Start is a Thread responsible for receiving packets from server, lifetime:app
 func (d UpstreamHttp) Start() {
 	for {
 		// Sleep first

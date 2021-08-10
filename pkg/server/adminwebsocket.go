@@ -84,6 +84,7 @@ func (a *AdminWebSocket) broadcastPacket(packetInfo PacketInfo) {
 	broadcast <- &websocketData
 }
 
+// Distributor is a Thread which distributes data to all connected websocket clients. Lifetime: app
 func (a *AdminWebSocket) Distributor() {
 	for {
 		guiData := <-broadcast

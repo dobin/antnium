@@ -115,6 +115,7 @@ func (s *Server) DumpDbClients() error {
 	return nil
 }
 
+// PeriodicDbDump is a Thread which regularly dumps the memory content to file system, lifetime:app
 func (s *Server) PeriodicDbDump() {
 	dbDumpInterval := 1 * time.Minute
 

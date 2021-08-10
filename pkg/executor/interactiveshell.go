@@ -94,7 +94,7 @@ func (interactiveShell *InteractiveShell) open() (string, string, error) {
 	interactiveShell.stderrBuf = bytes.NewBuffer(nil)
 
 	// read the stdout continuously in a separate goroutine and capture it in our vars
-	// Read() will block if no data is available.
+	// Read() will block if no data is available. Lifetime: app
 	go func() {
 		for {
 			part := make([]byte, 128)
