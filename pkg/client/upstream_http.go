@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -115,14 +114,14 @@ func (d UpstreamHttp) sendPacket(packet model.Packet) error {
 
 	// Setup response
 	packet.ComputerId = d.config.ComputerId
-	json, err := json.Marshal(packet)
-	if err != nil {
-		return err
-	}
 
 	log.WithFields(log.Fields{
-		"packet": string(json),
-	}).Info("Send Packet")
+		"computerId":   packet.ComputerId,
+		"packetId":     packet.PacketId,
+		"downstreamId": packet.DownstreamId,
+		"packetType":   packet.PacketType,
+		"argumetns":    packet.Arguments,
+	}).Info("Send to Server")
 
 	data, err := d.coder.EncodeData(packet)
 	if err != nil {

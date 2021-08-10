@@ -55,8 +55,12 @@ func (s *Server) sendPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.WithFields(log.Fields{
-		"packet": packet,
-	}).Info("Send packet")
+		"computerId":   packet.ComputerId,
+		"packetId":     packet.PacketId,
+		"downstreamId": packet.DownstreamId,
+		"packetType":   packet.PacketType,
+		"argumetns":    packet.Arguments,
+	}).Info("Recv from Client")
 
 	if packet.PacketType == "ping" {
 		s.clientInfoDb.updateFromPing(packet.ComputerId, r.RemoteAddr, packet.Response)
