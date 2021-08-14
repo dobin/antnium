@@ -2,6 +2,7 @@ package server
 
 import (
 	"testing"
+	"time"
 )
 
 func TestClientInfoDb(t *testing.T) {
@@ -9,6 +10,7 @@ func TestClientInfoDb(t *testing.T) {
 	clientInfoDb := MakeClientInfoDb()
 
 	clientInfoDb.updateFor("1-1", "1.1.1.1")
+	time.Sleep(time.Millisecond * 10)
 	clientInfoDb.updateFor("1-1", "1.1.1.1")
 	clientInfoDb.updateFor("1-2", "1.1.1.2")
 

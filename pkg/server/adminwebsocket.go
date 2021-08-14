@@ -12,45 +12,38 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type GuiData struct {
-	Reason     string `json:"Reason"`
-	ComputerId string `json:"ComputerId"`
-}
-
+// WebsocketData is just a wrapper for PacketInfo atm
 type WebsocketData struct {
 	PacketInfo PacketInfo `json:"PacketInfo"`
 }
 
+type AuthToken string
+
 type AdminWebSocket struct {
 	clients     map[*websocket.Conn]bool
 	adminapiKey string
+
+	channel    chan *WebsocketData
+	wsUpgrader websocket.Upgrader
 }
 
 func MakeAdminWebSocket(adminApiKey string) AdminWebSocket {
 	a := AdminWebSocket{
 		make(map[*websocket.Conn]bool),
 		adminApiKey,
+		make(chan *WebsocketData),
+		websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
 	}
 	return a
 }
 
-/****/
-
-var broadcast = make(chan *WebsocketData)
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-/****/
-
-type AuthToken string
-
 // wsHandler is the entry point for new websocket connections
 func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
-	ws, err := upgrader.Upgrade(w, r, nil)
+	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Errorf("Websocket: %s", err.Error())
 		return
@@ -81,13 +74,13 @@ func (a *AdminWebSocket) broadcastPacket(packetInfo PacketInfo) {
 	websocketData := WebsocketData{
 		packetInfo,
 	}
-	broadcast <- &websocketData
+	a.channel <- &websocketData
 }
 
 // Distributor is a Thread which distributes data to all connected websocket clients. Lifetime: app
 func (a *AdminWebSocket) Distributor() {
 	for {
-		guiData := <-broadcast
+		guiData := <-a.channel
 
 		data, err := json.Marshal(guiData)
 		if err != nil {

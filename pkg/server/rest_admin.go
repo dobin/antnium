@@ -92,10 +92,15 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 	}
 	log.Infof("<- Admin: %v", packet)
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
-	packetInfo = s.packetDb.add(packetInfo) // Get updated one
+
+	// Add to DB and get updated one
+	packetInfo = s.packetDb.add(packetInfo)
 
 	// Notify UI immediately (for initial STATE_RECORDED)
 	s.adminWebSocket.broadcastPacket(packetInfo)
+
+	// Notify client, if connected to WS
+	s.clientWebSocket.TryNotify(&packetInfo.Packet)
 }
 
 func (s *Server) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {

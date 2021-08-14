@@ -9,11 +9,14 @@ import (
 	"github.com/dobin/antnium/pkg/model"
 )
 
-func TestServerClientIntegration(t *testing.T) {
+func TestServerClientIntegrationHttp(t *testing.T) {
 	port := "55001"
 	packetId := "packetid-42"
 	computerId := "computerid-23"
 	s := NewServer("127.0.0.1:" + port)
+
+	// disable websocket for HTTP only
+	s.campaign.ClientUseWebsocket = false
 
 	// Make a example packet the client should receive
 	arguments := make(model.PacketArgument)

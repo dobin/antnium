@@ -31,7 +31,8 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.DownstreamManager.downstreamLocaltcp.listenAddr = downstreamTcpAddr
 
-	client.Upstream = fakeUpstream{} // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
+	fakeUpstream := fakeUpstream{}
+	client.Upstream = &fakeUpstream // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
 	client.DownstreamManager.StartListeners(&client)
 
 	// Downstream did not yet connect, this should result an error
@@ -76,10 +77,13 @@ type fakeUpstream struct {
 
 func (d fakeUpstream) Start() {
 }
+func (d fakeUpstream) Connect() error {
+	return nil
+}
 func (d fakeUpstream) Channel() chan model.Packet {
 	return nil
 }
-func (d fakeUpstream) SendPacket(packet model.Packet) error {
+func (d fakeUpstream) SendOutofband(packet model.Packet) error {
 	return nil
 }
 func (d fakeUpstream) GetPacket() (model.Packet, error) {

@@ -19,7 +19,8 @@ type Campaign struct {
 	FileUploadPath   string `json:"FileUploadPath"`
 	FileDownloadPath string `json:"FileDownloadPath"`
 
-	WebuiPath string
+	WebuiPath          string
+	ClientUseWebsocket bool `json:"ClientUseWebsocket"`
 }
 
 func MakeCampaign() Campaign {
@@ -46,6 +47,7 @@ func MakeCampaign() Campaign {
 		"/upload/",
 		"/static/",
 		"/webui",
+		true,
 	}
 	return c
 }
