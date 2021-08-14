@@ -14,10 +14,11 @@ type Campaign struct {
 
 	ServerUrl string `json:"ServerUrl"` // URL of the server, as viewed from the clients
 
-	PacketSendPath   string `json:"PacketSendPath"`
-	PacketGetPath    string `json:"PacketGetPath"`
-	FileUploadPath   string `json:"FileUploadPath"`
-	FileDownloadPath string `json:"FileDownloadPath"`
+	PacketSendPath      string `json:"PacketSendPath"`
+	PacketGetPath       string `json:"PacketGetPath"`
+	FileUploadPath      string `json:"FileUploadPath"`
+	FileDownloadPath    string `json:"FileDownloadPath"`
+	ClientWebsocketPath string `json:"ClientWebsocketPath"`
 
 	WebuiPath          string
 	ClientUseWebsocket bool `json:"ClientUseWebsocket"`
@@ -42,10 +43,13 @@ func MakeCampaign() Campaign {
 		true,
 		true,
 		serverUrl,
+
 		"/send",
 		"/get/",
 		"/upload/",
 		"/static/",
+		"/ws",
+
 		"/webui",
 		true,
 	}

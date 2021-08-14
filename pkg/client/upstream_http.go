@@ -43,7 +43,7 @@ func (d *UpstreamHttp) Connect() error {
 		log.Info("UpstreamHttp: Use WS")
 		err := d.notifier.Connect()
 		if err != nil {
-			log.Warnf("Could not connect websocket to %s", d.campaign.ServerUrl)
+			log.Warn(err.Error())
 		}
 	}
 
@@ -52,7 +52,7 @@ func (d *UpstreamHttp) Connect() error {
 	packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
 	err := d.SendOutofband(packet)
 	if err != nil {
-		log.Warnf("Could not reach server atm %s", d.campaign.ServerUrl)
+		log.Warnf("Initial test ping: Could not reach server %s (yet, i keep trying...)", d.campaign.ServerUrl)
 	}
 
 	return nil
@@ -73,9 +73,7 @@ func (d *UpstreamHttp) Start() {
 		// If the websocket is connected, it will notify us of new packets (it blocks).
 		// If not, try regularly
 		if d.campaign.ClientUseWebsocket && d.notifier.IsConnected() {
-			log.Info("-> Waiting")
 			<-d.notifier.channel
-			log.Info("-> Finished waiting")
 		} else {
 			time.Sleep(d.state.getSleepDuration())
 		}

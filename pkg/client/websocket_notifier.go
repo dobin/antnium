@@ -2,6 +2,8 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/websocket"
@@ -36,12 +38,10 @@ func MakeWebsocketNotifier(config *ClientConfig, campaign *model.Campaign) Webso
 
 func (d *WebsocketNotifier) Connect() error {
 	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/echo"}
-	url := "ws://localhost:8080/ws"
-	log.Printf("connecting to %s", url)
-
+	url := strings.Replace(d.campaign.ServerUrl, "http", "ws", 1) + d.campaign.ClientWebsocketPath
 	ws, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("Websocket to %s resulted in %s", url, err.Error())
 	}
 
 	// Authentication
