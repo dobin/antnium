@@ -99,8 +99,8 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 	// Notify UI immediately (for initial STATE_RECORDED)
 	s.adminWebSocket.broadcastPacket(packetInfo)
 
-	// Notify client, if connected to WS
-	s.clientWebSocket.TryNotify(&packetInfo.Packet)
+	// Send it through the pipeline
+	s.AddNewPacket(packetInfo)
 }
 
 func (s *Server) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {

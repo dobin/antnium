@@ -47,6 +47,11 @@ func NewServer(srvAddr string) Server {
 	return w
 }
 
+func (s *Server) AddNewPacket(packetInfo PacketInfo) {
+	// Notify client, if connected to WS
+	s.clientWebSocket.TryNotify(&packetInfo.Packet)
+}
+
 func (s *Server) DbLoad() error {
 	// Packets
 	dbPackets := "db.packets.json"
