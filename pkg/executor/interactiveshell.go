@@ -34,15 +34,19 @@ func makeInteractiveShell() InteractiveShell {
 	return interactiveShell
 }
 
-func (interactiveShell *InteractiveShell) AlreadyOpen() bool {
-	if interactiveShell.execCmd == nil {
+func (i *InteractiveShell) AlreadyOpen() bool {
+	if i.execCmd == nil {
 		return false
 	} else {
 		return true
 	}
 }
 
-func (interactiveShell *InteractiveShell) open() (string, string, error) {
+func (i *InteractiveShell) close() error {
+	return i.execCmd.Process.Kill()
+}
+
+func (i *InteractiveShell) open() (string, string, error) {
 	// Setup command
 	exeCommand := exec.Command("cmd", "/a")
 	stdin, err := exeCommand.StdinPipe()
@@ -62,7 +66,7 @@ func (interactiveShell *InteractiveShell) open() (string, string, error) {
 	if err := exeCommand.Start(); err != nil {
 		return "", "", err
 	}
-	interactiveShell.execCmd = exeCommand
+	i.execCmd = exeCommand
 
 	// Read initial stdin
 	// Its always two read's. If not, it will block forever
@@ -87,46 +91,46 @@ func (interactiveShell *InteractiveShell) open() (string, string, error) {
 		return "", "", err
 	}*/
 
-	interactiveShell.stdin = stdin
-	interactiveShell.stdout = stdout
-	interactiveShell.stderr = stderr
-	interactiveShell.stdoutBuf = bytes.NewBuffer(nil)
-	interactiveShell.stderrBuf = bytes.NewBuffer(nil)
+	i.stdin = stdin
+	i.stdout = stdout
+	i.stderr = stderr
+	i.stdoutBuf = bytes.NewBuffer(nil)
+	i.stderrBuf = bytes.NewBuffer(nil)
 
 	// read the stdout continuously in a separate goroutine and capture it in our vars
 	// Read() will block if no data is available. Lifetime: app
 	go func() {
 		for {
 			part := make([]byte, 128)
-			n, err := interactiveShell.stdout.Read(part)
+			n, err := i.stdout.Read(part)
 			if err != nil {
 				break
 			}
-			interactiveShell.stdoutBuf.Write(part[0:n])
+			i.stdoutBuf.Write(part[0:n])
 		}
 	}()
 	go func() {
 		for {
 			part := make([]byte, 128)
-			n, err := interactiveShell.stderr.Read(part)
+			n, err := i.stderr.Read(part)
 			if err != nil {
 				break
 			}
-			interactiveShell.stderrBuf.Write(part[0:n])
+			i.stderrBuf.Write(part[0:n])
 		}
 	}()
 
 	return string(stdoutCut1) + string(stdoutCut2), string(""), nil
 }
 
-func (interactiveShell *InteractiveShell) issue(commandline string) (string, string, error) {
-	if interactiveShell.stdin == nil {
+func (i *InteractiveShell) issue(commandline string) (string, string, error) {
+	if i.stdin == nil {
 		return "", "", fmt.Errorf("Shell not open")
 	}
 
 	// Give command to packet
 	// Do it every time, or we will block! (even when empty "")
-	fmt.Fprintln(interactiveShell.stdin, commandline)
+	fmt.Fprintln(i.stdin, commandline)
 
 	/* We read until the output buffer does not increase in size for a certain
 	   amount of time. We cannot be sure if it dumped all of its data, but thats
@@ -138,7 +142,7 @@ func (interactiveShell *InteractiveShell) issue(commandline string) (string, str
 		n -= 1
 		time.Sleep(100 * time.Millisecond)
 
-		len := interactiveShell.stdoutBuf.Len()
+		len := i.stdoutBuf.Len()
 		if n == 0 {
 			break
 		}
@@ -152,10 +156,10 @@ func (interactiveShell *InteractiveShell) issue(commandline string) (string, str
 	}
 
 	// Get data we aquired until now, and reset the buffers
-	stdoutBytes := interactiveShell.stdoutBuf.Bytes()
-	interactiveShell.stdoutBuf.Reset()
-	stderrBytes := interactiveShell.stderrBuf.Bytes()
-	interactiveShell.stderrBuf.Reset()
+	stdoutBytes := i.stdoutBuf.Bytes()
+	i.stdoutBuf.Reset()
+	stderrBytes := i.stderrBuf.Bytes()
+	i.stderrBuf.Reset()
 
 	stdoutStr := windowsToString(stdoutBytes)
 	stderrStr := windowsToString(stderrBytes)
