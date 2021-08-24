@@ -14,7 +14,7 @@ import (
 */
 
 type InteractiveShell struct {
-	execCmd   *exec.Cmd
+	execCmd   *exec.Cmd // nil means closed
 	stdin     io.WriteCloser
 	stdout    io.ReadCloser
 	stderr    io.ReadCloser
@@ -79,7 +79,6 @@ func (i *InteractiveShell) open() (string, string, error) {
 	if err := exeCommand.Start(); err != nil {
 		return "", "", err
 	}
-	i.execCmd = exeCommand
 
 	// Read initial stdin
 	// Its always two read's. If not, it will block forever
@@ -104,6 +103,8 @@ func (i *InteractiveShell) open() (string, string, error) {
 		return "", "", err
 	}*/
 
+	// No errors till here, set it
+	i.execCmd = exeCommand
 	i.stdin = stdin
 	i.stdout = stdout
 	i.stderr = stderr
@@ -111,7 +112,7 @@ func (i *InteractiveShell) open() (string, string, error) {
 	i.stderrBuf = bytes.NewBuffer(nil)
 
 	// read the stdout continuously in a separate goroutine and capture it in our vars
-	// Read() will block if no data is available. Lifetime: app
+	// Read() will block if no data is available. Lifetime: app?
 	go func() {
 		for {
 			part := make([]byte, 128)
@@ -137,23 +138,24 @@ func (i *InteractiveShell) open() (string, string, error) {
 }
 
 func (i *InteractiveShell) issue(commandline string) (string, string, error) {
-	if i.stdin == nil {
+	if i.execCmd == nil || i.stdin == nil {
 		return "", "", fmt.Errorf("Shell not open")
 	}
+	// i.stdin should be set too in this case
 
 	// Give command to packet
 	// Do it every time, or we will block! (even when empty "")
 	fmt.Fprintln(i.stdin, commandline)
 
-	/* We read until the output buffer does not increase in size for a certain
-	   amount of time. We cannot be sure if it dumped all of its data, but thats
-	   how it is.
+	/* We read until the output buffer size does not increase for a certain
+	   amount of time (0.5s).
+	   We cannot be sure if the process dumped all of its data, but thats  how it is.
 	*/
 	prevLen := 0
 	n := 10
 	for {
 		n -= 1
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 
 		len := i.stdoutBuf.Len()
 		if n == 0 {
