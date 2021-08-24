@@ -48,7 +48,6 @@ func (c *Client) Start() {
 	c.Upstream.Connect()
 	go c.Upstream.Start()
 
-	//c.DownstreamManager.StartListeners(s) // FIXME make optional
 	go c.sendPing() // Thread: sendPing
 }
 

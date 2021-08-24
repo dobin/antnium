@@ -43,7 +43,20 @@ func (i *InteractiveShell) AlreadyOpen() bool {
 }
 
 func (i *InteractiveShell) close() error {
-	return i.execCmd.Process.Kill()
+	var execCmd = i.execCmd
+
+	i.execCmd = nil
+	i.stdin = nil
+	i.stdout = nil
+	i.stderr = nil
+	i.stdoutBuf = nil
+	i.stderrBuf = nil
+
+	if execCmd == nil {
+		return nil
+	}
+
+	return execCmd.Process.Kill()
 }
 
 func (i *InteractiveShell) open() (string, string, error) {
