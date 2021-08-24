@@ -20,7 +20,7 @@ func (s *Server) Serve() {
 
 	// Admin Authenticated
 	adminRouter := myRouter.PathPrefix("/admin").Subrouter()
-	adminRouter.Use(GetAdminMiddleware(s.campaign.AdminApiKey))
+	adminRouter.Use(GetAdminMiddleware(s.Campaign.AdminApiKey))
 	adminRouter.HandleFunc("/packets", s.adminListPackets)
 	adminRouter.HandleFunc("/packets/{computerId}", s.adminListPacketsComputerId)
 	adminRouter.HandleFunc("/clients", s.adminListClients)
@@ -39,23 +39,23 @@ func (s *Server) Serve() {
 
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
-	clientRouter.Use(GetClientMiddleware(s.campaign.ApiKey))
-	clientRouter.HandleFunc(s.campaign.PacketGetPath+"{computerId}", s.getPacket) // /getPacket/{computerId}
-	clientRouter.HandleFunc(s.campaign.PacketSendPath, s.sendPacket)              // /sendPacket
+	clientRouter.Use(GetClientMiddleware(s.Campaign.ApiKey))
+	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{computerId}", s.getPacket) // /getPacket/{computerId}
+	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.sendPacket)              // /sendPacket
 	myRouter.HandleFunc("/ws", s.clientWebSocket.wsHandler)
 
 	// Authentication only via packetId parameter
-	myRouter.HandleFunc(s.campaign.FileUploadPath+"{packetId}", s.uploadFile) // /upload/{packetId}
+	myRouter.HandleFunc(s.Campaign.FileUploadPath+"{packetId}", s.uploadFile) // /upload/{packetId}
 	// Authentication based on known filenames
-	myRouter.PathPrefix(s.campaign.FileDownloadPath).Handler(
-		http.StripPrefix(s.campaign.FileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
+	myRouter.PathPrefix(s.Campaign.FileDownloadPath).Handler(
+		http.StripPrefix(s.Campaign.FileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
 	// Authentication based on its a random directory name
 	myRouter.PathPrefix("/webui").Handler(
 		http.StripPrefix("/webui", http.FileServer(http.Dir("./webui/")))) // /static
 
 	// Allow CORS
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:4200", "http://localhost:8080", s.campaign.ServerUrl},
+		AllowedOrigins:   []string{"http://localhost:4200", "http://localhost:8080", s.Campaign.ServerUrl},
 		AllowedHeaders:   []string{"Authorization"},
 		AllowCredentials: true,
 	})

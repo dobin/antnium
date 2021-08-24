@@ -37,48 +37,50 @@ func NewClient() Client {
 	return w
 }
 
-func (s *Client) Start() {
-	if s.Config.InsecureTls {
+func (c *Client) Start() {
+	if c.Config.InsecureTls {
 		// Enable SkipVerify on all instances of http
 		// https://stackoverflow.com/questions/12122159/how-to-do-a-https-request-with-bad-certificate
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
 	// "Connect" to the server, mostly to check if we have internet connection and are not blocked
-	s.Upstream.Connect()
-	go s.Upstream.Start()
+	c.Upstream.Connect()
+	go c.Upstream.Start()
 
-	//s.DownstreamManager.StartListeners(s) // FIXME make optional
-	go s.sendPing() // Thread: sendPing
+	//c.DownstreamManager.StartListeners(s) // FIXME make optional
+	go c.sendPing() // Thread: sendPing
+}
 
+func (c *Client) Loop() {
 	var p model.Packet
 	for {
 		// Block until we receive a packet from server
-		p = <-s.Upstream.Channel()
+		p = <-c.Upstream.Channel()
 
-		p, err := s.DownstreamManager.Do(p)
+		p, err := c.DownstreamManager.Do(p)
 		if err != nil {
 			log.Error("Err: ", err.Error())
 		}
 
 		// Send answer back to server
-		s.Upstream.Channel() <- p
+		c.Upstream.Channel() <- p
 	}
 }
 
 // sendPing is a Thread which tries to send initial ping packet to the server, lifetime: until success
-func (s *Client) sendPing() {
+func (c *Client) sendPing() {
 	arguments := make(model.PacketArgument)
 
 	response := make(model.PacketResponse)
-	response["hostname"] = s.Config.Hostname
-	model.AddArrayToResponse("localIp", s.Config.LocalIps, response)
-	response["arch"] = s.Config.Arch
-	model.AddArrayToResponse("processes", s.Config.Processes, response)
+	response["hostname"] = c.Config.Hostname
+	model.AddArrayToResponse("localIp", c.Config.LocalIps, response)
+	response["arch"] = c.Config.Arch
+	model.AddArrayToResponse("processes", c.Config.Processes, response)
 
-	packet := model.NewPacket("ping", s.Config.ComputerId, "0", arguments, response)
+	packet := model.NewPacket("ping", c.Config.ComputerId, "0", arguments, response)
 	for {
-		err := s.Upstream.SendOutofband(packet)
+		err := c.Upstream.SendOutofband(packet)
 		if err == nil {
 			break // when no error -> success
 		}
@@ -87,7 +89,7 @@ func (s *Client) sendPing() {
 }
 
 // SendDownstreams is used to notify server about any new downstreams
-func (s *Client) SendDownstreams(downstreams []DownstreamInfo) error {
+func (c *Client) SendDownstreams(downstreams []DownstreamInfo) error {
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
 
@@ -97,9 +99,9 @@ func (s *Client) SendDownstreams(downstreams []DownstreamInfo) error {
 		response["info"+idxStr] = downstreamInfo.Info
 	}
 
-	packet := model.NewPacket("downstreams", s.Config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
+	packet := model.NewPacket("downstreams", c.Config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
 
-	err := s.Upstream.SendOutofband(packet)
+	err := c.Upstream.SendOutofband(packet)
 	if err != nil {
 		return err
 	}

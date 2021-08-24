@@ -59,7 +59,7 @@ func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	err = json.Unmarshal(message, &authToken)
 	if err != nil {
-		log.Warn("AdminWebsocket: could not decode auth: %v", message)
+		log.Warnf("AdminWebsocket: could not decode auth: %v", message)
 		return
 	}
 	if string(authToken) == a.adminapiKey {

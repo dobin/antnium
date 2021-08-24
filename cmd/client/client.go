@@ -20,5 +20,6 @@ func main() {
 		c.Campaign.ServerUrl = *flagClientAddr
 	}
 	c.Start()
+	c.Loop()
 
 }

@@ -14,7 +14,7 @@ import (
 
 type Server struct {
 	srvaddr         string
-	campaign        model.Campaign
+	Campaign        model.Campaign
 	coder           model.Coder
 	packetDb        PacketDb
 	clientInfoDb    ClientInfoDb
