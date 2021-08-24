@@ -45,7 +45,7 @@ func MakeAdminWebSocket(adminApiKey string) AdminWebSocket {
 func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Errorf("Websocket: %s", err.Error())
+		log.Errorf("AdminWebsocket: %s", err.Error())
 		return
 	}
 
@@ -54,19 +54,19 @@ func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	var authToken AuthToken
 	_, message, err := ws.ReadMessage()
 	if err != nil {
-		log.Error("Websocket read error")
+		log.Error("AdminWebsocket read error")
 		return
 	}
 	err = json.Unmarshal(message, &authToken)
 	if err != nil {
-		log.Warn("WebSocket: could not decode auth")
+		log.Warn("AdminWebsocket: could not decode auth: %v", message)
 		return
 	}
 	if string(authToken) == a.adminapiKey {
 		// register client as auth succeeded
 		a.clients[ws] = true
 	} else {
-		log.Warn("WebSocket: incorrect key: " + authToken)
+		log.Warn("AdminWebsocket: incorrect key: " + authToken)
 	}
 }
 
@@ -91,7 +91,7 @@ func (a *AdminWebSocket) Distributor() {
 		for client := range a.clients {
 			err := client.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
-				log.Printf("Websocket error: %s", err)
+				log.Printf("AdminWebsocket error: %s", err)
 				client.Close()
 				delete(a.clients, client)
 			}

@@ -28,11 +28,9 @@ func MakeClientWebSocket() ClientWebSocket {
 
 // wsHandler is the entry point for new websocket connections
 func (a *ClientWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
-	log.Info("New WS connection")
-
 	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Errorf("Websocket: %s", err.Error())
+		log.Errorf("ClientWebsocket: %s", err.Error())
 		return
 	}
 
@@ -40,17 +38,17 @@ func (a *ClientWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	var authToken model.ClientWebSocketAuth
 	_, message, err := ws.ReadMessage()
 	if err != nil {
-		log.Error("Websocket read error")
+		log.Error("ClientWebsocket read error")
 		return
 	}
 	err = json.Unmarshal(message, &authToken)
 	if err != nil {
-		log.Errorf("WebSocket: could not decode auth: %v", message)
+		log.Errorf("ClientWebsocket: could not decode auth: %v", message)
 		return
 	}
 
 	if authToken.Key != "antnium" {
-		log.Warn("WebSocket: incorrect key: " + authToken.Key)
+		log.Warn("ClientWebsocket: incorrect key: " + authToken.Key)
 		return
 	}
 	// register client as auth succeeded
