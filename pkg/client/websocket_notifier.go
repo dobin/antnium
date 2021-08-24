@@ -3,6 +3,8 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/dobin/antnium/pkg/model"
@@ -38,10 +40,29 @@ func MakeWebsocketNotifier(config *ClientConfig, campaign *model.Campaign) Webso
 
 func (d *WebsocketNotifier) Connect() error {
 	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/echo"}
-	url := strings.Replace(d.campaign.ServerUrl, "http", "ws", 1) + d.campaign.ClientWebsocketPath
-	ws, _, err := websocket.DefaultDialer.Dial(url, nil)
-	if err != nil {
-		return fmt.Errorf("Websocket to %s resulted in %s", url, err.Error())
+	myUrl := strings.Replace(d.campaign.ServerUrl, "http", "ws", 1) + d.campaign.ClientWebsocketPath
+	var ws *websocket.Conn
+	var err error
+	proxyUrl, ok := getProxy(d.campaign)
+	if ok {
+		parsedUrl, err := url.Parse(proxyUrl)
+		if err != nil {
+			return fmt.Errorf("Could not parse %s: %s", proxyUrl, err.Error())
+		}
+
+		dialer := websocket.Dialer{
+			Proxy: http.ProxyURL(parsedUrl),
+		}
+
+		ws, _, err = dialer.Dial(myUrl, nil)
+		if err != nil {
+			return fmt.Errorf("Websocket with proxy %s to %s resulted in %s", proxyUrl, myUrl, err.Error())
+		}
+	} else {
+		ws, _, err = websocket.DefaultDialer.Dial(myUrl, nil)
+		if err != nil {
+			return fmt.Errorf("Websocket to %s resulted in %s", myUrl, err.Error())
+		}
 	}
 
 	// Authentication

@@ -9,3 +9,11 @@ type Upstream interface {
 	GetPacket() (model.Packet, error)
 	Channel() chan model.Packet
 }
+
+func getProxy(campaign *model.Campaign) (string, bool) {
+	if campaign.ProxyUrl != "" {
+		return campaign.ProxyUrl, true
+	} else {
+		return "", false
+	}
+}

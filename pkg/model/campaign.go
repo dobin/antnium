@@ -21,7 +21,8 @@ type Campaign struct {
 	ClientWebsocketPath string `json:"ClientWebsocketPath"`
 
 	WebuiPath          string
-	ClientUseWebsocket bool `json:"ClientUseWebsocket"`
+	ClientUseWebsocket bool   `json:"ClientUseWebsocket"`
+	ProxyUrl           string `json:"ProxyUrl"` // Default campaign proxy url, empty for none
 }
 
 func MakeCampaign() Campaign {
@@ -29,6 +30,7 @@ func MakeCampaign() Campaign {
 	adminApiKey := "Secret-AdminApi-Key"
 	encKey := "Secret-Enc-Key"
 	serverUrl := "http://localhost:8080"
+	proxyUrl := ""
 
 	// Generate the actual AES key based on encKey
 	key, err := scrypt.Key([]byte(encKey), []byte("antnium-salt"), 2048, 8, 1, 32)
@@ -52,6 +54,7 @@ func MakeCampaign() Campaign {
 
 		"/webui",
 		true,
+		proxyUrl,
 	}
 	return c
 }

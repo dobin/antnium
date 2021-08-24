@@ -37,6 +37,7 @@ func TestServerClientIntegrationHttp(t *testing.T) {
 	// create client, receive the packet we added above
 	// This tests most of the stuff (encryption, encoding, campaign data, server paths and more)
 	c := client.NewClient()
+	c.Campaign.ProxyUrl = "" // Always disable proxy
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Config.ComputerId = computerId
 	packet, err := c.Upstream.GetPacket()
@@ -69,6 +70,7 @@ func TestServerClientIntegrationHttpAndWebsocket(t *testing.T) {
 
 	// Let the client connect
 	c := client.NewClient()
+	c.Campaign.ProxyUrl = "" // Always disable proxy
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Config.ComputerId = computerId
 
@@ -169,6 +171,7 @@ func TestServerAuthClient(t *testing.T) {
 	go s.Serve()
 
 	c := client.NewClient()
+	c.Campaign.ProxyUrl = "" // Always disable proxy
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Config.ComputerId = computerId
 
