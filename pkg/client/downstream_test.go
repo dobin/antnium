@@ -33,7 +33,7 @@ func TestDownstreamLocaltcp(t *testing.T) {
 
 	fakeUpstream := fakeUpstream{}
 	client.Upstream = &fakeUpstream // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
-	client.DownstreamManager.StartListeners(&client)
+	client.DownstreamManager.StartListeners()
 
 	// Downstream did not yet connect, this should result an error
 	packet := makeTestPacket()

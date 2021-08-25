@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/dobin/antnium/pkg/model"
@@ -160,6 +162,7 @@ func (d *UpstreamHttp) sendPacket(packet model.Packet) error {
 
 	// Setup response
 	packet.ComputerId = d.config.ComputerId
+	packet.PacketId = strconv.Itoa(int(rand.Uint64()))
 
 	log.WithFields(log.Fields{
 		"computerId":   packet.ComputerId,

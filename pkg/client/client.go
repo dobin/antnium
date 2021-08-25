@@ -26,7 +26,7 @@ func NewClient() Client {
 	config := MakeClientConfig()
 	campaign := model.MakeCampaign()
 	upstream := MakeUpstreamHttp(&config, &campaign)
-	downstreamManager := MakeDownstreamManager()
+	downstreamManager := MakeDownstreamManager(upstream)
 
 	w := Client{
 		&config,

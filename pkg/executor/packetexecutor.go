@@ -53,10 +53,9 @@ func (p *PacketExecutor) Execute(packet model.Packet) (model.Packet, error) {
 		packet.Response, err = p.actionInteractiveShellIssue(packet.Arguments)
 	} else if packet.PacketType == "iClose" {
 		packet.Response, err = p.actionInteractiveShellClose(packet.Arguments)
-	} else if packet.PacketType == "downstreamStart" {
-		packet.Response, err = p.actionDownstreamStart(packet.Arguments)
 	} else {
-		packet.Response["response"] = "packet not found: " + packet.PacketType
+		packet.Response = make(model.PacketResponse)
+		packet.Response["err"] = "packet type not known: " + packet.PacketType
 	}
 
 	// Add any errors to the packet response
@@ -105,17 +104,6 @@ func (p *PacketExecutor) actionInteractiveShellIssue(packetArgument model.Packet
 
 	ret["stdout"] = stdout
 	ret["stderr"] = stderr
-
-	return ret, nil
-}
-
-func (p *PacketExecutor) actionDownstreamStart(packetArgument model.PacketArgument) (model.PacketResponse, error) {
-	ret := make(model.PacketResponse)
-
-	//p.DownstreamManager.StartListeners(s) // FIXME make optional
-
-	err := p.interactiveShell.close()
-	ret["err"] = err.Error()
 
 	return ret, nil
 }

@@ -20,9 +20,7 @@ type DownstreamInfoTcp struct {
 type DownstreamInfoTcpMap map[string]DownstreamInfoTcp
 
 type DownstreamLocaltcp struct {
-	listenAddr     string // which TCP port address we listen on
-	packetExecutor executor.PacketExecutor
-
+	listenAddr       string               // which TCP port address we listen on
 	downstreams      DownstreamInfoTcpMap // all ever accepted connections
 	downstreamsMutex *sync.Mutex          // downstreams map updated via startServer() thread
 }
@@ -35,7 +33,6 @@ func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
 
 	u := DownstreamLocaltcp{
 		listenAddr,
-		executor.MakePacketExecutor(),
 		make(DownstreamInfoTcpMap, 0),
 		&sync.Mutex{},
 	}
