@@ -99,19 +99,23 @@ func (d *DownstreamLocaltcp) DownstreamList() []DownstreamInfo {
 }
 
 // startServer is a thread which handles incoming downstream clients and notify parent via channel, lifetime: app
-func (d *DownstreamLocaltcp) startServer(downstreamLocaltcpChannel chan struct{}) {
+func (d *DownstreamLocaltcp) startServer() (net.Listener, error) {
 	log.Info("Start Downstream: LocalTcp on " + d.listenAddr)
 	ln, err := net.Listen("tcp", d.listenAddr)
 	if err != nil {
-		log.Error("Error: " + err.Error())
-		// TODO: Handle error
+		log.Errorf("Error: %s", err.Error())
+		return nil, err
 	}
 
+	return ln, nil
+}
+
+func (d *DownstreamLocaltcp) loop(ln net.Listener, downstreamLocaltcpChannel chan struct{}) {
 	n := 0
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			log.Error("Error: " + err.Error())
+			log.Error("Error2: " + err.Error())
 			// TODO: Handle error
 			continue
 		}

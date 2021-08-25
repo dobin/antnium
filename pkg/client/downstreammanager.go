@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -83,9 +84,13 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 // startListeners will set up all downstreams which have a listening component as threads
 func (dm *DownstreamManager) StartListeners() (string, error) {
 	// Thread: new downstreams via downstreamLocaltcpChannel
-	go dm.downstreamLocaltcp.startServer(dm.downstreamLocaltcpChannel)
+	ln, err := dm.downstreamLocaltcp.startServer()
+	if err != nil {
+		return "", err
+	}
+	go dm.downstreamLocaltcp.loop(ln, dm.downstreamLocaltcpChannel)
 
-	// Thread: receive new downstreams via local tcp, lifetime: app
+	// Thread: receive new downstreams via local tcp, lifetime: app?
 	go func() {
 		for {
 			// Wait for newly announced TCP downstreams
@@ -120,7 +125,7 @@ func (dm *DownstreamManager) SendDownstreams() {
 		response["name"+idxStr] = downstreamInfo.Name
 		response["info"+idxStr] = downstreamInfo.Info
 	}
-	packet := model.NewPacket("downstreams", "", "", arguments, response)
+	packet := model.NewPacket("downstreams", "", strconv.Itoa(int(rand.Uint64())), arguments, response)
 
 	err := dm.upstream.SendOutofband(packet)
 	if err != nil {
