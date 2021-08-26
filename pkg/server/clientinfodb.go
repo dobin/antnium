@@ -22,16 +22,15 @@ func (db *ClientInfoDb) updateFor(computerId string, ip string) {
 	if _, ok := db.clientInfoDb[computerId]; !ok {
 		// Init, without ping (misses a lot of data)
 		db.clientInfoDb[computerId] = &ClientInfo{
-			computerId,
-			time.Now(),
-			time.Now(),
-			ip,
+			ComputerId: computerId,
+			FirstSeen:  time.Now(),
+			LastSeen:   time.Now(),
+			LastIp:     ip,
 
-			"",
-			nil,
-			"",
-			nil,
-			"",
+			Hostname:  "",
+			LocalIps:  nil,
+			Arch:      "",
+			Processes: nil,
 		}
 	} else {
 		// Update
@@ -44,16 +43,15 @@ func (db *ClientInfoDb) updateFromPing(computerId, ip string, response model.Pac
 	if _, ok := db.clientInfoDb[computerId]; !ok {
 		// Init
 		db.clientInfoDb[computerId] = &ClientInfo{
-			computerId,
-			time.Now(),
-			time.Now(),
-			ip,
+			ComputerId: computerId,
+			FirstSeen:  time.Now(),
+			LastSeen:   time.Now(),
+			LastIp:     ip,
 
-			"",
-			nil,
-			"",
-			nil,
-			"",
+			Hostname:  "",
+			LocalIps:  nil,
+			Arch:      "",
+			Processes: nil,
 		}
 	}
 
@@ -62,13 +60,11 @@ func (db *ClientInfoDb) updateFromPing(computerId, ip string, response model.Pac
 	localIps := model.ResponseToArray("localIp", response)
 	arch := response["arch"]
 	processes := model.ResponseToArray("processes", response)
-	InsecureTls := response["InsecureTls"]
 
 	db.clientInfoDb[computerId].Hostname = hostname
 	db.clientInfoDb[computerId].LocalIps = localIps
 	db.clientInfoDb[computerId].Arch = arch
 	db.clientInfoDb[computerId].Processes = processes
-	db.clientInfoDb[computerId].InsecureTls = InsecureTls
 }
 
 func (db *ClientInfoDb) getAsList() []ClientInfo {

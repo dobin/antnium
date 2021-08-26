@@ -38,11 +38,10 @@ func NewClient() Client {
 }
 
 func (c *Client) Start() {
-	if c.Config.InsecureTls {
-		// Enable SkipVerify on all instances of http
-		// https://stackoverflow.com/questions/12122159/how-to-do-a-https-request-with-bad-certificate
-		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
+	// Connect even with invalid TLS certificates (e.g. Mitm proxy)
+	// by enable SkipVerify on all instances of http
+	//   https://stackoverflow.com/questions/12122159/how-to-do-a-https-request-with-bad-certificate
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	// "Connect" to the server, mostly to check if we have internet connection and are not blocked
 	c.Upstream.Connect()

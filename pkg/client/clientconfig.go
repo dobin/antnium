@@ -16,8 +16,6 @@ type ClientConfig struct {
 	LocalIps   []string
 	Arch       string
 	Processes  []string
-
-	InsecureTls bool // If we should accept invalid TLS certs
 }
 
 func MakeClientConfig() ClientConfig {
@@ -79,12 +77,11 @@ func MakeClientConfig() ClientConfig {
 	// https://github.com/denisbrodbeck/machineid
 
 	db := ClientConfig{
-		xid.New().String(),
-		hostname,
-		localIps,
-		arch,
-		processList,
-		true,
+		ComputerId: xid.New().String(),
+		Hostname:   hostname,
+		LocalIps:   localIps,
+		Arch:       arch,
+		Processes:  processList,
 	}
 	return db
 }
