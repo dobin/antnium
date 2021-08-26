@@ -141,30 +141,32 @@ func (i *InteractiveShell) issue(commandline string) (string, string, error) {
 	if i.execCmd == nil || i.stdin == nil {
 		return "", "", fmt.Errorf("Shell not open")
 	}
-	// i.stdin should be set too in this case
 
 	// Give command to packet
 	// Do it every time, or we will block! (even when empty "")
 	fmt.Fprintln(i.stdin, commandline)
 
 	/* We read until the output buffer size does not increase for a certain
-	   amount of time (0.5s).
+	   amount of time (max 0.5s).
 	   We cannot be sure if the process dumped all of its data, but thats  how it is.
 	*/
 	prevLen := 0
 	n := 10
 	for {
 		n -= 1
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 
-		len := i.stdoutBuf.Len()
 		if n == 0 {
+			// Max count reached (long lasting process with lots of output?)
 			break
 		}
+		len := i.stdoutBuf.Len()
 		if len == 0 {
+			// No new data, wait for it
 			continue
 		}
 		if len == prevLen {
+			// Same amount of data after a sleep, lets take it
 			break
 		}
 		prevLen = len
@@ -175,7 +177,6 @@ func (i *InteractiveShell) issue(commandline string) (string, string, error) {
 	i.stdoutBuf.Reset()
 	stderrBytes := i.stderrBuf.Bytes()
 	i.stderrBuf.Reset()
-
 	stdoutStr := windowsToString(stdoutBytes)
 	stderrStr := windowsToString(stderrBytes)
 
