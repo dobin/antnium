@@ -30,6 +30,28 @@ func NewServer(srvAddr string) Server {
 	adminWebsocket := MakeAdminWebSocket(campaign.AdminApiKey)
 	clientWebsocket := MakeClientWebSocket()
 
+	// Clients connected via websocket do not send regular ping packets (that's the idea of it)
+	// Sadly this makes LastSeen useless - but the user wants to know if the client is still connected.
+	// Here we regularly check the clients connected to ClientWebsocket, and update their LastSeen
+	// Lifetime: App
+	go func() {
+		for {
+			time.Sleep(10 * time.Second)
+			for computerId, conn := range clientWebsocket.clients {
+				if conn == nil {
+					continue
+				}
+				clientInfoDb.updateFor(computerId, conn.RemoteAddr().String())
+			}
+
+			// Todo: When to quit?
+		}
+	}()
+
+	// Init random for packet id generation
+	// Doesnt need to be secure
+	rand.Seed(time.Now().Unix())
+
 	w := Server{
 		srvAddr,
 		campaign,
@@ -39,10 +61,6 @@ func NewServer(srvAddr string) Server {
 		adminWebsocket,
 		clientWebsocket,
 	}
-
-	// Init random for packet id generation
-	// Doesnt need to be secure
-	rand.Seed(time.Now().Unix())
 
 	return w
 }

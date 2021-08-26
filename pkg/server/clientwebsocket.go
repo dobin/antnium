@@ -10,7 +10,7 @@ import (
 )
 
 type ClientWebSocket struct {
-	clients    map[string]*websocket.Conn
+	clients    map[string]*websocket.Conn // ComputerId:WebsocketConnection
 	wsUpgrader websocket.Upgrader
 }
 
@@ -46,21 +46,39 @@ func (a *ClientWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("ClientWebsocket: could not decode auth: %v", message)
 		return
 	}
-
 	if authToken.Key != "antnium" {
 		log.Warn("ClientWebsocket: incorrect key: " + authToken.Key)
 		return
 	}
+
 	// register client as auth succeeded
 	a.clients[authToken.ComputerId] = ws
+
+	// Thread which reads from the connection, to:
+	// * Fulfill Websocket requirement
+	// * Detect closed websocket connections
+	// See https://pkg.go.dev/github.com/gorilla/websocket?utm_source=godoc#hdr-Control_Messages
+	// Lifetime: Websocket connection
+	go func() {
+		for {
+			if _, _, err := ws.NextReader(); err != nil {
+				ws.Close()
+				a.clients[authToken.ComputerId] = nil
+				break
+			}
+		}
+	}()
 }
 
 func (a *ClientWebSocket) TryNotify(packet *model.Packet) {
-	client, ok := a.clients[packet.ComputerId]
+	clientConn, ok := a.clients[packet.ComputerId]
 	if !ok {
 		// All ok, not connected to ws
 		return
 	}
-	client.WriteMessage(websocket.TextMessage, []byte("notification"))
+	err := clientConn.WriteMessage(websocket.TextMessage, []byte("notification"))
+	if err != nil {
+		log.Infof("Websocket for host %s closed when trying to write: %s", packet.ComputerId, err.Error())
+	}
 	log.Infof("Notified: %s about new packet", packet.ComputerId)
 }
