@@ -7,12 +7,12 @@ runserver:
 runclient: 
 	go run cmd/client/client.go
 
-runexecutor:
-	go run cmd/executor/executor.go 
+rundownstreamclient:
+	go run cmd/downstreamclient/downstreamclient.go 
 
 
 # all
-compile: server client executor
+compile: server client downstreamclient
 	
 server:
 	go build cmd/server/server.go 
@@ -22,8 +22,8 @@ client:
 	GOOS=windows GOARCH=amd64 go build -o client.exe cmd/client/client.go
 	
 
-executor:
-	go build cmd/executor/executor.go 
+downstreamclient:
+	go build cmd/downstreamclient/downstreamclient.go 
 
 
 # Deploy
@@ -37,4 +37,4 @@ test:
 
 
 clean:
-	rm server.exe client.exe executor.exe
+	rm server.exe client.exe downstreamclient.exe

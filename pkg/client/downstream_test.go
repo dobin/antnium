@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dobin/antnium/pkg/executor"
+	"github.com/dobin/antnium/pkg/downstreamclient"
 	"github.com/dobin/antnium/pkg/model"
 )
 
@@ -45,8 +45,8 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	}
 
 	// Connect downstream
-	executor := executor.MakeExecutor()
-	go executor.StartClient(downstreamTcpAddr)
+	downstreamClient := downstreamclient.MakeDownstreamClient()
+	go downstreamClient.StartClient(downstreamTcpAddr)
 	// Rudimentary way to wait for client to connect
 	n := 0
 	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 1 {

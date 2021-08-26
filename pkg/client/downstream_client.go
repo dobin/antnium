@@ -6,18 +6,18 @@ import (
 )
 
 type DownstreamClient struct {
-	packetExecutor executor.PacketExecutor
+	executor executor.Executor
 }
 
 func MakeDownstreamClient() DownstreamClient {
 	u := DownstreamClient{
-		executor.MakePacketExecutor(),
+		executor.MakeExecutor(),
 	}
 	return u
 }
 
 func (d *DownstreamClient) do(packet model.Packet) (model.Packet, error) {
-	packet, err := d.packetExecutor.Execute(packet)
+	packet, err := d.executor.Execute(packet)
 	if err != nil {
 		packet.Response["error"] = err.Error()
 		return packet, err
