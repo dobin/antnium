@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -53,6 +54,8 @@ func (p *Executor) Execute(packet model.Packet) (model.Packet, error) {
 		packet.Response, err = p.actionInteractiveShellIssue(packet.Arguments)
 	} else if packet.PacketType == "iClose" {
 		packet.Response, err = p.actionInteractiveShellClose(packet.Arguments)
+	} else if packet.PacketType == "dir" {
+		packet.Response, err = p.actionDir(packet.Arguments)
 	} else {
 		packet.Response = make(model.PacketResponse)
 		packet.Response["err"] = "packet type not known: " + packet.PacketType
@@ -258,4 +261,27 @@ func MakePacketArgumentFrom(packetArgument model.PacketArgument) (string, []stri
 	}
 
 	return executable, args, nil
+}
+
+func (p *Executor) actionDir(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+	ret := make(model.PacketResponse)
+
+	// Check and transform input
+	path, ok := packetArgument["path"]
+	if !ok {
+		return ret, fmt.Errorf("No argument 'path' given")
+	}
+
+	dirList, err := model.ListDirectory(path)
+	if err != nil {
+		return ret, err
+	}
+	json, err := json.Marshal(dirList)
+	if err != nil {
+		return ret, err
+	}
+
+	ret["filelist"] = string(json)
+
+	return ret, nil
 }
