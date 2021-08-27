@@ -2,3 +2,5 @@
 experimental
 *.exe
 db.*
+upload/*
+static/*
