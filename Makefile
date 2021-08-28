@@ -20,21 +20,32 @@ server:
 client:
 	GOOS=linux GOARCH=amd64 go build -o client.elf cmd/client/client.go
 	GOOS=windows GOARCH=amd64 go build -o client.exe cmd/client/client.go
-	
+	GOOS=darwin GOARCH=amd64 go build -o client.darwin cmd/client/client.go
 
 downstreamclient:
-	go build cmd/downstreamclient/downstreamclient.go 
+	GOOS=windows GOARCH=amd64 go build -o downstreamclient.exe cmd/downstreamclient/downstreamclient.go 
 
 
-# Deploy
-deploy:
-	go build -ldflags="-s -w" cmd/client/client.go
+deploy: compile
+	# client
+	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o client.elf cmd/client/client.go
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o client.exe cmd/client/client.go
+	GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o client.darwin cmd/client/client.go
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o downstreamclient.exe cmd/downstreamclient/downstreamclient.go 
+
+	# server
+	GOOS=linux GOARCH=amd64 go build cmd/server/server.go 
+
+	# directory structure
+	mkdir -p build/static build/upload
+	cp client.elf client.exe client.darwin build/static/
+	cp downstreamclient.exe build/static/
+	cp server build/
 
 
 # Utilities
 test:
 	go test ./...
 
-
 clean:
-	rm server.exe client.exe downstreamclient.exe
+	rm server.exe client.exe client.elf client.darwin downstreamclient.exe
