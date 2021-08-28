@@ -31,9 +31,9 @@ func MyExec(packetArgument model.PacketArgument) ([]byte, []byte, int, int, erro
 	var err error
 	err = nil
 
-	// Create a new context and add a timeout to it
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel() // The cancel should be deferred so resources are cleaned up
+	processTimeout := 10 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), processTimeout)
+	defer cancel()
 
 	shellType, ok := packetArgument["shelltype"]
 	if !ok {
