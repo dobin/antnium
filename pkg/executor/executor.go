@@ -152,7 +152,6 @@ func (p *Executor) actionExec(packetArgument model.PacketArgument) (model.Packet
 	ret["exitCode"] = strconv.Itoa(exitCode)
 
 	return ret, err
-
 }
 
 func (p *Executor) actionFiledownload(packetArgument model.PacketArgument) (model.PacketResponse, error) {

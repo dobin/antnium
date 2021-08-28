@@ -90,6 +90,12 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Infof("<- Admin: %v", packet)
+
+	if packet.ComputerId == "" || packet.PacketId == "" || packet.PacketType == "" {
+		log.Error("Missing data in packet: %v", packet)
+		return
+	}
+
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
 
 	// Add to DB and get updated one
