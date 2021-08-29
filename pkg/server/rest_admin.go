@@ -92,7 +92,7 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 	log.Infof("<- Admin: %v", packet)
 
 	if packet.ComputerId == "" || packet.PacketId == "" || packet.PacketType == "" {
-		log.Error("Missing data in packet: %v", packet)
+		log.Errorf("Missing data in packet: %v", packet)
 		return
 	}
 

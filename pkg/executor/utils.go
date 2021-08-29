@@ -58,7 +58,7 @@ func MyExec(packetArgument model.PacketArgument) ([]byte, []byte, int, int, erro
 		cmd = exec.CommandContext(ctx, "powershell.exe", "-ExecutionPolicy", "Bypass", "-C", commandStr)
 		cmd.SysProcAttr = getSysProcAttrs()
 	} else { // "raw"
-		executable, args, err := MakePacketArgumentFrom(packetArgument)
+		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Invalid packet arguments")
 		}

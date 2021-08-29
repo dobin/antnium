@@ -69,3 +69,25 @@ func TestResponseB(t *testing.T) {
 		t.Error("Error")
 	}
 }
+
+func TestArgs(t *testing.T) {
+	packetArgument := make(PacketArgument, 3)
+
+	packetArgument["executable"] = "e"
+	packetArgument["param0"] = "a0"
+	packetArgument["param1"] = "a1"
+
+	executable, args, err := MakePacketArgumentFrom(packetArgument)
+	if err != nil {
+		t.Errorf("Make error")
+	}
+	if executable != "e" {
+		t.Errorf("executable error")
+	}
+	if args[0] != "a0" {
+		t.Errorf("arg0 error")
+	}
+	if args[1] != "a1" {
+		t.Errorf("arg1 error")
+	}
+}

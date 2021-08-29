@@ -1,7 +1,9 @@
 package model
 
 import (
+	"fmt"
 	"io/ioutil"
+	"strconv"
 	"time"
 )
 
@@ -32,4 +34,28 @@ func ListDirectory(path string) ([]DirEntry, error) {
 	}
 
 	return dirList, err
+}
+
+func MakePacketArgumentFrom(packetArgument PacketArgument) (string, []string, error) {
+	args := make([]string, 0)
+
+	executable, ok := packetArgument["executable"]
+	if !ok {
+		return "", nil, fmt.Errorf("No executable given")
+	}
+
+	n := 0
+	for {
+		nr := strconv.Itoa(n)
+		key := "param" + nr
+		_, ok := packetArgument[key]
+		if ok {
+			args = append(args, packetArgument[key])
+		} else {
+			break
+		}
+		n = n + 1
+	}
+
+	return executable, args, nil
 }

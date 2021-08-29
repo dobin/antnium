@@ -222,30 +222,6 @@ func (p *Executor) actionFileupload(packetArgument model.PacketArgument) (model.
 	return ret, nil
 }
 
-func MakePacketArgumentFrom(packetArgument model.PacketArgument) (string, []string, error) {
-	args := make([]string, 0)
-
-	executable, ok := packetArgument["executable"]
-	if !ok {
-		return "", nil, fmt.Errorf("No executable given")
-	}
-
-	n := 0
-	for {
-		nr := strconv.Itoa(n)
-		key := "param" + nr
-		_, ok := packetArgument[key]
-		if ok {
-			args = append(args, packetArgument[key])
-		} else {
-			break
-		}
-		n = n + 1
-	}
-
-	return executable, args, nil
-}
-
 func (p *Executor) actionDir(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 
