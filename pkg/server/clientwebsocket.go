@@ -76,9 +76,14 @@ func (a *ClientWebSocket) TryNotify(packet *model.Packet) {
 		// All ok, not connected to ws
 		return
 	}
+	if clientConn == nil {
+		log.Warn("WS Client connection nil")
+		return
+	}
 	err := clientConn.WriteMessage(websocket.TextMessage, []byte("notification"))
 	if err != nil {
 		log.Infof("Websocket for host %s closed when trying to write: %s", packet.ComputerId, err.Error())
+		return
 	}
 	log.Infof("Client %s notified about new packet via WS", packet.ComputerId)
 }
