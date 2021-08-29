@@ -162,12 +162,13 @@ func (d *UpstreamHttp) sendPacket(packet model.Packet) error {
 	packet.ComputerId = d.config.ComputerId
 
 	log.WithFields(log.Fields{
-		"computerId":   packet.ComputerId,
-		"packetId":     packet.PacketId,
-		"downstreamId": packet.DownstreamId,
-		"packetType":   packet.PacketType,
-		"argumetns":    packet.Arguments,
-	}).Info("Send to Server")
+		"1_computerId":   packet.ComputerId,
+		"2_packetId":     packet.PacketId,
+		"3_downstreamId": packet.DownstreamId,
+		"4_packetType":   packet.PacketType,
+		"5_arguments":    packet.Arguments,
+		"6_response":     "...",
+	}).Info("Send")
 
 	data, err := d.coder.EncodeData(packet)
 	if err != nil {

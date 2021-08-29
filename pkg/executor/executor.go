@@ -32,8 +32,12 @@ func (p *Executor) Execute(packet model.Packet) (model.Packet, error) {
 	var err error
 
 	log.WithFields(log.Fields{
-		"packet": packet,
-	}).Info("Execute")
+		"1_computerId":   packet.ComputerId,
+		"2_packetId":     packet.PacketId,
+		"3_downstreamId": packet.DownstreamId,
+		"4_packetType":   packet.PacketType,
+		"5_arguments":    packet.Arguments,
+	}).Info("Exec")
 
 	if packet.PacketType == "ping" {
 		packet.Response, err = p.actionPing(packet.Arguments)

@@ -80,5 +80,5 @@ func (a *ClientWebSocket) TryNotify(packet *model.Packet) {
 	if err != nil {
 		log.Infof("Websocket for host %s closed when trying to write: %s", packet.ComputerId, err.Error())
 	}
-	log.Infof("Notified: %s about new packet", packet.ComputerId)
+	log.Infof("Client %s notified about new packet via WS", packet.ComputerId)
 }

@@ -70,18 +70,18 @@ func MyExec(packetArgument model.PacketArgument) ([]byte, []byte, int, int, erro
 	stdOut, err = cmd.Output()
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
-			log.Infof("Case A: %s", err.Error())
+			log.Debugf("Case A: %s", err.Error())
 			stdErr = exitError.Stderr
 			pid = exitError.Pid()
 			exitCode = exitError.ProcessState.ExitCode()
 		} else {
-			log.Infof("Case B: %s", err.Error())
+			log.Debugf("Case B: %s", err.Error())
 			pid = 0
 			exitCode = cmd.ProcessState.ExitCode()
 
 		}
 	} else {
-		log.Infof("Case C")
+		log.Debugf("Case C")
 		pid = cmd.ProcessState.Pid()
 		exitCode = cmd.ProcessState.ExitCode()
 	}

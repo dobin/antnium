@@ -36,9 +36,15 @@ func (s *Server) getPacket(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+
 	log.WithFields(log.Fields{
-		"packet": packetInfo.Packet,
-	}).Info("Get packet")
+		"1_computerId":   packetInfo.Packet.ComputerId,
+		"2_packetId":     packetInfo.Packet.PacketId,
+		"3_downstreamId": packetInfo.Packet.DownstreamId,
+		"4_packetType":   packetInfo.Packet.PacketType,
+		"5_arguments":    packetInfo.Packet.Arguments,
+	}).Info("ToClient   ")
+
 	fmt.Fprint(rw, string(jsonData))
 }
 
@@ -54,13 +60,23 @@ func (s *Server) sendPacket(rw http.ResponseWriter, r *http.Request) {
 		log.Error("Could not decode")
 		return
 	}
+	/*
+		log.WithFields(log.Fields{
+			"computerId":   packet.ComputerId,
+			"packetId":     packet.PacketId,
+			"downstreamId": packet.DownstreamId,
+			"packetType":   packet.PacketType,
+			"argumetns":    packet.Arguments,
+		}).Info("Recv from Client")
+	*/
 	log.WithFields(log.Fields{
-		"computerId":   packet.ComputerId,
-		"packetId":     packet.PacketId,
-		"downstreamId": packet.DownstreamId,
-		"packetType":   packet.PacketType,
-		"argumetns":    packet.Arguments,
-	}).Info("Recv from Client")
+		"1_computerId":   packet.ComputerId,
+		"2_packetId":     packet.PacketId,
+		"3_downstreamId": packet.DownstreamId,
+		"4_packetType":   packet.PacketType,
+		"5_arguments":    packet.Arguments,
+		"6_response":     "...",
+	}).Info("FromClient ")
 
 	if packet.PacketType == "ping" {
 		s.clientInfoDb.updateFromPing(packet.ComputerId, r.RemoteAddr, packet.Response)

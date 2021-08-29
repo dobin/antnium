@@ -89,7 +89,14 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		}).Info("Error add packet")
 		return
 	}
-	log.Infof("<- Admin: %v", packet)
+
+	log.WithFields(log.Fields{
+		"1_computerId":   packet.ComputerId,
+		"2_packetId":     packet.PacketId,
+		"3_downstreamId": packet.DownstreamId,
+		"4_packetType":   packet.PacketType,
+		"5_arguments":    packet.Arguments,
+	}).Info("Add Packet ")
 
 	if packet.ComputerId == "" || packet.PacketId == "" || packet.PacketType == "" {
 		log.Errorf("Missing data in packet: %v", packet)
