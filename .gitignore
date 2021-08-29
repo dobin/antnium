@@ -4,3 +4,5 @@ experimental
 db.*
 upload/*
 static/*
+build/*
+client.*
