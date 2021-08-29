@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	flagServerUrl := flag.String("addr", "", "")
-	flagProxyUrl := flag.String("proxy", "", "")
+	flagServerUrl := flag.String("addr", "", "ENV: PROXY")
+	flagProxyUrl := flag.String("proxy", "", "ENV: ADDR")
 	flag.Parse()
 
 	fmt.Println("Antnium 0.1")
