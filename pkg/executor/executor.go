@@ -2,8 +2,10 @@ package executor
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -170,6 +172,9 @@ func (p *Executor) actionFiledownload(packetArgument model.PacketArgument) (mode
 	if !ok {
 		return ret, fmt.Errorf("No argument 'destination' given")
 	}
+	if _, err := os.Stat(destination); !errors.Is(err, fs.ErrNotExist) {
+		return ret, fmt.Errorf("Destination %s already exists", destination)
+	}
 
 	// Download and write file
 	resp, err := http.Get(remoteurl)
@@ -177,6 +182,7 @@ func (p *Executor) actionFiledownload(packetArgument model.PacketArgument) (mode
 		return ret, err
 	}
 	defer resp.Body.Close()
+
 	out, err := os.Create(destination)
 	if err != nil {
 		return ret, err
@@ -202,6 +208,9 @@ func (p *Executor) actionFileupload(packetArgument model.PacketArgument) (model.
 	source, ok := packetArgument["source"]
 	if !ok {
 		return ret, fmt.Errorf("No argument 'source' given")
+	}
+	if _, err := os.Stat(source); errors.Is(err, fs.ErrNotExist) {
+		return ret, fmt.Errorf("file %s does not exists", source)
 	}
 
 	client := &http.Client{}
