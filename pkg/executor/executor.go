@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"strconv"
 
 	"github.com/dobin/antnium/pkg/model"
@@ -144,31 +143,15 @@ func (p *Executor) actionTest(packetArgument model.PacketArgument) (model.Packet
 func (p *Executor) actionExec(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 
-	// Check and transform input
-	_, ok := packetArgument["executable"]
-	if !ok {
-		return ret, fmt.Errorf("No argument 'executable' given")
-	}
-	executable, args, err := MakePacketArgumentFrom(packetArgument)
-	if err != nil {
-		return ret, fmt.Errorf("Invalid packet arguments")
-	}
+	// Check and transform input done in there sadly
+	stdout, stderr, pid, exitCode, err := MyExec(packetArgument)
 
-	// Execute and return result
-	cmd := exec.Command(executable, args...)
-	stdout, err := cmd.CombinedOutput() // also includes stderr for now
-	if err != nil {
-		// If program didnt exit nicely
-		ret["stdout"] = windowsToString(stdout)
-		return ret, err
-	} else {
-		if len(stdout) == 0 {
-			ret["stdout"] = "<no stdout, success>"
-		} else {
-			ret["stdout"] = windowsToString(stdout)
-		}
-		return ret, nil
-	}
+	ret["stdout"] = windowsToString(stdout)
+	ret["stderr"] = windowsToString(stderr)
+	ret["pid"] = strconv.Itoa(pid)
+	ret["exitCode"] = strconv.Itoa(exitCode)
+
+	return ret, err
 }
 
 func (p *Executor) actionFiledownload(packetArgument model.PacketArgument) (model.PacketResponse, error) {

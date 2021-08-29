@@ -92,7 +92,8 @@ func (d fakeUpstream) GetPacket() (model.Packet, error) {
 
 func makeTestPacket() model.Packet {
 	arguments := make(model.PacketArgument)
-	arguments["executable"] = "hostname"
+	arguments["shelltype"] = "cmd"
+	arguments["commandline"] = "hostname"
 	response := make(model.PacketResponse)
 	c := model.NewPacket("exec", "23", "42", arguments, response)
 	return c
