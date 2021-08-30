@@ -27,10 +27,12 @@ func (db *ClientInfoDb) updateFor(computerId string, ip string) {
 			LastSeen:   time.Now(),
 			LastIp:     ip,
 
-			Hostname:  "",
-			LocalIps:  nil,
-			Arch:      "",
-			Processes: nil,
+			Hostname:   "",
+			LocalIps:   nil,
+			Arch:       "",
+			Processes:  nil,
+			IsAdmin:    "",
+			IsElevated: "",
 		}
 	} else {
 		// Update
@@ -48,10 +50,12 @@ func (db *ClientInfoDb) updateFromPing(computerId, ip string, response model.Pac
 			LastSeen:   time.Now(),
 			LastIp:     ip,
 
-			Hostname:  "",
-			LocalIps:  nil,
-			Arch:      "",
-			Processes: nil,
+			Hostname:   "",
+			LocalIps:   nil,
+			Arch:       "",
+			Processes:  nil,
+			IsAdmin:    "",
+			IsElevated: "",
 		}
 	}
 
@@ -59,12 +63,16 @@ func (db *ClientInfoDb) updateFromPing(computerId, ip string, response model.Pac
 	hostname, _ := response["hostname"]
 	localIps := model.ResponseToArray("localIp", response)
 	arch := response["arch"]
+	isAdmin := response["isAdmin"]
+	isElevated := response["isElevated"]
 	processes := model.ResponseToArray("processes", response)
 
 	db.clientInfoDb[computerId].Hostname = hostname
 	db.clientInfoDb[computerId].LocalIps = localIps
 	db.clientInfoDb[computerId].Arch = arch
 	db.clientInfoDb[computerId].Processes = processes
+	db.clientInfoDb[computerId].IsAdmin = isAdmin
+	db.clientInfoDb[computerId].IsElevated = isElevated
 }
 
 func (db *ClientInfoDb) getAsList() []ClientInfo {

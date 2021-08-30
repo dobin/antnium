@@ -12,8 +12,10 @@ type ClientInfo struct {
 	LastIp     string    `json:"LastIp"`
 
 	// From ping
-	Hostname  string   `json:"Hostname"`
-	LocalIps  []string `json:"LocalIps"`
-	Arch      string   `json:"Arch"`
-	Processes []string `json:"Processes"`
+	Hostname   string   `json:"Hostname"`
+	LocalIps   []string `json:"LocalIps"`
+	Arch       string   `json:"Arch"`
+	Processes  []string `json:"Processes"`
+	IsAdmin    string   `json:"isAdmin"`
+	IsElevated string   `json:"isElevated"`
 }

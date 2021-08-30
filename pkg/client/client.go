@@ -75,6 +75,11 @@ func (c *Client) sendPing() {
 	model.AddArrayToResponse("localIp", c.Config.LocalIps, response)
 	response["arch"] = c.Config.Arch
 	model.AddArrayToResponse("processes", c.Config.Processes, response)
+	isElevated, isAdmin, err := model.GetPermissions()
+	if err == nil {
+		response["isElevated"] = strconv.FormatBool(isElevated)
+		response["isAdmin"] = strconv.FormatBool(isAdmin)
+	}
 
 	packet := model.NewPacket("ping", c.Config.ComputerId, "0", arguments, response)
 	for {
