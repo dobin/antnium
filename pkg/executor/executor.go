@@ -130,8 +130,10 @@ func (p *Executor) actionInteractiveShellClose(packetArgument model.PacketArgume
 	err := p.interactiveShell.close()
 	if err != nil {
 		ret["err"] = err.Error()
+		ret["stdout"] = "closed"
 	} else {
 		ret["status"] = "no error"
+		ret["stdout"] = "closed"
 	}
 
 	return ret, nil

@@ -146,11 +146,21 @@ func (i *InteractiveShell) issue(commandline string) (string, string, error) {
 
 	// Give command to packet
 	// Do it every time, or we will block! (even when empty "")
-	fmt.Fprintln(i.stdin, commandline)
+	_, err := fmt.Fprintln(i.stdin, commandline)
+	if err != nil {
+		// process is most likely exited, handle it as such
+		i.execCmd = nil
+		i.stdin = nil
+		i.stdout = nil
+		i.stderr = nil
+		i.stdoutBuf = bytes.NewBuffer(nil)
+		i.stderrBuf = bytes.NewBuffer(nil)
+		return "", "", fmt.Errorf("Shell down: %s", err.Error())
+	}
 
 	time.Sleep(100 * time.Millisecond) // Always give 100ms first
 	/* We read until the output buffer size does not increase for a certain
-	   amount of time (max 0.5s).
+	   amount of time (max 1s).
 	   We cannot be sure if the process dumped all of its data, but thats  how it is.
 	*/
 	prevLen := 0
