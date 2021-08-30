@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/pkg/model"
+	log "github.com/sirupsen/logrus"
 )
 
 type ClientInfoDb struct {
@@ -66,6 +67,11 @@ func (db *ClientInfoDb) updateFromPing(computerId, ip string, response model.Pac
 	isAdmin := response["isAdmin"]
 	isElevated := response["isElevated"]
 	processes := model.ResponseToArray("processes", response)
+
+	if hostname == "" {
+		log.Warn("Empty ping")
+		return
+	}
 
 	db.clientInfoDb[computerId].Hostname = hostname
 	db.clientInfoDb[computerId].LocalIps = localIps

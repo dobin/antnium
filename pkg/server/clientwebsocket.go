@@ -16,12 +16,8 @@ type ClientWebSocket struct {
 
 func MakeClientWebSocket() ClientWebSocket {
 	a := ClientWebSocket{
-		make(map[string]*websocket.Conn),
-		websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				return true
-			},
-		},
+		clients:    make(map[string]*websocket.Conn),
+		wsUpgrader: websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
 	}
 	return a
 }

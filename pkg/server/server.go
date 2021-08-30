@@ -17,7 +17,7 @@ type Server struct {
 	Campaign        model.Campaign
 	coder           model.Coder
 	packetDb        PacketDb
-	clientInfoDb    ClientInfoDb
+	clientInfoDb    *ClientInfoDb
 	adminWebSocket  AdminWebSocket
 	clientWebSocket ClientWebSocket
 }
@@ -35,13 +35,15 @@ func NewServer(srvAddr string) Server {
 	// Here we regularly check the clients connected to ClientWebsocket, and update their LastSeen
 	// Lifetime: App
 	go func() {
+		clientInfoDb2 := &clientInfoDb
 		for {
 			time.Sleep(10 * time.Second)
-			for computerId, conn := range clientWebsocket.clients {
+			c := clientWebsocket.clients
+			for computerId, conn := range c {
 				if conn == nil {
 					continue
 				}
-				clientInfoDb.updateFor(computerId, conn.RemoteAddr().String())
+				clientInfoDb2.updateFor(computerId, conn.RemoteAddr().String())
 			}
 
 			// Todo: When to quit?
@@ -57,7 +59,7 @@ func NewServer(srvAddr string) Server {
 		campaign,
 		coder,
 		packetDb,
-		clientInfoDb,
+		&clientInfoDb,
 		adminWebsocket,
 		clientWebsocket,
 	}
