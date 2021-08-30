@@ -79,13 +79,18 @@ func (p *Executor) actionInteractiveShellOpen(packetArgument model.PacketArgumen
 	ret := make(model.PacketResponse)
 	_, force := packetArgument["force"]
 
+	executable, args, err := model.MakePacketArgumentFrom(packetArgument)
+	if err != nil {
+		return ret, err
+	}
+
 	if p.interactiveShell.AlreadyOpen() && !force {
 		return ret, fmt.Errorf("already_open")
 	} else {
 		if p.interactiveShell.AlreadyOpen() {
 			p.interactiveShell.execCmd.Process.Kill()
 		}
-		stdout, stderr, err := p.interactiveShell.open()
+		stdout, stderr, err := p.interactiveShell.open(executable, args)
 		if err != nil {
 			return ret, err
 		}
@@ -98,7 +103,6 @@ func (p *Executor) actionInteractiveShellOpen(packetArgument model.PacketArgumen
 
 func (p *Executor) actionInteractiveShellIssue(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
-
 	// Check and transform input
 	commandline, ok := packetArgument["commandline"]
 	if !ok {
@@ -109,7 +113,6 @@ func (p *Executor) actionInteractiveShellIssue(packetArgument model.PacketArgume
 	if err != nil {
 		return ret, err
 	}
-
 	ret["stdout"] = stdout
 	ret["stderr"] = stderr
 

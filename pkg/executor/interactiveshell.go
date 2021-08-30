@@ -6,6 +6,8 @@ import (
 	"io"
 	"os/exec"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 /* exec.Command() does return a stdout pipe. But it blocks on read if no data is available.
@@ -59,9 +61,9 @@ func (i *InteractiveShell) close() error {
 	return execCmd.Process.Kill()
 }
 
-func (i *InteractiveShell) open() (string, string, error) {
-	// Setup command
-	exeCommand := exec.Command("cmd", "/a")
+func (i *InteractiveShell) open(executable string, args []string) (string, string, error) {
+	log.Debugf("Starting interactive shell: %s %v", executable, args)
+	exeCommand := exec.Command(executable, args...)
 	stdin, err := exeCommand.StdinPipe()
 	if err != nil {
 		return "", "", err
@@ -146,6 +148,7 @@ func (i *InteractiveShell) issue(commandline string) (string, string, error) {
 	// Do it every time, or we will block! (even when empty "")
 	fmt.Fprintln(i.stdin, commandline)
 
+	time.Sleep(100 * time.Millisecond) // Always give 100ms first
 	/* We read until the output buffer size does not increase for a certain
 	   amount of time (max 0.5s).
 	   We cannot be sure if the process dumped all of its data, but thats  how it is.
