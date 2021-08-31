@@ -19,7 +19,7 @@ type DownstreamInfo struct {
 }
 
 type DownstreamManager struct {
-	upstream UpstreamHttp // used to send notifications
+	upstream Upstream // used to send notifications
 
 	downstreamClient     DownstreamClient
 	downstreamClientInfo string
@@ -28,7 +28,7 @@ type DownstreamManager struct {
 	downstreamLocaltcpNotify chan struct{}
 }
 
-func MakeDownstreamManager(upstream UpstreamHttp) DownstreamManager {
+func MakeDownstreamManager(upstream Upstream) DownstreamManager {
 	// Get our name (for channel identification)
 	ex, err := os.Executable()
 	if err != nil {
@@ -68,8 +68,15 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 	if packet.DownstreamId != "manager" {
 		return packet, fmt.Errorf("Wrong args")
 	}
-	if packet.PacketType == "downstreamStart" {
+	if packet.PacketType == "downstreamServerStart" {
 		ret, err := dm.StartListeners()
+		if err != nil {
+			packet.Response["err"] = err.Error()
+		} else {
+			packet.Response["ret"] = ret
+		}
+	} else if packet.PacketType == "downstreamServerStop" {
+		ret, err := dm.StopListeners()
 		if err != nil {
 			packet.Response["err"] = err.Error()
 		} else {
@@ -89,9 +96,23 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 	return packet, nil
 }
 
-// StartListeners will all downstream servers
+// StartListeners will stop all downstream servers
+func (dm *DownstreamManager) StopListeners() (string, error) {
+	out := ""
+	if dm.downstreamLocaltcp.Started() {
+		err := dm.downstreamLocaltcp.Shutdown()
+		if err != nil {
+			return out, err
+		} else {
+			out = "Localtcp shutdown"
+		}
+	}
+	return out, nil
+}
+
+// StartListeners will start all downstream servers
 func (dm *DownstreamManager) StartListeners() (string, error) {
-	log := ""
+	out := ""
 
 	// Downstream: LocalTcp
 	err := dm.downstreamLocaltcp.StartServer()
@@ -111,9 +132,9 @@ func (dm *DownstreamManager) StartListeners() (string, error) {
 			// TODO when to quit thread
 		}
 	}()
-	log += "Started LocalTcp on " + dm.downstreamLocaltcp.ListenAddr()
+	out += "Started LocalTcp on " + dm.downstreamLocaltcp.ListenAddr()
 
-	return log, nil
+	return out, nil
 }
 
 // SendDownstreams is used to notify the server about newly connected downstream clients

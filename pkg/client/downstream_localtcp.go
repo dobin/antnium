@@ -41,6 +41,13 @@ func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
 	return u
 }
 
+func (d *DownstreamLocaltcp) Shutdown() error {
+	d.listener.Close()
+	d.listener = nil
+	d.downstreams = make(DownstreamInfoTcpMap, 0)
+	return nil
+}
+
 // Do handles a incoming packet destined for this downstream by sending it from the appropriate socket
 func (d *DownstreamLocaltcp) Do(packet model.Packet) (model.Packet, error) {
 	d.downstreamsMutex.Lock()
@@ -101,12 +108,16 @@ func (d *DownstreamLocaltcp) StartServer() error {
 // ListenerLoop is a Thread which waits for new tcp downstream client connections and integrates them
 func (d *DownstreamLocaltcp) ListenerLoop(downstreamLocaltcpNotify chan struct{}) error {
 	if d.listener == nil {
-		return fmt.Errorf("Starting loop without connection")
+		return fmt.Errorf("Can't loop without connection")
 	}
 
 	n := 0
 	var err error
 	for {
+		if d.listener == nil {
+			log.Info("Listener nil, shutdown thread")
+			break
+		}
 		var conn net.Conn
 		conn, err = d.listener.Accept()
 		if err != nil {
@@ -140,9 +151,7 @@ func (d *DownstreamLocaltcp) ListenerLoop(downstreamLocaltcpNotify chan struct{}
 	}
 
 	if err != nil {
-		log.Error("LocalTcp thread exited, because of: %s", err.Error())
-	} else {
-		log.Error("Cant happen")
+		log.Errorf("LocalTcp thread exited, because of: %s", err.Error())
 	}
 
 	// Never reached

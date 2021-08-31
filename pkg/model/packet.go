@@ -14,14 +14,14 @@ type Packet struct {
 	DownstreamId string         `json:"downstreamId"`
 }
 
-func NewPacket(packet string, computerId string, packetId string, arguments PacketArgument, response PacketResponse) Packet {
+func NewPacket(packetType string, computerId string, packetId string, arguments PacketArgument, response PacketResponse) Packet {
 	c := Packet{
-		computerId,
-		packetId,
-		packet,
-		arguments,
-		response,
-		"client", // sane default for now
+		ComputerId:   computerId,
+		PacketId:     packetId,
+		PacketType:   packetType,
+		Arguments:    arguments,
+		Response:     response,
+		DownstreamId: "client", // sane default for now
 	}
 	return c
 }
