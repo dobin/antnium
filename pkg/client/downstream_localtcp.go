@@ -23,6 +23,7 @@ type DownstreamLocaltcp struct {
 	listenAddr       string               // which TCP port address we listen on
 	downstreams      DownstreamInfoTcpMap // all ever accepted connections
 	downstreamsMutex *sync.Mutex          // downstreams map updated via startServer() thread
+	listener         net.Listener         // nil = not connected
 }
 
 func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
@@ -32,14 +33,16 @@ func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
 	}
 
 	u := DownstreamLocaltcp{
-		listenAddr,
-		make(DownstreamInfoTcpMap, 0),
-		&sync.Mutex{},
+		listenAddr:       listenAddr,
+		downstreams:      make(DownstreamInfoTcpMap, 0),
+		downstreamsMutex: &sync.Mutex{},
+		listener:         nil,
 	}
 	return u
 }
 
-func (d *DownstreamLocaltcp) do(packet model.Packet) (model.Packet, error) {
+// Do handles a incoming packet destined for this downstream by sending it from the appropriate socket
+func (d *DownstreamLocaltcp) Do(packet model.Packet) (model.Packet, error) {
 	d.downstreamsMutex.Lock()
 	downstreamInfo, ok := d.downstreams[packet.DownstreamId]
 	d.downstreamsMutex.Unlock()
@@ -57,6 +60,7 @@ func (d *DownstreamLocaltcp) do(packet model.Packet) (model.Packet, error) {
 	return packet, err
 }
 
+// doConn will send a packet to a socket and wait for its response
 func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.Packet, error) {
 	// Send it to the downstream executor
 	packetEncoded, err := downstreamclient.EncodePacket(packet)
@@ -82,42 +86,31 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 	return packet, nil
 }
 
-func (d *DownstreamLocaltcp) DownstreamList() []DownstreamInfo {
-	ret := make([]DownstreamInfo, 0)
-
-	d.downstreamsMutex.Lock()
-	for _, downstreamInfoTcp := range d.downstreams {
-		d := DownstreamInfo{
-			downstreamInfoTcp.Name,
-			downstreamInfoTcp.Info,
-		}
-		ret = append(ret, d)
-	}
-	d.downstreamsMutex.Unlock()
-
-	return ret
-}
-
-// startServer is a thread which handles incoming downstream clients and notify parent via channel, lifetime: app
-func (d *DownstreamLocaltcp) startServer() (net.Listener, error) {
+// StartServer starts the TCP listener
+func (d *DownstreamLocaltcp) StartServer() error {
 	log.Info("Start Downstream: LocalTcp on " + d.listenAddr)
 	ln, err := net.Listen("tcp", d.listenAddr)
 	if err != nil {
 		log.Errorf("Error: %s", err.Error())
-		return nil, err
+		return err
 	}
-
-	return ln, nil
+	d.listener = ln
+	return nil
 }
 
-func (d *DownstreamLocaltcp) loop(ln net.Listener, downstreamLocaltcpChannel chan struct{}) {
+// ListenerLoop is a Thread which waits for new tcp downstream client connections and integrates them
+func (d *DownstreamLocaltcp) ListenerLoop(downstreamLocaltcpNotify chan struct{}) error {
+	if d.listener == nil {
+		return fmt.Errorf("Starting loop without connection")
+	}
+
 	n := 0
+	var err error
 	for {
-		conn, err := ln.Accept()
+		var conn net.Conn
+		conn, err = d.listener.Accept()
 		if err != nil {
-			log.Error("Error2: " + err.Error())
-			// TODO: Handle error
-			continue
+			break
 		}
 
 		// receive info line first or fail
@@ -141,8 +134,47 @@ func (d *DownstreamLocaltcp) loop(ln net.Listener, downstreamLocaltcpChannel cha
 		d.downstreamsMutex.Unlock()
 
 		// Notify about new downstream
-		downstreamLocaltcpChannel <- struct{}{}
+		downstreamLocaltcpNotify <- struct{}{}
 
 		n += 1
 	}
+
+	if err != nil {
+		log.Error("LocalTcp thread exited, because of: %s", err.Error())
+	} else {
+		log.Error("Cant happen")
+	}
+
+	// Never reached
+	return err
+}
+
+// DownstreamList returns all actively connected clients
+func (d *DownstreamLocaltcp) DownstreamList() []DownstreamInfo {
+	ret := make([]DownstreamInfo, 0)
+
+	d.downstreamsMutex.Lock()
+	for _, downstreamInfoTcp := range d.downstreams {
+		d := DownstreamInfo{
+			downstreamInfoTcp.Name,
+			downstreamInfoTcp.Info,
+		}
+		ret = append(ret, d)
+	}
+	d.downstreamsMutex.Unlock()
+
+	return ret
+}
+
+// Connected returns true if this tcp server is started
+func (d *DownstreamLocaltcp) Started() bool {
+	if d.listener == nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func (d *DownstreamLocaltcp) ListenAddr() string {
+	return d.listenAddr
 }

