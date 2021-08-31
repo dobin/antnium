@@ -114,7 +114,19 @@ func (dm *DownstreamManager) StopListeners() (string, error) {
 func (dm *DownstreamManager) StartListeners() (string, error) {
 	out := ""
 
-	// Downstream: LocalTcp
+	o, err := dm.StartListenerLocaltcp()
+	if err != nil {
+		return out, err
+	}
+	out += o + "\n"
+
+	return out, nil
+}
+
+func (dm *DownstreamManager) StartListenerLocaltcp() (string, error) {
+	if dm.downstreamLocaltcp.Started() {
+		return "", fmt.Errorf("LocalTcp already started")
+	}
 	err := dm.downstreamLocaltcp.StartServer()
 	if err != nil {
 		return "", err
@@ -132,7 +144,7 @@ func (dm *DownstreamManager) StartListeners() (string, error) {
 			// TODO when to quit thread
 		}
 	}()
-	out += "Started LocalTcp on " + dm.downstreamLocaltcp.ListenAddr()
+	out := "Started LocalTcp on " + dm.downstreamLocaltcp.ListenAddr()
 
 	return out, nil
 }
