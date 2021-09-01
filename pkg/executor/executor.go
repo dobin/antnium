@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -157,8 +158,8 @@ func (p *Executor) actionExec(packetArgument model.PacketArgument) (model.Packet
 	// Check and transform input done in there sadly
 	stdout, stderr, pid, exitCode, err := MyExec(packetArgument)
 
-	ret["stdout"] = windowsToString(stdout)
-	ret["stderr"] = windowsToString(stderr)
+	ret["stdout"] = arch.WindowsToString(stdout)
+	ret["stderr"] = arch.WindowsToString(stderr)
 	ret["pid"] = strconv.Itoa(pid)
 	ret["exitCode"] = strconv.Itoa(exitCode)
 

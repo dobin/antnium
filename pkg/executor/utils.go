@@ -9,19 +9,7 @@ import (
 
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/text/encoding/charmap"
 )
-
-func windowsToString(data []byte) string {
-	d := charmap.CodePage850.NewDecoder()
-	outDecoded, err := d.Bytes(data)
-	if err != nil {
-		// Fall back to stdout if decoding failed
-		return string(data)
-	} else {
-		return string(outDecoded)
-	}
-}
 
 func MyExec(packetArgument model.PacketArgument) ([]byte, []byte, int, int, error) {
 	stdOut := make([]byte, 0)

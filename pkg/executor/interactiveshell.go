@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/dobin/antnium/pkg/arch"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -190,8 +191,8 @@ func (i *InteractiveShell) issue(commandline string) (string, string, error) {
 	i.stdoutBuf.Reset()
 	stderrBytes := i.stderrBuf.Bytes()
 	i.stderrBuf.Reset()
-	stdoutStr := windowsToString(stdoutBytes)
-	stderrStr := windowsToString(stderrBytes)
+	stdoutStr := arch.WindowsToString(stdoutBytes)
+	stderrStr := arch.WindowsToString(stderrBytes)
 
 	return stdoutStr, stderrStr, nil
 }

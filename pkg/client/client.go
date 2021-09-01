@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -78,7 +79,7 @@ func (c *Client) sendPing() {
 	model.AddArrayToResponse("localIp", c.Config.LocalIps, response)
 	response["arch"] = c.Config.Arch
 	model.AddArrayToResponse("processes", c.Config.Processes, response)
-	isElevated, isAdmin, err := model.GetPermissions()
+	isElevated, isAdmin, err := arch.GetPermissions()
 	if err == nil {
 		response["isElevated"] = strconv.FormatBool(isElevated)
 		response["isAdmin"] = strconv.FormatBool(isAdmin)
