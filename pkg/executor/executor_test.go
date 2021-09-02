@@ -3,6 +3,7 @@ package executor
 import (
 	"testing"
 
+	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/model"
 )
 
@@ -11,7 +12,7 @@ func TestCmdValidCommand(t *testing.T) {
 	packetArgument["shelltype"] = "cmd"
 	packetArgument["commandline"] = "hostname"
 
-	stdOut, stdErr, pid, exitCode, err := MyExec(packetArgument)
+	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
 	if err != nil {
 		t.Error("Error: " + err.Error())
 	}
@@ -34,7 +35,7 @@ func TestPowershellValidCommand(t *testing.T) {
 	packetArgument["shelltype"] = "powershell"
 	packetArgument["commandline"] = "hostname"
 
-	stdOut, stdErr, pid, exitCode, err := MyExec(packetArgument)
+	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
 	if err != nil {
 		t.Error("Error: " + err.Error())
 	}
@@ -57,7 +58,7 @@ func TestCmdInvalidCommand(t *testing.T) {
 	packetArgument["shelltype"] = "cmd"
 	packetArgument["commandline"] = "invalid"
 
-	stdOut, stdErr, pid, exitCode, err := MyExec(packetArgument)
+	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
 	if err == nil {
 		t.Error("No Error")
 	}
@@ -80,7 +81,7 @@ func TestPowershellInvalidCommand(t *testing.T) {
 	packetArgument["shelltype"] = "powershell"
 	packetArgument["commandline"] = "invalid"
 
-	stdOut, stdErr, pid, exitCode, err := MyExec(packetArgument)
+	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
 	if err == nil {
 		t.Error("No Error")
 	}

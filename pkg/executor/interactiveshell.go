@@ -25,7 +25,7 @@ type InteractiveShell struct {
 	stderrBuf *bytes.Buffer
 }
 
-func makeInteractiveShell() InteractiveShell {
+func MakeInteractiveShell() InteractiveShell {
 	interactiveShell := InteractiveShell{
 		nil,
 		nil,
@@ -45,7 +45,7 @@ func (i *InteractiveShell) AlreadyOpen() bool {
 	}
 }
 
-func (i *InteractiveShell) close() error {
+func (i *InteractiveShell) Close() error {
 	var execCmd = i.execCmd
 
 	i.execCmd = nil
@@ -62,7 +62,7 @@ func (i *InteractiveShell) close() error {
 	return execCmd.Process.Kill()
 }
 
-func (i *InteractiveShell) open(executable string, args []string) (string, string, error) {
+func (i *InteractiveShell) Open(executable string, args []string) (string, string, error) {
 	log.Debugf("Starting interactive shell: %s %v", executable, args)
 	exeCommand := exec.Command(executable, args...)
 	stdin, err := exeCommand.StdinPipe()
@@ -82,29 +82,6 @@ func (i *InteractiveShell) open(executable string, args []string) (string, strin
 	if err := exeCommand.Start(); err != nil {
 		return "", "", err
 	}
-
-	// Read initial stdin
-	// Its always two read's. If not, it will block forever
-	line1 := make([]byte, 100)
-	n, err := stdout.Read(line1)
-	if err != nil {
-		return "", "", err
-	}
-	stdoutCut1 := line1[0:n]
-	line2 := make([]byte, 100)
-	n, err = stdout.Read(line2)
-	if err != nil {
-		return "", "", err
-	}
-	stdoutCut2 := line2[0:n]
-
-	// Read initial stderr
-	// Doesnt work, its usually empty so block forever
-	/*line3 := make([]byte, 100)
-	_, err = stderr.Read(line2)
-	if err != nil {
-		return "", "", err
-	}*/
 
 	// No errors till here, set it
 	i.execCmd = exeCommand
@@ -137,10 +114,17 @@ func (i *InteractiveShell) open(executable string, args []string) (string, strin
 		}
 	}()
 
-	return string(stdoutCut1) + string(stdoutCut2), string(""), nil
+	// Wait a bit and capture of initial output
+	// cmd.exe and powershell.exe have two read()'s, bash has zero
+	stdOut, stdErr, err := i.Issue("")
+	if err != nil {
+		return "", "", err
+	}
+
+	return string(stdOut), string(stdErr), nil
 }
 
-func (i *InteractiveShell) issue(commandline string) (string, string, error) {
+func (i *InteractiveShell) Issue(commandline string) (string, string, error) {
 	if i.execCmd == nil || i.stdin == nil {
 		return "", "", fmt.Errorf("Shell not open")
 	}
@@ -191,8 +175,8 @@ func (i *InteractiveShell) issue(commandline string) (string, string, error) {
 	i.stdoutBuf.Reset()
 	stderrBytes := i.stderrBuf.Bytes()
 	i.stderrBuf.Reset()
-	stdoutStr := arch.WindowsToString(stdoutBytes)
-	stderrStr := arch.WindowsToString(stderrBytes)
+	stdoutStr := arch.ExecOutputDecode(stdoutBytes)
+	stderrStr := arch.ExecOutputDecode(stderrBytes)
 
 	return stdoutStr, stderrStr, nil
 }

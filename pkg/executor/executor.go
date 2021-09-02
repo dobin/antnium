@@ -2,10 +2,8 @@ package executor
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -21,7 +19,7 @@ type Executor struct {
 }
 
 func MakeExecutor() Executor {
-	interactiveShell := makeInteractiveShell()
+	interactiveShell := MakeInteractiveShell()
 	executor := Executor{
 		interactiveShell,
 	}
@@ -91,7 +89,7 @@ func (p *Executor) actionInteractiveShellOpen(packetArgument model.PacketArgumen
 		if p.interactiveShell.AlreadyOpen() {
 			p.interactiveShell.execCmd.Process.Kill()
 		}
-		stdout, stderr, err := p.interactiveShell.open(executable, args)
+		stdout, stderr, err := p.interactiveShell.Open(executable, args)
 		if err != nil {
 			return ret, err
 		}
@@ -110,7 +108,7 @@ func (p *Executor) actionInteractiveShellIssue(packetArgument model.PacketArgume
 		return ret, fmt.Errorf("No argument 'commandline' given")
 	}
 
-	stdout, stderr, err := p.interactiveShell.issue(commandline)
+	stdout, stderr, err := p.interactiveShell.Issue(commandline)
 	if err != nil {
 		return ret, err
 	}
@@ -128,7 +126,7 @@ func (p *Executor) actionShutdown(packetArgument model.PacketArgument) (model.Pa
 func (p *Executor) actionInteractiveShellClose(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 
-	err := p.interactiveShell.close()
+	err := p.interactiveShell.Close()
 	if err != nil {
 		ret["err"] = err.Error()
 		ret["stdout"] = "closed"
@@ -156,10 +154,10 @@ func (p *Executor) actionExec(packetArgument model.PacketArgument) (model.Packet
 	ret := make(model.PacketResponse)
 
 	// Check and transform input done in there sadly
-	stdout, stderr, pid, exitCode, err := MyExec(packetArgument)
+	stdout, stderr, pid, exitCode, err := arch.Exec(packetArgument)
 
-	ret["stdout"] = arch.WindowsToString(stdout)
-	ret["stderr"] = arch.WindowsToString(stderr)
+	ret["stdout"] = arch.ExecOutputDecode(stdout)
+	ret["stderr"] = arch.ExecOutputDecode(stderr)
 	ret["pid"] = strconv.Itoa(pid)
 	ret["exitCode"] = strconv.Itoa(exitCode)
 
@@ -178,7 +176,8 @@ func (p *Executor) actionFiledownload(packetArgument model.PacketArgument) (mode
 	if !ok {
 		return ret, fmt.Errorf("No argument 'destination' given")
 	}
-	if _, err := os.Stat(destination); !errors.Is(err, fs.ErrNotExist) {
+	//if _, err := os.Stat(destination); !errors.Is(err, fs.ErrNotExist) { // GO1.16
+	if _, err := os.Stat(destination); err == nil {
 		return ret, fmt.Errorf("Destination %s already exists", destination)
 	}
 
@@ -215,7 +214,8 @@ func (p *Executor) actionFileupload(packetArgument model.PacketArgument) (model.
 	if !ok {
 		return ret, fmt.Errorf("No argument 'source' given")
 	}
-	if _, err := os.Stat(source); errors.Is(err, fs.ErrNotExist) {
+	//if _, err := os.Stat(source); errors.Is(err, fs.ErrNotExist) { // GO1.16
+	if _, err := os.Stat(source); err != nil {
 		return ret, fmt.Errorf("file %s does not exists", source)
 	}
 

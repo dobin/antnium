@@ -1,3 +1,5 @@
+// +build windows
+
 package executor
 
 import (
@@ -7,8 +9,8 @@ import (
 )
 
 func TestInteractiveShellCmdexe(t *testing.T) {
-	interactiveShell := makeInteractiveShell()
-	stdout, stderr, err := interactiveShell.open("cmd.exe", []string{"/a"})
+	interactiveShell := MakeInteractiveShell()
+	stdout, stderr, err := interactiveShell.Open("cmd.exe", []string{"/a"})
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -18,7 +20,7 @@ func TestInteractiveShellCmdexe(t *testing.T) {
 		return
 	}
 
-	stdout, stderr, err = interactiveShell.issue("echo test")
+	stdout, stderr, err = interactiveShell.Issue("echo test")
 	if err != nil {
 		t.Errorf("Packet 1 error")
 		return
@@ -28,7 +30,7 @@ func TestInteractiveShellCmdexe(t *testing.T) {
 		return
 	}
 
-	stdout, stderr, err = interactiveShell.issue("invalid")
+	stdout, stderr, err = interactiveShell.Issue("invalid")
 	if err != nil {
 		t.Errorf("Packet 1 error")
 		return
@@ -40,8 +42,8 @@ func TestInteractiveShellCmdexe(t *testing.T) {
 }
 
 func TestInteractiveShellCmdexeExit(t *testing.T) {
-	interactiveShell := makeInteractiveShell()
-	stdout, _, err := interactiveShell.open("cmd.exe", []string{"/a"})
+	interactiveShell := MakeInteractiveShell()
+	stdout, _, err := interactiveShell.Open("cmd.exe", []string{"/a"})
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -52,14 +54,14 @@ func TestInteractiveShellCmdexeExit(t *testing.T) {
 	}
 
 	// exit process
-	stdout, _, err = interactiveShell.issue("exit")
+	stdout, _, err = interactiveShell.Issue("exit")
 	if err != nil {
 		t.Errorf("Packet 1 error")
 		return
 	}
 
 	// execute dir with closed process, should generate "shell down" error
-	stdout, _, err = interactiveShell.issue("dir")
+	stdout, _, err = interactiveShell.Issue("dir")
 	if err == nil {
 		t.Errorf("Packet 1 no error")
 		return
@@ -70,7 +72,7 @@ func TestInteractiveShellCmdexeExit(t *testing.T) {
 	}
 
 	// execute dir with closed process, should generate "shell not open" error
-	stdout, _, err = interactiveShell.issue("dir")
+	stdout, _, err = interactiveShell.Issue("dir")
 	if err == nil {
 		t.Errorf("Packet 1 no error")
 		return
@@ -81,7 +83,7 @@ func TestInteractiveShellCmdexeExit(t *testing.T) {
 	}
 
 	// try opening it again
-	stdout, _, err = interactiveShell.open("cmd.exe", []string{"/a"})
+	stdout, _, err = interactiveShell.Open("cmd.exe", []string{"/a"})
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -93,8 +95,8 @@ func TestInteractiveShellCmdexeExit(t *testing.T) {
 }
 
 func TestInteractiveShellPowershell(t *testing.T) {
-	interactiveShell := makeInteractiveShell()
-	stdout, stderr, err := interactiveShell.open("powershell.exe", []string{"-ExecutionPolicy", "Bypass"})
+	interactiveShell := MakeInteractiveShell()
+	stdout, stderr, err := interactiveShell.Open("powershell.exe", []string{"-ExecutionPolicy", "Bypass"})
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -109,7 +111,7 @@ func TestInteractiveShellPowershell(t *testing.T) {
 	// just the command prompt of it. Even though we give it enough time...
 	time.Sleep(time.Millisecond * 100)
 
-	stdout, stderr, err = interactiveShell.issue("echo test")
+	stdout, stderr, err = interactiveShell.Issue("echo test")
 	if err != nil {
 		t.Errorf("Packet 1 error")
 		return
@@ -120,7 +122,7 @@ func TestInteractiveShellPowershell(t *testing.T) {
 	}
 
 	time.Sleep(time.Millisecond * 100)
-	stdout, stderr, err = interactiveShell.issue("invalid")
+	stdout, stderr, err = interactiveShell.Issue("invalid")
 	if err != nil {
 		t.Errorf("Packet 1 error")
 		return
