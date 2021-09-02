@@ -13,65 +13,77 @@ There are two components:
 
 Download and install go (and git).
 
-Decide on a C2 IP or domain. We use `127.0.0.1:8080` here, as we start both client.exe and server.exe
-on the same host (and OS). This is also the default, no need to change anything. 
+We use `127.0.0.1:8080` as C2 domain here (localhost as we start both client.exe and server.exe
+on the same host). This is also the default, no need to change anything. 
 
-Check your campaign in `model/campaign.go`: 
+Check campaign in `campaign/campaign.go`: 
 * `serverUrl = "http://127.0.0.1:8080"`
+
+Build it: 
+```
+.\makewin.bat deploy
+```
+
+Start server, and client: 
+```
+cd build\
+.\server.exe
+.\static\client.exe
+```
 
 Access the WebUI by opening the following URL in the browser after starting server.exe:
 ```
 http://localhost:8080/webui/
 ```
 
-### Quick Windows
+Note: for Linux use `make` instead of `makewin.bat`, and replace `\` with `/`
 
-Go: https://golang.org/doc/install
+## Detailed build instructions
+
+Go install: 
+* Windows: https://golang.org/doc/install
+* Linux: `apt install golang`
 
 Compile client.exe and server.exe: 
 ```
-> go get all
-> .\makewin.bat server
-> .\makewin.bat client
+> .\makewin.bat deploy
 ```
+
+This will create: 
+* /build/server.exe
+* /build/server.elf
+* /build/static/client.exe
+* /build/static/client.elf
+* /build/upload/
+* /build/webui/
 
 Start server.exe:
 ```
-> .\server.exe --listenaddr localhost:8080
+> cd build
+> .\server.exe
+
+Antnium 0.1
+Loaded 102 packets from db.packets.json
+Loaded 21 clients from db.clients.json 
+Periodic DB dump enabled
+Starting webserver on 127.0.0.1:8080  
 ```
 
 Start client.exe:
 ```
-> .\client.exe
-```
+> .\build\static\client.exe
 
-
-### Quick Linux
-
-Go: `apt install golang`
-
-Compile client and server.exe: 
+Antnium 0.1
+time="2021-09-02T21:48:16+02:00" level=info msg="UpstreamHttp: Use WS"
+time="2021-09-02T21:48:16+02:00" level=info msg="Connecting to WS succeeded"
+time="2021-09-02T21:48:16+02:00" level=info msg=Send 1_computerId=c4oil02sdke2sp3nfngg 2_packetId=0 3_downstreamId=client 4_packetType=ping 5_arguments="map[]" 6_response=...
+time="2021-09-02T21:48:16+02:00" level=info msg=Send 1_computerId=c4oil02sdke2sp3nfngg 2_packetId=0 3_downstreamId=client 4_packetType=ping 5_arguments="map[]" 6_response=...
 ```
-$ go get all
-$ make server
-$ make client
-```
-
-Start server.exe:
-```
-$ ./server --listenaddr localhost:8080
-```
-
-Start client.exe:
-```
-$ ./client
-```
-
 
 ## Notes on Campaign configuration
 
 `campaign.go` connects a compiled client.exe with a specific server.exe, which forms a campaign. 
-A campaign has individual encryption and authentication keys, which are shared between
+A campaign has individual encryption- and authentication keys, which are shared between
 server and client. 
 
 ```
@@ -85,22 +97,13 @@ type Campaign struct {
 
 Note that `ServerUrl` is the URL used by the client for all interaction with the server. 
 It is the public server URL, e.g. `http://totallynotmalware.ch`. The actual server.exe may
-be behind a reverse proxy, and started with `server.exe --listenaddr 127.0.0.1:8080` (so ServerUrl != listenaddr). 
-
-
-## Details
-
-```
-$ git clone https://github.com/dobin/antnium
-$ cd antnium
-$ go get all
-```
+be behind a reverse proxy, and started with `server.exe --listenaddr 127.0.0.1:8080` (so `ServerUrl` is not necessarily equal `listenaddr`). 
 
 ## Client
 
 Tested on: 
 * Windows 10
-* Ubuntu 20.04
+* Ubuntu 20.04 LTS
 
 Compile on windows:
 ```
@@ -114,9 +117,10 @@ Deploy it on your target.
 
 Tested on: 
 * Works: Ubuntu 20.04 LTS, Go 1.13.8
-* Wors: Windows 10, Go 1.16.6
-* Compile fail: Ubuntu 16.04 LTS, Go 1.6.2
+* Works: Windows 10, Go 1.16.6
+* Compile FAIL: Ubuntu 16.04 LTS, Go 1.6.2
 
+On Linux:
 ```
 $ make server
 $ ./server --listenaddr 0.0.0.0:8080
@@ -141,5 +145,4 @@ as working directory.
 
 ```
 go test ./...
-go test ./server
 ```

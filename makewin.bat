@@ -21,10 +21,12 @@ IF "%1"=="runserver" (
     .\makewin.bat server
     mkdir build\upload
     mkdir build\static
+    mkdir build\webui
     copy server.elf build\
     copy server.exe build\
     copy client.exe build\static\
     copy client.elf build\static\
+    copy webui\* build\webui\
 ) ELSE IF "%1"=="coverage" (
     go test -coverprofile="coverage.out"
     go tool cover -html="coverage.out"
