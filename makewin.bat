@@ -8,15 +8,20 @@ IF "%1"=="runserver" (
     go run cmd\downstreamclient\downstreamclient.go 
 ) ELSE IF "%1"=="server" (
     go build cmd\server\server.go 
-    REM Doesnt work
-    REM SET GOOS=linux
-    REM go build -o server.elf cmd\server\server.go 
+    SET GOOS=linux
+    go build -o server.elf cmd\server\server.go 
 ) ELSE IF "%1"=="client" (
     go build cmd\client\client.go
 ) ELSE IF "%1"=="downstreamclient" (
     go build cmd\downstreamclient\downstreamclient.go 
 ) ELSE IF "%1"=="deploy" (
-    echo "bla"
+    .\makewin.bat client
+    .\makewin.bat server
+    mkdir build\upload
+    mkdir build\static
+    copy server.elf build\
+    copy server.exe build\
+    copy client.exe build\static\
 ) ELSE IF "%1"=="coverage" (
     go test -coverprofile="coverage.out"
     go tool cover -html="coverage.out"
