@@ -1,6 +1,9 @@
 package client
 
-import "github.com/dobin/antnium/pkg/model"
+import (
+	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/dobin/antnium/pkg/model"
+)
 
 type Upstream interface {
 	Connect() error
@@ -10,7 +13,7 @@ type Upstream interface {
 	Channel() chan model.Packet
 }
 
-func getProxy(campaign *model.Campaign) (string, bool) {
+func getProxy(campaign *campaign.Campaign) (string, bool) {
 	if campaign.ProxyUrl != "" {
 		return campaign.ProxyUrl, true
 	} else {

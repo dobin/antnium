@@ -11,13 +11,15 @@ import (
 	"io"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/dobin/antnium/pkg/campaign"
 )
 
 type Coder struct {
-	campaign *Campaign
+	campaign *campaign.Campaign
 }
 
-func MakeCoder(campaign *Campaign) Coder {
+func MakeCoder(campaign *campaign.Campaign) Coder {
 	w := Coder{campaign}
 	return w
 }

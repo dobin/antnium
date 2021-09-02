@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,12 +20,12 @@ type UpstreamHttp struct {
 	coder model.Coder
 
 	config   *ClientConfig
-	campaign *model.Campaign
+	campaign *campaign.Campaign
 
 	notifier WebsocketNotifier
 }
 
-func MakeUpstreamHttp(config *ClientConfig, campaign *model.Campaign) UpstreamHttp {
+func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) UpstreamHttp {
 	coder := model.MakeCoder(campaign)
 	notifier := MakeWebsocketNotifier(config, campaign)
 

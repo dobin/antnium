@@ -2,10 +2,12 @@ package model
 
 import (
 	"testing"
+
+	"github.com/dobin/antnium/pkg/campaign"
 )
 
 func TestEncodeDecode(t *testing.T) {
-	campaign := MakeCampaign()
+	campaign := campaign.MakeCampaign()
 	coder := MakeCoder(&campaign)
 
 	packetId := "1234"
@@ -31,7 +33,7 @@ func TestEncodeDecode(t *testing.T) {
 }
 
 func TestEncryptionSuccess(t *testing.T) {
-	campaign := MakeCampaign()
+	campaign := campaign.MakeCampaign()
 	coder := MakeCoder(&campaign)
 
 	reference := "verysecret"
@@ -51,7 +53,7 @@ func TestEncryptionSuccess(t *testing.T) {
 }
 
 func TestEncryptionFail(t *testing.T) {
-	campaign := MakeCampaign()
+	campaign := campaign.MakeCampaign()
 	coder := MakeCoder(&campaign)
 
 	reference := "verysecret"

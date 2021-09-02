@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -19,12 +20,12 @@ type WebsocketNotifier struct {
 	coder model.Coder
 
 	config   *ClientConfig
-	campaign *model.Campaign
+	campaign *campaign.Campaign
 
 	wsConn *websocket.Conn
 }
 
-func MakeWebsocketNotifier(config *ClientConfig, campaign *model.Campaign) WebsocketNotifier {
+func MakeWebsocketNotifier(config *ClientConfig, campaign *campaign.Campaign) WebsocketNotifier {
 	coder := model.MakeCoder(campaign)
 
 	u := WebsocketNotifier{

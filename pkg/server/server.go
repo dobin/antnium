@@ -8,13 +8,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
 	srvaddr         string
-	Campaign        model.Campaign
+	Campaign        campaign.Campaign
 	coder           model.Coder
 	packetDb        PacketDb
 	clientInfoDb    *ClientInfoDb
@@ -23,7 +24,7 @@ type Server struct {
 }
 
 func NewServer(srvAddr string) Server {
-	campaign := model.MakeCampaign()
+	campaign := campaign.MakeCampaign()
 	coder := model.MakeCoder(&campaign)
 	packetDb := MakePacketDb()
 	clientInfoDb := MakeClientInfoDb()

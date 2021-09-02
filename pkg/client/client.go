@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/pkg/arch"
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,7 +17,7 @@ var ErrNoPacketsFound = errors.New("Server did not return any packets")
 
 type Client struct {
 	Config   *ClientConfig
-	Campaign *model.Campaign
+	Campaign *campaign.Campaign
 
 	Upstream          Upstream
 	DownstreamManager DownstreamManager
@@ -24,7 +25,7 @@ type Client struct {
 
 func NewClient() Client {
 	config := MakeClientConfig()
-	campaign := model.MakeCampaign()
+	campaign := campaign.MakeCampaign()
 	upstream := MakeUpstreamHttp(&config, &campaign)
 	downstreamManager := MakeDownstreamManager(&upstream)
 

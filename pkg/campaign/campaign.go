@@ -1,4 +1,4 @@
-package model
+package campaign
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -20,7 +20,7 @@ type Campaign struct {
 	FileDownloadPath    string `json:"FileDownloadPath"`
 	ClientWebsocketPath string `json:"ClientWebsocketPath"`
 
-	WebuiPath          string
+	HttpJitter         int    `json:"HttpJitter"` // in percent
 	ClientUseWebsocket bool   `json:"ClientUseWebsocket"`
 	ProxyUrl           string `json:"ProxyUrl"` // Default campaign proxy url, empty for none
 }
@@ -39,22 +39,22 @@ func MakeCampaign() Campaign {
 	}
 
 	c := Campaign{
-		apiKey,
-		adminApiKey,
-		key,
-		true,
-		true,
-		serverUrl,
+		ApiKey:      apiKey,
+		AdminApiKey: adminApiKey,
+		EncKey:      key,
+		WithZip:     true,
+		WithEnc:     true,
+		ServerUrl:   serverUrl,
 
-		"/send",
-		"/get/",
-		"/upload/",
-		"/static/",
-		"/ws",
+		PacketSendPath:      "/send",
+		PacketGetPath:       "/get/",
+		FileUploadPath:      "/upload/",
+		FileDownloadPath:    "/static/",
+		ClientWebsocketPath: "/ws",
 
-		"/webui",
-		true,
-		proxyUrl,
+		HttpJitter:         20,
+		ClientUseWebsocket: true,
+		ProxyUrl:           proxyUrl,
 	}
 	return c
 }
