@@ -17,6 +17,9 @@ IF "%1"=="runserver" (
     go build cmd\downstreamclient\downstreamclient.go 
 ) ELSE IF "%1"=="deploy" (
     echo "bla"
+) ELSE IF "%1"=="coverage" (
+    go test -coverprofile="coverage.out"
+    go tool cover -html="coverage.out"
 ) ELSE (
     echo "Unknown: %1"
 )

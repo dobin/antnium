@@ -41,16 +41,19 @@ func TestClientInfoDb(t *testing.T) {
 		return
 	}
 
-	// Check
+	// Check order
 	if hostList[1].LastSeen.After(hostList[0].LastSeen) {
 		t.Errorf("Error host order: %v", hostList)
 	}
+
+	// Check update
+	time.Sleep(time.Millisecond * 10) // Needs some time
 	clientInfoDb.updateFor("1-1", "1.1.1.3")
 	hostList = clientInfoDb.getAsList()
 	if len(hostList) != 2 {
 		t.Errorf("Len wrong")
 	}
-	if hostList[0].LastIp != "1.1.1.3" {
+	if hostList[0].LastIp != "1.1.1.3" { // 1-1 is always @0
 		t.Errorf("Error: IP is %s", hostList[0].LastIp)
 	}
 }
