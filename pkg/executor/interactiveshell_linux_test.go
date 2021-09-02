@@ -9,16 +9,10 @@ import (
 )
 
 func TestInteractiveShellBash(t *testing.T) {
-	t.Log("0")
 	interactiveShell := MakeInteractiveShell()
-	t.Log("1")
 	stdout, stderr, err := interactiveShell.Open("/bin/bash", []string{})
 	if err != nil {
 		t.Errorf(err.Error())
-		return
-	}
-	if !strings.Contains(stdout, "$") {
-		t.Errorf("Packet 1 error")
 		return
 	}
 
@@ -44,7 +38,7 @@ func TestInteractiveShellBash(t *testing.T) {
 		t.Errorf("Packet 1 error")
 		return
 	}
-	if !strings.Contains(stderr, "is not recognized") {
+	if !strings.Contains(stderr, "not found") {
 		t.Errorf("Packet 1 error")
 		return
 	}

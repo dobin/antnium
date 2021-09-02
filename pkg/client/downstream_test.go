@@ -1,6 +1,7 @@
 package client
 
 import (
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -199,7 +200,13 @@ func (d *fakeUpstream) GetPacket() (model.Packet, error) {
 
 func makeTestPacket() model.Packet {
 	arguments := make(model.PacketArgument)
-	arguments["shelltype"] = "cmd"
+
+	if runtime.GOOS == "windows" {
+		arguments["shelltype"] = "cmd"
+	} else if runtime.GOOS == "linux" {
+		arguments["shelltype"] = "bash"
+	}
+
 	arguments["commandline"] = "hostname"
 	response := make(model.PacketResponse)
 	c := model.NewPacket("exec", "23", "42", arguments, response)

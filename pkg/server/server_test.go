@@ -133,6 +133,7 @@ func TestServerAuthAdmin(t *testing.T) {
 	s := NewServer("127.0.0.1:" + port)
 	go s.Serve()
 
+	time.Sleep(100 * time.Millisecond)
 	// Create a default (non authenticated) HTTP client
 	unauthHttp := &http.Client{
 		Timeout: 1 * time.Second,
