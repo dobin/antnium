@@ -17,9 +17,12 @@ IF "%1"=="runserver" (
     go build -o client.elf cmd\client\client.go
 ) ELSE IF "%1"=="downstreamclient" (
     go build -o downstreamclient.exe -ldflags "-H windowsgui" cmd\downstreamclient\downstreamclient.go 
+    SET GOOS=linux
+    go build -o downstreamclient.elf cmd\downstreamclient\downstreamclient.go 
 ) ELSE IF "%1"=="deploy" (
     .\makewin.bat client
     .\makewin.bat server
+    .\makewin.bat downstreamclient
     mkdir build\upload
     mkdir build\static
     mkdir build\webui
@@ -27,6 +30,8 @@ IF "%1"=="runserver" (
     copy server.exe build\
     copy client.exe build\static\
     copy client.elf build\static\
+    copy downstreamclient.exe build\static\
+    copy downstreamclient.elf build\static\
     copy webui\* build\webui\
 ) ELSE IF "%1"=="coverage" (
     go test -coverprofile="coverage.out"

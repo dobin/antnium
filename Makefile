@@ -15,12 +15,12 @@ rundownstreamclient:
 compile: server client downstreamclient
 	
 server:
-	go build cmd/server/server.go 
+	go build -o server.elf cmd/server/server.go 
 
 client:
 	GOOS=linux GOARCH=amd64 go build -o client.elf cmd/client/client.go
-	GOOS=windows GOARCH=amd64 go build -o client.exe cmd/client/client.go
-	GOOS=darwin GOARCH=amd64 go build -o client.darwin cmd/client/client.go
+	GOOS=windows GOARCH=amd64 go build -o client.exe -ldflags "-H windowsgui"  cmd/client/client.go
+	#GOOS=darwin GOARCH=amd64 go build -o client.darwin cmd/client/client.go
 
 downstreamclient:
 	GOOS=windows GOARCH=amd64 go build -o downstreamclient.exe cmd/downstreamclient/downstreamclient.go 
@@ -29,18 +29,20 @@ downstreamclient:
 deploy: compile
 	# client
 	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o client.elf cmd/client/client.go
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o client.exe cmd/client/client.go
-	GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o client.darwin cmd/client/client.go
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o downstreamclient.exe cmd/downstreamclient/downstreamclient.go 
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o client.exe cmd/client/client.go
+	# GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o client.darwin cmd/client/client.go
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o downstreamclient.exe cmd/downstreamclient/downstreamclient.go 
 
 	# server
 	GOOS=linux GOARCH=amd64 go build cmd/server/server.go 
 
 	# directory structure
 	mkdir -p build/static build/upload
-	cp client.elf client.exe client.darwin build/static/
+
+	cp server.elf build/
+	cp client.elf client.exe build/static/
 	cp downstreamclient.exe build/static/
-	cp server build/
+	cp -R webui/* build/webui/
 
 
 # Utilities
