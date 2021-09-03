@@ -76,6 +76,14 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 	}
 	_, err = conn.Write(packetEncoded)
 	if err != nil {
+		/* // TODO put socket in class? (so we can notify webui)
+		d.downstreamsMutex.Lock()
+		delete(d.downstreams, packet.DownstreamId)
+		d.downstreamsMutex.Unlock()
+
+		// Notify about deleted downstream
+		downstreamLocaltcpNotify <- struct{}{}
+		*/
 		return packet, err
 	}
 	conn.Write([]byte("\n"))

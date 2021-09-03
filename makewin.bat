@@ -11,11 +11,12 @@ IF "%1"=="runserver" (
     SET GOOS=linux
     go build -o server.elf cmd\server\server.go 
 ) ELSE IF "%1"=="client" (
-    go build -o client.exe cmd\client\client.go
+    REM -H windowsgui will disable the go window
+    go build -o client.exe -ldflags "-H windowsgui" cmd\client\client.go
     SET GOOS=linux
     go build -o client.elf cmd\client\client.go
 ) ELSE IF "%1"=="downstreamclient" (
-    go build cmd\downstreamclient\downstreamclient.go 
+    go build -o downstreamclient.exe -ldflags "-H windowsgui" cmd\downstreamclient\downstreamclient.go 
 ) ELSE IF "%1"=="deploy" (
     .\makewin.bat client
     .\makewin.bat server
