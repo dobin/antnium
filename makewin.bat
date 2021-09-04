@@ -34,7 +34,7 @@ IF "%1"=="runserver" (
     copy downstreamclient.elf build\static\
     copy webui\* build\webui\
 ) ELSE IF "%1"=="coverage" (
-    go test -coverprofile="coverage.out"
+    go test .\... -coverprofile="coverage.out"
     go tool cover -html="coverage.out"
 ) ELSE (
     echo "Unknown: %1"
