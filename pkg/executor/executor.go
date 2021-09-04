@@ -40,29 +40,30 @@ func (p *Executor) Execute(packet model.Packet) (model.Packet, error) {
 		"5_arguments":    packet.Arguments,
 	}).Info("Exec")
 
-	if packet.PacketType == "ping" {
+	switch packet.PacketType {
+	case "ping":
 		packet.Response, err = p.actionPing(packet.Arguments)
-	} else if packet.PacketType == "test" {
+	case "test":
 		packet.Response, err = p.actionTest(packet.Arguments)
-	} else if packet.PacketType == "shutdown" {
+	case "shutdown":
 		packet.Response, err = p.actionShutdown(packet.Arguments)
-	} else if packet.PacketType == "exec" {
+	case "exec":
 		packet.Response, err = p.actionExec(packet.Arguments)
-	} else if packet.PacketType == "fileupload" {
+	case "fileupload":
 		packet.Response, err = p.actionFileupload(packet.Arguments)
-	} else if packet.PacketType == "filedownload" {
+	case "filedownload":
 		packet.Response, err = p.actionFiledownload(packet.Arguments)
-	} else if packet.PacketType == "iOpen" {
+	case "iOpen":
 		packet.Response, err = p.actionInteractiveShellOpen(packet.Arguments)
-	} else if packet.PacketType == "iIssue" {
+	case "iIssue":
 		packet.Response, err = p.actionInteractiveShellIssue(packet.Arguments)
-	} else if packet.PacketType == "iClose" {
+	case "iClose":
 		packet.Response, err = p.actionInteractiveShellClose(packet.Arguments)
-	} else if packet.PacketType == "dir" {
+	case "dir":
 		packet.Response, err = p.actionDir(packet.Arguments)
-	} else {
+	default:
 		packet.Response = make(model.PacketResponse)
-		packet.Response["err"] = "packet type not known: " + packet.PacketType
+		packet.Response["error"] = "packet type not known: " + packet.PacketType
 	}
 
 	// Add any errors to the packet response
@@ -128,7 +129,7 @@ func (p *Executor) actionInteractiveShellClose(packetArgument model.PacketArgume
 
 	err := p.interactiveShell.Close()
 	if err != nil {
-		ret["err"] = err.Error()
+		ret["error"] = err.Error()
 		ret["stdout"] = "closed"
 	} else {
 		ret["status"] = "no error"

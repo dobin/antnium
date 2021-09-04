@@ -81,7 +81,8 @@ func Exec(packetArgument model.PacketArgument) ([]byte, []byte, int, int, error)
 	}
 
 	var cmd *exec.Cmd
-	if shellType == "cmd" {
+	switch shellType {
+	case "cmd":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("No argument 'commandline' given")
@@ -89,21 +90,23 @@ func Exec(packetArgument model.PacketArgument) ([]byte, []byte, int, int, error)
 		cmd = exec.CommandContext(ctx, "cmd.exe")
 		cmd.SysProcAttr = getSysProcAttrs()
 		cmd.SysProcAttr.CmdLine = fmt.Sprintf(`cmd.exe /S /C "%s"`, commandStr)
-	} else if shellType == "powershell" {
+
+	case "powershell":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("No argument 'commandline' given")
 		}
-
 		cmd = exec.CommandContext(ctx, "powershell.exe", "-ExecutionPolicy", "Bypass", "-C", commandStr)
 		cmd.SysProcAttr = getSysProcAttrs()
-	} else if shellType == "raw" {
+
+	case "raw":
 		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Invalid packet arguments")
 		}
 		cmd = exec.CommandContext(ctx, executable, args...)
-	} else {
+
+	default:
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("Unknown shelltype: %s", shellType)
 	}
 

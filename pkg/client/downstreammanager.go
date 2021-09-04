@@ -68,29 +68,36 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 	if packet.DownstreamId != "manager" {
 		return packet, fmt.Errorf("Wrong args")
 	}
-	if packet.PacketType == "downstreamServerStart" {
+	switch packet.PacketType {
+	case "downstreamServerStart":
 		ret, err := dm.StartListeners()
 		if err != nil {
-			packet.Response["err"] = err.Error()
+			packet.Response["error"] = err.Error()
+			return packet, err
 		} else {
 			packet.Response["ret"] = ret
 		}
-	} else if packet.PacketType == "downstreamServerStop" {
+
+	case "downstreamServerStop":
 		ret, err := dm.StopListeners()
 		if err != nil {
-			packet.Response["err"] = err.Error()
+			packet.Response["error"] = err.Error()
+			return packet, err
 		} else {
 			packet.Response["ret"] = ret
 		}
-	} else if packet.PacketType == "downstreamServers" {
+
+	case "downstreamServers":
 		downstreams := dm.DownstreamServers()
 		for idx, downstreamInfo := range downstreams {
 			idxStr := strconv.Itoa(idx)
 			packet.Response["name"+idxStr] = downstreamInfo.Name
 			packet.Response["info"+idxStr] = downstreamInfo.Info
 		}
-	} else {
-		packet.Response["ret"] = "packettype not known"
+
+	default:
+		packet.Response["error"] = "packettype not known: " + packet.PacketType
+		return packet, fmt.Errorf("PacketType not known: " + packet.PacketType)
 	}
 
 	return packet, nil

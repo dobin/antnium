@@ -46,19 +46,22 @@ func Exec(packetArgument model.PacketArgument) ([]byte, []byte, int, int, error)
 	}
 
 	var cmd *exec.Cmd
-	if shellType == "bash" {
+	switch shellType {
+	case "bash":
 		commandLine, ok := packetArgument["commandline"]
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("No argument 'commandline' given")
 		}
 		cmd = exec.CommandContext(ctx, "/bin/bash", "-c", commandLine)
-	} else if shellType == "raw" {
+
+	case "raw":
 		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Invalid packet arguments")
 		}
 		cmd = exec.CommandContext(ctx, executable, args...)
-	} else {
+
+	default:
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("Unknown shelltype: %s", shellType)
 	}
 
