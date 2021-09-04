@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -12,12 +13,16 @@ import (
 type ClientWebSocket struct {
 	clients    map[string]*websocket.Conn // ComputerId:WebsocketConnection
 	wsUpgrader websocket.Upgrader
+	coder      model.Coder
+	campaign   *campaign.Campaign
 }
 
-func MakeClientWebSocket() ClientWebSocket {
+func MakeClientWebSocket(campaign *campaign.Campaign) ClientWebSocket {
 	a := ClientWebSocket{
 		clients:    make(map[string]*websocket.Conn),
 		wsUpgrader: websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
+		coder:      model.MakeCoder(campaign),
+		campaign:   campaign,
 	}
 	return a
 }
@@ -66,20 +71,35 @@ func (a *ClientWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
-func (a *ClientWebSocket) TryNotify(packet *model.Packet) {
+func (a *ClientWebSocket) TryNotify(packet *model.Packet) bool {
 	clientConn, ok := a.clients[packet.ComputerId]
 	if !ok {
 		// All ok, not connected to ws
-		return
+		return false
 	}
 	if clientConn == nil {
 		log.Warn("WS Client connection nil")
-		return
+		return false
 	}
-	err := clientConn.WriteMessage(websocket.TextMessage, []byte("notification"))
+
+	// Encode the packet and send it
+	jsonData, err := a.coder.EncodeData(*packet)
+	if err != nil {
+		return false
+	}
+
+	err = clientConn.WriteMessage(websocket.TextMessage, jsonData)
+	if err != nil {
+		log.Infof("Websocket for host %s closed when trying to write: %s", packet.ComputerId, err.Error())
+		return false
+	}
+
+	/*err := clientConn.WriteMessage(websocket.TextMessage, []byte("notification"))
 	if err != nil {
 		log.Infof("Websocket for host %s closed when trying to write: %s", packet.ComputerId, err.Error())
 		return
-	}
+	}*/
 	log.Infof("Client %s notified about new packet via WS", packet.ComputerId)
+
+	return true
 }

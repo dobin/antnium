@@ -13,19 +13,23 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type WebsocketNotifier struct {
-	channel  chan string
-	coder    model.Coder
+type UpstreamWs struct {
+	channel chan model.Packet
+
+	// state?
+	coder model.Coder
+
 	config   *ClientConfig
 	campaign *campaign.Campaign
-	wsConn   *websocket.Conn
+
+	wsConn *websocket.Conn
 }
 
-func MakeWebsocketNotifier(config *ClientConfig, campaign *campaign.Campaign) WebsocketNotifier {
+func MakeUpstreamWs(config *ClientConfig, campaign *campaign.Campaign) UpstreamWs {
 	coder := model.MakeCoder(campaign)
 
-	u := WebsocketNotifier{
-		make(chan string),
+	u := UpstreamWs{
+		make(chan model.Packet),
 		coder,
 		config,
 		campaign,
@@ -34,7 +38,22 @@ func MakeWebsocketNotifier(config *ClientConfig, campaign *campaign.Campaign) We
 	return u
 }
 
-func (d *WebsocketNotifier) Connect() error {
+func (d *UpstreamWs) Connect() error {
+	proxyUrl, ok := getProxy(d.campaign)
+	if ok {
+		if proxyUrl, err := url.Parse(proxyUrl); err == nil && proxyUrl.Scheme != "" && proxyUrl.Host != "" {
+			proxyUrlFunc := http.ProxyURL(proxyUrl)
+			http.DefaultTransport.(*http.Transport).Proxy = proxyUrlFunc
+			log.Infof("Using proxy: %s", proxyUrl)
+		} else {
+			log.Warnf("Could not parse proxy %s: %s", proxyUrl, err.Error())
+		}
+	}
+
+	return d.connectWs()
+}
+
+func (d *UpstreamWs) connectWs() error {
 	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/echo"}
 	myUrl := strings.Replace(d.campaign.ServerUrl, "http", "ws", 1) + d.campaign.ClientWebsocketPath
 	var ws *websocket.Conn
@@ -79,12 +98,23 @@ func (d *WebsocketNotifier) Connect() error {
 	d.wsConn = ws
 
 	// Thread: Receiver Thread
-	go d.Start()
+	//go d.Start()
 
 	return nil
 }
 
-func (d *WebsocketNotifier) IsConnected() bool {
+func (d *UpstreamWs) Channel() chan model.Packet {
+	return d.channel
+}
+
+func (d *UpstreamWs) SendOutofband(packet model.Packet) error {
+	// Only used for client-initiated packets
+	//return d.sendPacket(packet)
+
+	return nil
+}
+
+func (d *UpstreamWs) IsConnected() bool {
 	if d.wsConn == nil {
 		return false
 	} else {
@@ -93,16 +123,23 @@ func (d *WebsocketNotifier) IsConnected() bool {
 }
 
 // Start is a Thread responsible for receiving notifications from server, lifetime:websocket connection
-func (d *WebsocketNotifier) Start() {
+func (d *UpstreamWs) Start() {
 	defer d.wsConn.Close()
 
 	for {
 		// Get notification (blocking)
-		_, _, err := d.wsConn.ReadMessage()
+		_, message, err := d.wsConn.ReadMessage()
+
+		packet, err := d.coder.DecodeData(message)
+		if err != nil {
+			log.Error("Could not decode")
+			return
+		}
+
 		if err == nil {
-			d.channel <- "notification"
+			d.channel <- packet
 		} else {
-			d.channel <- "notification" // ALWAYS send back something, or upstream will get stuck
+			//d.channel <- "notification" // ALWAYS send back something, or upstream will get stuck
 			log.Error("WS error, closed?")
 			d.wsConn = nil
 			break

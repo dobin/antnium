@@ -21,13 +21,11 @@ type UpstreamHttp struct {
 
 	config   *ClientConfig
 	campaign *campaign.Campaign
-
-	notifier *WebsocketNotifier
 }
 
 func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) UpstreamHttp {
 	coder := model.MakeCoder(campaign)
-	notifier := MakeWebsocketNotifier(config, campaign)
+
 	clientState := MakeClientState()
 
 	u := UpstreamHttp{
@@ -36,7 +34,6 @@ func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) Upstrea
 		coder:    coder,
 		config:   config,
 		campaign: campaign,
-		notifier: &notifier,
 	}
 	return u
 }
@@ -53,21 +50,16 @@ func (d *UpstreamHttp) Connect() error {
 		}
 	}
 
-	if d.campaign.ClientUseWebsocket {
-		log.Info("UpstreamHttp: Use WS")
-		err := d.notifier.Connect()
-		if err != nil {
-			log.Warn(err.Error())
-		}
-	}
+	//// TODO: IMPLEMENT HTTP PING CHECK
 
-	arguments := make(model.PacketArgument)
-	response := make(model.PacketResponse)
-	packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
-	err := d.SendOutofband(packet)
-	if err != nil {
-		log.Warnf("Initial test ping: Could not reach server %s (yet, i keep trying...)", d.campaign.ServerUrl)
-	}
+	/*
+		arguments := make(model.PacketArgument)
+		response := make(model.PacketResponse)
+		packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
+		err := d.SendOutofband(packet)
+		if err != nil {
+			log.Warnf("Initial test ping: Could not reach server %s (yet, i keep trying...)", d.campaign.ServerUrl)
+		}*/
 
 	return nil
 }
@@ -84,23 +76,13 @@ func (d *UpstreamHttp) SendOutofband(packet model.Packet) error {
 // Start is a Thread responsible for receiving packets from server, lifetime:app
 func (d *UpstreamHttp) Start() {
 	for {
-		// If the websocket is connected, it will notify us of new packets (it blocks).
-		// If not, try regularly
-		if d.campaign.ClientUseWebsocket && d.notifier.IsConnected() {
-			<-d.notifier.channel
-		} else {
-			time.Sleep(d.state.getSleepDuration())
-		}
+		time.Sleep(d.state.getSleepDuration())
 
 		// Try getting a packet from server
 		packet, err := d.GetPacket()
 		if err != nil {
 			if err == ErrNoPacketsFound {
 				fmt.Print(".")
-
-				if d.campaign.ClientUseWebsocket && d.notifier.IsConnected() {
-					log.Error("WS notified us about new packet, but there wasnt one")
-				}
 				continue // no packets for us, maybe later
 			}
 

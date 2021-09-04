@@ -29,7 +29,7 @@ func NewServer(srvAddr string) Server {
 	packetDb := MakePacketDb()
 	clientInfoDb := MakeClientInfoDb()
 	adminWebsocket := MakeAdminWebSocket(campaign.AdminApiKey)
-	clientWebsocket := MakeClientWebSocket()
+	clientWebsocket := MakeClientWebSocket(&campaign)
 
 	// Clients connected via websocket do not send regular ping packets (that's the idea of it)
 	// Sadly this makes LastSeen useless - but the user wants to know if the client is still connected.
@@ -69,8 +69,18 @@ func NewServer(srvAddr string) Server {
 }
 
 func (s *Server) AddNewPacket(packetInfo PacketInfo) {
-	// Notify client, if connected to WS
-	s.clientWebSocket.TryNotify(&packetInfo.Packet)
+	// Add to DB and get updated one
+	packetInfo = s.packetDb.add(packetInfo)
+
+	// Notify UI immediately (for initial STATE_RECORDED)
+	s.adminWebSocket.broadcastPacket(packetInfo)
+
+	// Send to client, if they are connected via Websocket
+	ok := s.clientWebSocket.TryNotify(&packetInfo.Packet)
+	if ok {
+		// only notify UI if we really sent a packet
+		s.adminWebSocket.broadcastPacket(packetInfo)
+	}
 }
 
 func (s *Server) DbLoad() error {

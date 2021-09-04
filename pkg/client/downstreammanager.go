@@ -19,7 +19,7 @@ type DownstreamInfo struct {
 }
 
 type DownstreamManager struct {
-	upstream Upstream // used to send notifications
+	upstreamManager *UpstreamManager // used to send notifications
 
 	downstreamClient     *DownstreamClient
 	downstreamClientInfo string
@@ -28,7 +28,7 @@ type DownstreamManager struct {
 	downstreamLocaltcpNotify chan struct{}
 }
 
-func MakeDownstreamManager(upstream Upstream) DownstreamManager {
+func MakeDownstreamManager(upstreamManager *UpstreamManager) DownstreamManager {
 	// Get our name (for channel identification)
 	ex, err := os.Executable()
 	if err != nil {
@@ -41,7 +41,7 @@ func MakeDownstreamManager(upstream Upstream) DownstreamManager {
 	downstreamLocaltcp := MakeDownstreamLocaltcp("")
 
 	downstreamManager := DownstreamManager{
-		upstream:                 upstream,
+		upstreamManager:          upstreamManager,
 		downstreamClient:         &downstreamClient,
 		downstreamClientInfo:     downstreamClientInfo,
 		downstreamLocaltcp:       &downstreamLocaltcp,
@@ -178,7 +178,7 @@ func (dm *DownstreamManager) SendDownstreams() {
 	}
 	packet := model.NewPacket("downstreams", "", strconv.Itoa(int(rand.Uint64())), arguments, response)
 
-	err := dm.upstream.SendOutofband(packet)
+	err := dm.upstreamManager.SendOutofband(packet)
 	if err != nil {
 		log.Errorf("Senddownstreams send error: %s", err.Error())
 	}

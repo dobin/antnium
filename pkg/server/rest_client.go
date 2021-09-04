@@ -25,7 +25,7 @@ func (s *Server) getPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// only notify if we had a packet for the client
+	// only notify UI if we really sent a packet
 	s.adminWebSocket.broadcastPacket(*packetInfo)
 
 	// Set source IP for this packet

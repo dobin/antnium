@@ -105,12 +105,6 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
 
-	// Add to DB and get updated one
-	packetInfo = s.packetDb.add(packetInfo)
-
-	// Notify UI immediately (for initial STATE_RECORDED)
-	s.adminWebSocket.broadcastPacket(packetInfo)
-
 	// Send it through the pipeline
 	s.AddNewPacket(packetInfo)
 }
