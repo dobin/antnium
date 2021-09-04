@@ -6,7 +6,6 @@ package server
 
 import (
 	"encoding/json"
-	"net/http"
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -23,8 +22,7 @@ type AdminWebSocket struct {
 	clients     map[*websocket.Conn]bool
 	adminapiKey string
 
-	channel    chan *WebsocketData
-	wsUpgrader websocket.Upgrader
+	channel chan *WebsocketData
 }
 
 func MakeAdminWebSocket(adminApiKey string) AdminWebSocket {
@@ -32,42 +30,16 @@ func MakeAdminWebSocket(adminApiKey string) AdminWebSocket {
 		make(map[*websocket.Conn]bool),
 		adminApiKey,
 		make(chan *WebsocketData),
-		websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				return true
-			},
-		},
 	}
+
+	go a.Distributor() // FIXME good here?
+
 	return a
 }
 
 // wsHandler is the entry point for new websocket connections
-func (a *AdminWebSocket) wsHandler(w http.ResponseWriter, r *http.Request) {
-	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Errorf("AdminWebsocket: %s", err.Error())
-		return
-	}
-
-	// WebSocket Authentication
-	// first message should be the AdminApiKey
-	var authToken AuthToken
-	_, message, err := ws.ReadMessage()
-	if err != nil {
-		log.Error("AdminWebsocket read error")
-		return
-	}
-	err = json.Unmarshal(message, &authToken)
-	if err != nil {
-		log.Warnf("AdminWebsocket: could not decode auth: %v", message)
-		return
-	}
-	if string(authToken) == a.adminapiKey {
-		// register client as auth succeeded
-		a.clients[ws] = true
-	} else {
-		log.Warn("AdminWebsocket: incorrect key: " + authToken)
-	}
+func (a *AdminWebSocket) registerWs(wsConn *websocket.Conn) {
+	a.clients[wsConn] = true
 }
 
 func (a *AdminWebSocket) broadcastPacket(packetInfo PacketInfo) {

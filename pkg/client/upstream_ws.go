@@ -14,7 +14,8 @@ import (
 )
 
 type UpstreamWs struct {
-	channel chan model.Packet
+	channel    chan model.Packet
+	oobChannel chan model.Packet
 
 	// state?
 	coder model.Coder
@@ -29,6 +30,7 @@ func MakeUpstreamWs(config *ClientConfig, campaign *campaign.Campaign) UpstreamW
 	coder := model.MakeCoder(campaign)
 
 	u := UpstreamWs{
+		make(chan model.Packet),
 		make(chan model.Packet),
 		coder,
 		config,
@@ -107,6 +109,10 @@ func (d *UpstreamWs) Channel() chan model.Packet {
 	return d.channel
 }
 
+func (d *UpstreamWs) OobChannel() chan model.Packet {
+	return d.oobChannel
+}
+
 func (d *UpstreamWs) SendOutofband(packet model.Packet) error {
 	// Only used for client-initiated packets
 	//return d.sendPacket(packet)
@@ -124,25 +130,43 @@ func (d *UpstreamWs) IsConnected() bool {
 
 // Start is a Thread responsible for receiving notifications from server, lifetime:websocket connection
 func (d *UpstreamWs) Start() {
-	defer d.wsConn.Close()
+	// WS Reader
+	go func() {
+		defer d.wsConn.Close()
+		for {
+			// Get notification (blocking)
+			_, message, err := d.wsConn.ReadMessage()
 
-	for {
-		// Get notification (blocking)
-		_, message, err := d.wsConn.ReadMessage()
+			packet, err := d.coder.DecodeData(message)
+			if err != nil {
+				log.Error("Could not decode")
+				return
+			}
 
-		packet, err := d.coder.DecodeData(message)
-		if err != nil {
-			log.Error("Could not decode")
-			return
+			if err == nil {
+				d.channel <- packet
+			} else {
+				//d.channel <- "notification" // ALWAYS send back something, or upstream will get stuck
+				log.Error("WS error, closed?")
+				d.wsConn = nil
+				break
+			}
 		}
+	}()
 
-		if err == nil {
-			d.channel <- packet
-		} else {
-			//d.channel <- "notification" // ALWAYS send back something, or upstream will get stuck
-			log.Error("WS error, closed?")
-			d.wsConn = nil
-			break
+	// OOB Reader
+	go func() {
+		for {
+			packet := <-d.oobChannel
+
+			packetData, err := d.coder.EncodeData(packet)
+			if err != nil {
+				log.Error("Could not decode")
+				return
+			}
+			log.Info("Send to server via WS")
+
+			d.wsConn.WriteMessage(websocket.TextMessage, packetData)
 		}
-	}
+	}()
 }

@@ -8,79 +8,32 @@ import (
 	"os"
 	"time"
 
-	"github.com/dobin/antnium/pkg/campaign"
-	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
-	srvaddr         string
-	Campaign        *campaign.Campaign
-	coder           model.Coder
-	packetDb        *PacketDb
-	clientInfoDb    *ClientInfoDb
-	adminWebSocket  *AdminWebSocket
-	clientWebSocket *ClientWebSocket
+	serverManager *ServerManager
+	httpServer    *HttpServer
 }
 
 func NewServer(srvAddr string) Server {
-	campaign := campaign.MakeCampaign()
-	coder := model.MakeCoder(&campaign)
-	packetDb := MakePacketDb()
-	clientInfoDb := MakeClientInfoDb()
-	adminWebsocket := MakeAdminWebSocket(campaign.AdminApiKey)
-	clientWebsocket := MakeClientWebSocket(&campaign)
-
-	// Clients connected via websocket do not send regular ping packets (that's the idea of it)
-	// Sadly this makes LastSeen useless - but the user wants to know if the client is still connected.
-	// Here we regularly check the clients connected to ClientWebsocket, and update their LastSeen
-	// Lifetime: App
-	go func() {
-		clientInfoDb2 := &clientInfoDb
-		for {
-			time.Sleep(10 * time.Second)
-			c := clientWebsocket.clients
-			for computerId, conn := range c {
-				if conn == nil {
-					continue
-				}
-				clientInfoDb2.updateFor(computerId, conn.RemoteAddr().String())
-			}
-
-			// Todo: When to quit?
-		}
-	}()
+	serverManager := NewServerManager(srvAddr)
+	httpServer := MakeHttpServer(&serverManager)
 
 	// Init random for packet id generation
 	// Doesnt need to be secure
 	rand.Seed(time.Now().Unix())
 
 	w := Server{
-		srvAddr,
-		&campaign,
-		coder,
-		&packetDb,
-		&clientInfoDb,
-		&adminWebsocket,
-		&clientWebsocket,
+		&serverManager,
+		&httpServer,
 	}
 
 	return w
 }
 
-func (s *Server) AddNewPacket(packetInfo PacketInfo) {
-	// Add to DB and get updated one
-	packetInfo = s.packetDb.add(packetInfo)
-
-	// Notify UI immediately (for initial STATE_RECORDED)
-	s.adminWebSocket.broadcastPacket(packetInfo)
-
-	// Send to client, if they are connected via Websocket
-	ok := s.clientWebSocket.TryNotify(&packetInfo.Packet)
-	if ok {
-		// only notify UI if we really sent a packet
-		s.adminWebSocket.broadcastPacket(packetInfo)
-	}
+func (s *Server) Serve() {
+	s.httpServer.Serve()
 }
 
 func (s *Server) DbLoad() error {
@@ -96,7 +49,7 @@ func (s *Server) DbLoad() error {
 		if err != nil {
 			return fmt.Errorf("Read file decode error: %s", err.Error())
 		}
-		s.packetDb.Set(packetInfos)
+		s.serverManager.packetDb.Set(packetInfos)
 		fmt.Printf("Loaded %d packets from %s\n", len(packetInfos), dbPackets)
 	}
 
@@ -112,7 +65,7 @@ func (s *Server) DbLoad() error {
 		if err != nil {
 			return fmt.Errorf("Read file decode error: %s", err.Error())
 		}
-		s.clientInfoDb.Set(clients)
+		s.serverManager.clientInfoDb.Set(clients)
 		fmt.Printf("Loaded %d clients from %s\n", len(clients), dbClients)
 	}
 
@@ -121,7 +74,7 @@ func (s *Server) DbLoad() error {
 
 func (s *Server) DumpDbPackets() error {
 	log.Debug("DB Dump: Packets")
-	packets := s.packetDb.getAll()
+	packets := s.serverManager.packetDb.getAll()
 	packetBytes, err := json.Marshal(packets)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
@@ -139,7 +92,7 @@ func (s *Server) DumpDbPackets() error {
 
 func (s *Server) DumpDbClients() error {
 	log.Debug("DB Dump: Clients")
-	clients := s.clientInfoDb.getAll()
+	clients := s.serverManager.clientInfoDb.getAll()
 	clientsBytes, err := json.Marshal(clients)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
@@ -162,7 +115,7 @@ func (s *Server) PeriodicDbDump() {
 	lastClientsLen := 0  // len of array. at least we get all clients
 	for {
 		// Packets
-		packets := s.packetDb.getAll()
+		packets := s.serverManager.packetDb.getAll()
 		packetBytes, err := json.Marshal(packets)
 		if err != nil {
 			log.Errorf("could not marshal config json: %v", err)
@@ -173,7 +126,7 @@ func (s *Server) PeriodicDbDump() {
 		}
 
 		// Clients
-		clients := s.clientInfoDb.getAll()
+		clients := s.serverManager.clientInfoDb.getAll()
 		if len(clients) != lastClientsLen {
 			s.DumpDbClients() // ignore err
 			lastClientsLen = len(clients)
