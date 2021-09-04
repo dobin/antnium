@@ -20,7 +20,7 @@ type Client struct {
 	Campaign *campaign.Campaign
 
 	Upstream          Upstream
-	DownstreamManager DownstreamManager
+	DownstreamManager *DownstreamManager
 }
 
 func NewClient() Client {
@@ -33,7 +33,7 @@ func NewClient() Client {
 		&config,
 		&campaign,
 		&upstream,
-		downstreamManager,
+		&downstreamManager,
 	}
 	return w
 }

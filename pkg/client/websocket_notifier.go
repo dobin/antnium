@@ -14,15 +14,11 @@ import (
 )
 
 type WebsocketNotifier struct {
-	channel chan string
-
-	state ClientState
-	coder model.Coder
-
+	channel  chan string
+	coder    model.Coder
 	config   *ClientConfig
 	campaign *campaign.Campaign
-
-	wsConn *websocket.Conn
+	wsConn   *websocket.Conn
 }
 
 func MakeWebsocketNotifier(config *ClientConfig, campaign *campaign.Campaign) WebsocketNotifier {
@@ -30,7 +26,6 @@ func MakeWebsocketNotifier(config *ClientConfig, campaign *campaign.Campaign) We
 
 	u := WebsocketNotifier{
 		make(chan string),
-		MakeClientState(),
 		coder,
 		config,
 		campaign,

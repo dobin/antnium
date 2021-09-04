@@ -16,26 +16,27 @@ import (
 type UpstreamHttp struct {
 	channel chan model.Packet
 
-	state ClientState
+	state *ClientState
 	coder model.Coder
 
 	config   *ClientConfig
 	campaign *campaign.Campaign
 
-	notifier WebsocketNotifier
+	notifier *WebsocketNotifier
 }
 
 func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) UpstreamHttp {
 	coder := model.MakeCoder(campaign)
 	notifier := MakeWebsocketNotifier(config, campaign)
+	clientState := MakeClientState()
 
 	u := UpstreamHttp{
-		make(chan model.Packet),
-		MakeClientState(),
-		coder,
-		config,
-		campaign,
-		notifier,
+		channel:  make(chan model.Packet),
+		state:    &clientState,
+		coder:    coder,
+		config:   config,
+		campaign: campaign,
+		notifier: &notifier,
 	}
 	return u
 }

@@ -15,12 +15,12 @@ import (
 
 type Server struct {
 	srvaddr         string
-	Campaign        campaign.Campaign
+	Campaign        *campaign.Campaign
 	coder           model.Coder
-	packetDb        PacketDb
+	packetDb        *PacketDb
 	clientInfoDb    *ClientInfoDb
-	adminWebSocket  AdminWebSocket
-	clientWebSocket ClientWebSocket
+	adminWebSocket  *AdminWebSocket
+	clientWebSocket *ClientWebSocket
 }
 
 func NewServer(srvAddr string) Server {
@@ -57,12 +57,12 @@ func NewServer(srvAddr string) Server {
 
 	w := Server{
 		srvAddr,
-		campaign,
+		&campaign,
 		coder,
-		packetDb,
+		&packetDb,
 		&clientInfoDb,
-		adminWebsocket,
-		clientWebsocket,
+		&adminWebsocket,
+		&clientWebsocket,
 	}
 
 	return w

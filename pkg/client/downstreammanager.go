@@ -21,10 +21,10 @@ type DownstreamInfo struct {
 type DownstreamManager struct {
 	upstream Upstream // used to send notifications
 
-	downstreamClient     DownstreamClient
+	downstreamClient     *DownstreamClient
 	downstreamClientInfo string
 
-	downstreamLocaltcp       DownstreamLocaltcp
+	downstreamLocaltcp       *DownstreamLocaltcp
 	downstreamLocaltcpNotify chan struct{}
 }
 
@@ -42,9 +42,9 @@ func MakeDownstreamManager(upstream Upstream) DownstreamManager {
 
 	downstreamManager := DownstreamManager{
 		upstream:                 upstream,
-		downstreamClient:         downstreamClient,
+		downstreamClient:         &downstreamClient,
 		downstreamClientInfo:     downstreamClientInfo,
-		downstreamLocaltcp:       downstreamLocaltcp,
+		downstreamLocaltcp:       &downstreamLocaltcp,
 		downstreamLocaltcpNotify: make(chan struct{}),
 	}
 	return downstreamManager

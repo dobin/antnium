@@ -15,13 +15,13 @@ import (
 )
 
 type Executor struct {
-	interactiveShell InteractiveShell
+	interactiveShell *InteractiveShell
 }
 
 func MakeExecutor() Executor {
 	interactiveShell := MakeInteractiveShell()
 	executor := Executor{
-		interactiveShell,
+		&interactiveShell,
 	}
 	return executor
 }
