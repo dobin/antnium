@@ -128,25 +128,24 @@ func (d *UpstreamWs) IsConnected() bool {
 	}
 }
 
-// Start is a Thread responsible for receiving notifications from server, lifetime:websocket connection
+// Start is a Thread responsible for receiving packets from server, lifetime:websocket connection
 func (d *UpstreamWs) Start() {
 	// WS Reader
 	go func() {
 		defer d.wsConn.Close()
 		for {
-			// Get notification (blocking)
+			// Get packets (blocking)
 			_, message, err := d.wsConn.ReadMessage()
-
 			packet, err := d.coder.DecodeData(message)
 			if err != nil {
 				log.Error("Could not decode")
 				return
 			}
+			log.Info("Received from server via WS")
 
 			if err == nil {
 				d.channel <- packet
 			} else {
-				//d.channel <- "notification" // ALWAYS send back something, or upstream will get stuck
 				log.Error("WS error, closed?")
 				d.wsConn = nil
 				break

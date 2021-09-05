@@ -10,7 +10,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *ServerManager) AddNewClientPacket(packet model.Packet, remoteAddr string) {
+func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string) {
+	if packet.PacketType == "ping" {
+		s.clientInfoDb.updateFromPing(packet.ComputerId, remoteAddr, packet.Response)
+		return
+	}
+
+	s.addNewClientPacket(packet, remoteAddr)
+}
+
+func (s *Middleware) addNewClientPacket(packet model.Packet, remoteAddr string) {
 	// Update Client DB
 	s.clientInfoDb.updateFor(packet.ComputerId, remoteAddr)
 
@@ -18,10 +27,10 @@ func (s *ServerManager) AddNewClientPacket(packet model.Packet, remoteAddr strin
 	packetInfo := s.packetDb.update(packet)
 
 	// Notify UI
-	s.adminWebSocket.broadcastPacket(packetInfo)
+	s.frontendManager.FrontendWs.broadcastPacket(packetInfo)
 }
 
-func (s *ServerManager) ClientGetPacket(computerId string, remoteAddr string) (model.Packet, bool) {
+func (s *Middleware) ClientGetPacket(computerId string, remoteAddr string) (model.Packet, bool) {
 	// Update last seen for this host
 	s.clientInfoDb.updateFor(computerId, remoteAddr)
 
@@ -31,7 +40,7 @@ func (s *ServerManager) ClientGetPacket(computerId string, remoteAddr string) (m
 	}
 
 	// only notify UI if we really sent a packet
-	s.adminWebSocket.broadcastPacket(*packetInfo)
+	s.frontendManager.FrontendWs.broadcastPacket(*packetInfo)
 
 	// Set source IP for this packet
 	packetInfo.ClientIp = remoteAddr
@@ -39,16 +48,7 @@ func (s *ServerManager) ClientGetPacket(computerId string, remoteAddr string) (m
 	return packetInfo.Packet, true
 }
 
-func (s *ServerManager) ClientSendPacket(packet model.Packet, remoteAddr string) {
-	if packet.PacketType == "ping" {
-		s.clientInfoDb.updateFromPing(packet.ComputerId, remoteAddr, packet.Response)
-		return
-	}
-
-	s.AddNewClientPacket(packet, remoteAddr)
-}
-
-func (s *ServerManager) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
+func (s *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
 	// Check if request for this file really exists
 	packetInfo, err := s.packetDb.ByPacketId(packetId)
 	if err != nil {

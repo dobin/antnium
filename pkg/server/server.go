@@ -5,35 +5,68 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
+/*
+	// Clients connected via websocket do not send regular ping packets (that's the idea of it)
+	// Sadly this makes LastSeen useless - but the user wants to know if the client is still connected.
+	// Here we regularly check the clients connected to ClientWebsocket, and update their LastSeen
+	// Lifetime: App
+	go func() {
+		clientInfoDb2 := &clientInfoDb
+		for {
+			time.Sleep(10 * time.Second)
+			c := clientWebsocket.clients
+			for computerId, conn := range c {
+				if conn == nil {
+					continue
+				}
+				clientInfoDb2.updateFor(computerId, conn.RemoteAddr().String())
+			}
+
+			// Todo: When to quit?
+		}
+	}()
+*/
+
 type Server struct {
-	serverManager *ServerManager
-	httpServer    *HttpServer
+	srvaddr          string
+	Campaign         *campaign.Campaign
+	connectorManager *ConnectorManager
+	frontendManager  *FrontendManager
+	middleware       *Middleware
+	wsUpgrader       websocket.Upgrader
 }
 
 func NewServer(srvAddr string) Server {
-	serverManager := NewServerManager(srvAddr)
-	httpServer := MakeHttpServer(&serverManager)
+	campaign := campaign.MakeCampaign()
+	middleware := MakeMiddleware()
+	connectorManager := MakeConnectorManager(&campaign, &middleware)
+	frontendManager := MakeFrontendManager(&campaign, &middleware)
+	middleware.SetTODO(&connectorManager, &frontendManager)
 
 	// Init random for packet id generation
 	// Doesnt need to be secure
 	rand.Seed(time.Now().Unix())
 
 	w := Server{
-		&serverManager,
-		&httpServer,
+		srvAddr,
+		&campaign,
+		&connectorManager,
+		&frontendManager,
+		&middleware,
+
+		websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
 	}
 
 	return w
-}
-
-func (s *Server) Serve() {
-	s.httpServer.Serve()
 }
 
 func (s *Server) DbLoad() error {
@@ -49,7 +82,7 @@ func (s *Server) DbLoad() error {
 		if err != nil {
 			return fmt.Errorf("Read file decode error: %s", err.Error())
 		}
-		s.serverManager.packetDb.Set(packetInfos)
+		s.middleware.packetDb.Set(packetInfos)
 		fmt.Printf("Loaded %d packets from %s\n", len(packetInfos), dbPackets)
 	}
 
@@ -65,7 +98,7 @@ func (s *Server) DbLoad() error {
 		if err != nil {
 			return fmt.Errorf("Read file decode error: %s", err.Error())
 		}
-		s.serverManager.clientInfoDb.Set(clients)
+		s.middleware.clientInfoDb.Set(clients)
 		fmt.Printf("Loaded %d clients from %s\n", len(clients), dbClients)
 	}
 
@@ -74,7 +107,7 @@ func (s *Server) DbLoad() error {
 
 func (s *Server) DumpDbPackets() error {
 	log.Debug("DB Dump: Packets")
-	packets := s.serverManager.packetDb.getAll()
+	packets := s.middleware.packetDb.getAll()
 	packetBytes, err := json.Marshal(packets)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
@@ -92,7 +125,7 @@ func (s *Server) DumpDbPackets() error {
 
 func (s *Server) DumpDbClients() error {
 	log.Debug("DB Dump: Clients")
-	clients := s.serverManager.clientInfoDb.getAll()
+	clients := s.middleware.clientInfoDb.getAll()
 	clientsBytes, err := json.Marshal(clients)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
@@ -115,7 +148,7 @@ func (s *Server) PeriodicDbDump() {
 	lastClientsLen := 0  // len of array. at least we get all clients
 	for {
 		// Packets
-		packets := s.serverManager.packetDb.getAll()
+		packets := s.middleware.packetDb.getAll()
 		packetBytes, err := json.Marshal(packets)
 		if err != nil {
 			log.Errorf("could not marshal config json: %v", err)
@@ -126,7 +159,7 @@ func (s *Server) PeriodicDbDump() {
 		}
 
 		// Clients
-		clients := s.serverManager.clientInfoDb.getAll()
+		clients := s.middleware.clientInfoDb.getAll()
 		if len(clients) != lastClientsLen {
 			s.DumpDbClients() // ignore err
 			lastClientsLen = len(clients)

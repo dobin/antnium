@@ -5,12 +5,29 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
+type ConnectorRest struct {
+	coder      model.Coder
+	middleware *Middleware
+	campaign   *campaign.Campaign
+}
+
+func MakeConnectorRest(campaign *campaign.Campaign, middleware *Middleware) ConnectorRest {
+	c := ConnectorRest{
+		campaign:   campaign,
+		middleware: middleware,
+		coder:      model.MakeCoder(campaign),
+	}
+	return c
+}
+
 // getPacket provides a client with new packets, if any
-func (s *HttpServer) getPacket(rw http.ResponseWriter, r *http.Request) {
+func (s *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
 
@@ -18,7 +35,7 @@ func (s *HttpServer) getPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	packet, ok := s.serverManager.ClientGetPacket(computerId, r.RemoteAddr)
+	packet, ok := s.middleware.ClientGetPacket(computerId, r.RemoteAddr)
 	if !ok {
 		// No packet, just return
 		return
@@ -42,7 +59,7 @@ func (s *HttpServer) getPacket(rw http.ResponseWriter, r *http.Request) {
 }
 
 // sendPacket receives packet answers from client
-func (s *HttpServer) sendPacket(rw http.ResponseWriter, r *http.Request) {
+func (s *ConnectorRest) sendPacket(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error("Could not read body")
@@ -71,16 +88,16 @@ func (s *HttpServer) sendPacket(rw http.ResponseWriter, r *http.Request) {
 		"6_response":     "...",
 	}).Info("FromClient ")
 
-	s.serverManager.ClientSendPacket(packet, r.RemoteAddr)
+	s.middleware.ClientSendPacket(packet, r.RemoteAddr)
 
 	fmt.Fprint(rw, "asdf")
 }
 
-func (s *HttpServer) uploadFile(w http.ResponseWriter, r *http.Request) {
+func (s *ConnectorRest) uploadFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	packetId := vars["packetId"]
 
-	s.serverManager.ClientUploadFile(packetId, r.Body)
+	s.middleware.ClientUploadFile(packetId, r.Body)
 
 	fmt.Fprintf(w, "ok\n")
 }

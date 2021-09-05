@@ -56,11 +56,13 @@ func (d *UpstreamManager) Connect() error {
 
 	var packet model.Packet
 	go func() {
-		packet = <-d.upstreamWs.Channel()
-		d.channel <- packet
+		for {
+			packet = <-d.upstreamWs.Channel()
+			d.channel <- packet
 
-		packet = <-d.channel
-		d.upstreamWs.OobChannel() <- packet
+			packet = <-d.channel
+			d.upstreamWs.OobChannel() <- packet
+		}
 	}()
 
 	/**

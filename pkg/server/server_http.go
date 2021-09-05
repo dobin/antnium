@@ -1,29 +1,26 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
 
-	"github.com/dobin/antnium/pkg/campaign"
-	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 )
 
-type HttpServer struct {
+/*
+type Server struct {
 	serverManager *ServerManager
 	Campaign      campaign.Campaign
 	coder         model.Coder
 	wsUpgrader    websocket.Upgrader
 }
 
-func MakeHttpServer(serverManager *ServerManager) HttpServer {
-	u := HttpServer{
+func MakeServer(serverManager *ServerManager) Server {
+	u := Server{
 		serverManager: serverManager,
 		Campaign:      *serverManager.Campaign,
 		coder:         model.MakeCoder(serverManager.Campaign),
@@ -35,41 +32,42 @@ func MakeHttpServer(serverManager *ServerManager) HttpServer {
 	}
 	return u
 }
+*/
 
-func (s *HttpServer) getRandomPacketId() string {
+func (s *Server) getRandomPacketId() string {
 	return strconv.Itoa(rand.Int())
 }
 
-func (s *HttpServer) Serve() {
+func (s *Server) Serve() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 
 	// Admin Authenticated
 	adminRouter := myRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(GetAdminMiddleware(s.Campaign.AdminApiKey))
-	adminRouter.HandleFunc("/packets", s.adminListPackets)
-	adminRouter.HandleFunc("/packets/{computerId}", s.adminListPacketsComputerId)
-	adminRouter.HandleFunc("/clients", s.adminListClients)
+	adminRouter.HandleFunc("/packets", s.frontendManager.FrontendRest.adminListPackets)
+	adminRouter.HandleFunc("/packets/{computerId}", s.frontendManager.FrontendRest.adminListPacketsComputerId)
+	adminRouter.HandleFunc("/clients", s.frontendManager.FrontendRest.adminListClients)
 	//adminRouter.HandleFunc("/addTestPacket", s.adminAddTestPacket)
-	adminRouter.HandleFunc("/addPacket", s.adminAddPacket)
-	adminRouter.HandleFunc("/campaign", s.adminGetCampaign)
-	adminRouter.HandleFunc("/uploads", s.adminGetUploads)
-	adminRouter.HandleFunc("/statics", s.adminGetStatics)
+	adminRouter.HandleFunc("/addPacket", s.frontendManager.FrontendRest.adminAddPacket)
+	adminRouter.HandleFunc("/campaign", s.frontendManager.FrontendRest.adminGetCampaign)
+	adminRouter.HandleFunc("/uploads", s.frontendManager.FrontendRest.adminGetUploads)
+	adminRouter.HandleFunc("/statics", s.frontendManager.FrontendRest.adminGetStatics)
 	adminRouter.PathPrefix("/upload").Handler(http.StripPrefix("/admin/upload/",
 		http.FileServer(http.Dir("./upload/"))))
 
 	// While technically part of admin, the adminWebsocket cannot be authenticated
 	// via HTTP headers. Make it public. Authenticate in the handler.
-	myRouter.HandleFunc("/adminws", s.wsHandlerAdmin)
+	myRouter.HandleFunc("/adminws", s.frontendManager.FrontendWs.wsHandlerAdmin)
 
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
 	clientRouter.Use(GetClientMiddleware(s.Campaign.ApiKey))
-	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{computerId}", s.getPacket) // /getPacket/{computerId}
-	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.sendPacket)              // /sendPacket
-	myRouter.HandleFunc("/ws", s.wsHandlerClient)
+	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{computerId}", s.connectorManager.ConnectorRest.getPacket) // /getPacket/{computerId}
+	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.connectorManager.ConnectorRest.sendPacket)              // /sendPacket
+	myRouter.HandleFunc("/ws", s.connectorManager.ConnectorWs.wsHandlerClient)
 
 	// Authentication only via packetId parameter
-	myRouter.HandleFunc(s.Campaign.FileUploadPath+"{packetId}", s.uploadFile) // /upload/{packetId}
+	myRouter.HandleFunc(s.Campaign.FileUploadPath+"{packetId}", s.connectorManager.ConnectorRest.uploadFile) // /upload/{packetId}
 	// Authentication based on known filenames
 	myRouter.PathPrefix(s.Campaign.FileDownloadPath).Handler(
 		http.StripPrefix(s.Campaign.FileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
@@ -86,64 +84,8 @@ func (s *HttpServer) Serve() {
 	myRouter.Use(loggingMiddleware)
 	handler := c.Handler(myRouter)
 
-	fmt.Println("Starting webserver on " + s.serverManager.srvaddr)
-	log.Fatal(http.ListenAndServe(s.serverManager.srvaddr, handler))
-}
-
-// wsHandler is the entry point for new admin/UI websocket connections
-func (s *HttpServer) wsHandlerAdmin(w http.ResponseWriter, r *http.Request) {
-	ws, err := s.wsUpgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Errorf("AdminWebsocket: %s", err.Error())
-		return
-	}
-
-	// WebSocket Authentication
-	// first message should be the AdminApiKey
-	var authToken AuthToken
-	_, message, err := ws.ReadMessage()
-	if err != nil {
-		log.Error("AdminWebsocket read error")
-		return
-	}
-	err = json.Unmarshal(message, &authToken)
-	if err != nil {
-		log.Warnf("AdminWebsocket: could not decode auth: %v", message)
-		return
-	}
-	if string(authToken) == s.Campaign.AdminApiKey {
-		s.serverManager.AdminRegisterWs(ws)
-	} else {
-		log.Warn("AdminWebsocket: incorrect key: " + authToken)
-	}
-}
-
-// wsHandler is the entry point for new websocket connections
-func (s *HttpServer) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
-	ws, err := s.wsUpgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Errorf("ClientWebsocket: %s", err.Error())
-		return
-	}
-
-	// WebSocket Authentication
-	var authToken model.ClientWebSocketAuth
-	_, message, err := ws.ReadMessage()
-	if err != nil {
-		log.Error("ClientWebsocket read error")
-		return
-	}
-	err = json.Unmarshal(message, &authToken)
-	if err != nil {
-		log.Errorf("ClientWebsocket: could not decode auth: %v", message)
-		return
-	}
-	if authToken.Key != "antnium" {
-		log.Warn("ClientWebsocket: incorrect key: " + authToken.Key)
-		return
-	}
-
-	s.serverManager.ClientRegisterWs(authToken.ComputerId, ws)
+	fmt.Println("Starting webserver on " + s.srvaddr)
+	log.Fatal(http.ListenAndServe(s.srvaddr, handler))
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {

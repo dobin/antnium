@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/dobin/antnium/pkg/campaign"
@@ -9,15 +10,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type ClientWebSocket struct {
+type ConnectorWs struct {
+	middleware *Middleware
 	clients    map[string]*websocket.Conn // ComputerId:WebsocketConnection
 	wsUpgrader websocket.Upgrader
 	coder      model.Coder
 	campaign   *campaign.Campaign
 }
 
-func MakeClientWebSocket(campaign *campaign.Campaign) ClientWebSocket {
-	a := ClientWebSocket{
+func MakeConnectorWs(campaign *campaign.Campaign, middleware *Middleware) ConnectorWs {
+	a := ConnectorWs{
+		middleware: middleware,
 		clients:    make(map[string]*websocket.Conn),
 		wsUpgrader: websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
 		coder:      model.MakeCoder(campaign),
@@ -27,7 +30,35 @@ func MakeClientWebSocket(campaign *campaign.Campaign) ClientWebSocket {
 }
 
 // wsHandler is the entry point for new websocket connections
-func (a *ClientWebSocket) registerWs(computerId string, ws *websocket.Conn) {
+func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
+	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Errorf("ClientWebsocket: %s", err.Error())
+		return
+	}
+
+	// WebSocket Authentication
+	var authToken model.ClientWebSocketAuth
+	_, message, err := ws.ReadMessage()
+	if err != nil {
+		log.Error("ClientWebsocket read error")
+		return
+	}
+	err = json.Unmarshal(message, &authToken)
+	if err != nil {
+		log.Errorf("ClientWebsocket: could not decode auth: %v", message)
+		return
+	}
+	if authToken.Key != "antnium" {
+		log.Warn("ClientWebsocket: incorrect key: " + authToken.Key)
+		return
+	}
+
+	a.registerWs(authToken.ComputerId, ws)
+}
+
+// wsHandler is the entry point for new websocket connections
+func (a *ConnectorWs) registerWs(computerId string, ws *websocket.Conn) {
 	// register client as auth succeeded
 	a.clients[computerId] = ws
 
@@ -62,12 +93,12 @@ func (a *ClientWebSocket) registerWs(computerId string, ws *websocket.Conn) {
 
 			log.Info("AAA 2: %v", packet)
 
-			//a.server.AddNewClientPacket(packet)
+			a.middleware.ClientSendPacket(packet, ws.RemoteAddr().String())
 		}
 	}()
 }
 
-func (a *ClientWebSocket) TryNotify(packet *model.Packet) bool {
+func (a *ConnectorWs) TryNotify(packet *model.Packet) bool {
 	clientConn, ok := a.clients[packet.ComputerId]
 	if !ok {
 		// All ok, not connected to ws

@@ -6,13 +6,27 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *HttpServer) adminListPackets(rw http.ResponseWriter, r *http.Request) {
-	packetInfos := s.serverManager.AdminGetAllPacket()
+type FrontendRest struct {
+	campaign   *campaign.Campaign
+	middleware *Middleware
+}
+
+func MakeFrontendRest(campaign *campaign.Campaign, middleware *Middleware) FrontendRest {
+	f := FrontendRest{
+		campaign:   campaign,
+		middleware: middleware,
+	}
+	return f
+}
+
+func (s *FrontendRest) adminListPackets(rw http.ResponseWriter, r *http.Request) {
+	packetInfos := s.middleware.AdminGetAllPacket()
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -21,14 +35,14 @@ func (s *HttpServer) adminListPackets(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *HttpServer) adminListPacketsComputerId(rw http.ResponseWriter, r *http.Request) {
+func (s *FrontendRest) adminListPacketsComputerId(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
 
 	if computerId == "" {
 		return
 	}
-	packetInfos := s.serverManager.AdminGetPacketById(computerId)
+	packetInfos := s.middleware.AdminGetPacketById(computerId)
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -37,8 +51,8 @@ func (s *HttpServer) adminListPacketsComputerId(rw http.ResponseWriter, r *http.
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *HttpServer) adminListClients(rw http.ResponseWriter, r *http.Request) {
-	hostList := s.serverManager.AdminGetAllClients()
+func (s *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request) {
+	hostList := s.middleware.AdminGetAllClients()
 	json, err := json.Marshal(hostList)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -47,7 +61,7 @@ func (s *HttpServer) adminListClients(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *HttpServer) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
+func (s *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error("Could not read body")
@@ -77,11 +91,11 @@ func (s *HttpServer) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.serverManager.AdminAddNewPacket(packet)
+	s.middleware.AdminAddNewPacket(packet)
 }
 
-func (s *HttpServer) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
-	json, err := json.Marshal(s.Campaign)
+func (s *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
+	json, err := json.Marshal(s.campaign)
 	if err != nil {
 		log.Error("Could not JSON marshal")
 		return
@@ -89,7 +103,7 @@ func (s *HttpServer) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *HttpServer) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
+func (s *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := model.ListDirectory("./upload")
 	if err != nil {
 		log.Error("Could not: ", err)
@@ -103,7 +117,7 @@ func (s *HttpServer) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *HttpServer) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
+func (s *FrontendRest) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := model.ListDirectory("./static")
 	if err != nil {
 		log.Error("Could not: ", err)
