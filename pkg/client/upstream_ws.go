@@ -55,6 +55,14 @@ func (d *UpstreamWs) Connect() error {
 	return d.connectWs()
 }
 
+func (d *UpstreamWs) Connected() bool {
+	if d.wsConn == nil {
+		return false
+	} else {
+		return true
+	}
+}
+
 func (d *UpstreamWs) connectWs() error {
 	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/echo"}
 	myUrl := strings.Replace(d.campaign.ServerUrl, "http", "ws", 1) + d.campaign.ClientWebsocketPath

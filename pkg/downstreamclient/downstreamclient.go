@@ -24,14 +24,14 @@ func (e *DownstreamClient) StartClient(destination string) {
 	if destination == "" {
 		destination = "localhost:50000"
 	}
-	fmt.Println("DownstreamClient connect to: " + destination)
+	fmt.Println("DownstreamClient: connect to: " + destination)
 
 	conn, err := net.Dial("tcp", destination)
 	if err != nil {
 		log.Error("Could not connect: " + err.Error())
 		return
 	}
-	log.Info("DownstreamClient connected")
+	log.Info("DownstreamClient: Connected")
 
 	// Send initial line
 	ex, err := os.Executable()

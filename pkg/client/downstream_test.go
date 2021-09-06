@@ -34,10 +34,11 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.DownstreamManager.downstreamLocaltcp.listenAddr = downstreamTcpAddr
 
-	fakeUpstream := &fakeUpstream{}
+	fakeUpstream := makeFakeUpstream()
 	client.UpstreamManager.UpstreamHttp = fakeUpstream // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
 	client.UpstreamManager.UpstreamWs = fakeUpstream
-	//client.DownstreamManager.upstream = fakeUpstream
+
+	client.Start()
 	client.DownstreamManager.StartListeners()
 
 	// Downstream did not yet connect, this should result an error
@@ -49,7 +50,7 @@ func TestDownstreamLocaltcp(t *testing.T) {
 		return
 	}
 
-	// Connect downstream
+	// Connect downstreamClient
 	downstreamClient := downstreamclient.MakeDownstreamClient()
 	go downstreamClient.StartClient(downstreamTcpAddr)
 	// Rudimentary way to wait for client to connect
@@ -63,18 +64,16 @@ func TestDownstreamLocaltcp(t *testing.T) {
 		n += 1
 	}
 
-	//oobPacket := <-client.UpstreamManager.Channel
-
 	// check if we received oob message
-	/*
-		if fakeUpstream.oobPacket == nil {
-			t.Errorf("No OOB message")
-			return
-		}
-		if fakeUpstream.oobPacket == nil || fakeUpstream.oobPacket.PacketType != "downstreams" {
-			t.Errorf("No OOB notification")
-			return
-		}*/
+	time.Sleep(100 * time.Millisecond)
+	if fakeUpstream.oobPacket == nil {
+		t.Errorf("No OOB message")
+		return
+	}
+	if fakeUpstream.oobPacket == nil || fakeUpstream.oobPacket.PacketType != "downstreams" {
+		t.Errorf("No OOB notification")
+		return
+	}
 
 	// Check if it works
 	packet = makeTestPacket()
@@ -99,10 +98,10 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.DownstreamManager.downstreamLocaltcp.listenAddr = downstreamTcpAddr
 
-	fakeUpstream := fakeUpstream{}
-	client.UpstreamManager.UpstreamHttp = &fakeUpstream // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
-	client.UpstreamManager.UpstreamWs = &fakeUpstream
-	//client.DownstreamManager.upstream = &fakeUpstream
+	fakeUpstream := makeFakeUpstream()
+	client.UpstreamManager.UpstreamHttp = fakeUpstream // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
+	client.UpstreamManager.UpstreamWs = fakeUpstream
+	client.Start()
 
 	var err error
 
@@ -160,17 +159,17 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		n += 1
 	}
-	/*
-		// check if we received oob message
-		if fakeUpstream.oobPacket == nil {
-			t.Errorf("No OOB message")
-			return
-		}
-		if fakeUpstream.oobPacket == nil || fakeUpstream.oobPacket.PacketType != "downstreams" {
-			t.Errorf("No OOB notification")
-			return
-		}
-	*/
+
+	// check if we received oob message
+	if fakeUpstream.oobPacket == nil {
+		t.Errorf("No OOB message")
+		return
+	}
+	if fakeUpstream.oobPacket == nil || fakeUpstream.oobPacket.PacketType != "downstreams" {
+		t.Errorf("No OOB notification")
+		return
+	}
+
 	// Check if it works
 	packet := makeTestPacket()
 	packet.DownstreamId = "net#0"
@@ -189,18 +188,36 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 
 type fakeUpstream struct {
 	oobPacket *model.Packet
+	channel   chan model.Packet
+}
+
+func makeFakeUpstream() *fakeUpstream {
+	f := fakeUpstream{
+		nil,
+		make(chan model.Packet),
+	}
+	return &f
 }
 
 func (d *fakeUpstream) Start() {
+	go func() {
+		for {
+			p := <-d.Channel()
+			d.oobPacket = &p
+		}
+	}()
 }
 func (d *fakeUpstream) Connect() error {
 	return nil
 }
 func (d *fakeUpstream) Channel() chan model.Packet {
-	return nil
+	return d.channel
 }
 func (d *fakeUpstream) OobChannel() chan model.Packet {
-	return nil
+	return d.channel
+}
+func (d *fakeUpstream) Connected() bool {
+	return true
 }
 func (d *fakeUpstream) SendOutofband(packet model.Packet) error {
 	d.oobPacket = &packet

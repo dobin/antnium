@@ -7,6 +7,7 @@ import (
 
 type Upstream interface {
 	Connect() error
+	Connected() bool
 	Start()
 	SendOutofband(packet model.Packet) error
 	Channel() chan model.Packet
