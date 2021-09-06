@@ -136,20 +136,20 @@ func (d *UpstreamWs) Start() {
 		for {
 			// Get packets (blocking)
 			_, message, err := d.wsConn.ReadMessage()
-			packet, err := d.coder.DecodeData(message)
 			if err != nil {
-				log.Error("Could not decode")
-				return
-			}
-			log.Info("Received from server via WS")
-
-			if err == nil {
-				d.channel <- packet
-			} else {
-				log.Error("WS error, closed?")
+				log.Errorf("WS read error: %s", err.Error())
 				d.wsConn = nil
 				break
 			}
+
+			packet, err := d.coder.DecodeData(message)
+			if err != nil {
+				log.Error("Could not decode")
+				continue
+			}
+			log.Info("Received from server via WS")
+
+			d.channel <- packet
 		}
 	}()
 

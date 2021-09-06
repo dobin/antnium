@@ -59,25 +59,17 @@ func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 
 // wsHandler is the entry point for new websocket connections
 func (a *ConnectorWs) registerWs(computerId string, ws *websocket.Conn) {
+	if ws == nil {
+		log.Error("registerWs with nil arg")
+		return
+	}
 	// register client as auth succeeded
 	a.clients[computerId] = ws
 
-	// Thread which reads from the connection, to:
-	// * Fulfill Websocket requirement
-	// * Detect closed websocket connections
-	// See https://pkg.go.dev/github.com/gorilla/websocket?utm_source=godoc#hdr-Control_Messages
+	// Thread which reads from the client connection
 	// Lifetime: Websocket connection
 	go func() {
 		for {
-			/*_, packetReader, err := ws.NextReader()
-			if err != nil {
-				ws.Close()
-				a.clients[authToken.ComputerId] = nil
-				break
-			}*/
-
-			//packetData, err := packetReader.Read()
-
 			_, packetData, err := ws.ReadMessage()
 			if err != nil {
 				log.Infof("ws_client error: %s", err.Error())
@@ -94,9 +86,19 @@ func (a *ConnectorWs) registerWs(computerId string, ws *websocket.Conn) {
 			a.middleware.ClientSendPacket(packet, ws.RemoteAddr().String())
 		}
 	}()
+
+	// send all packets which havent yet been answered
+	for {
+		packet, ok := a.middleware.ClientGetPacket(computerId, "")
+		if !ok {
+			break
+		}
+		a.TryViaWebsocket(&packet)
+	}
+
 }
 
-func (a *ConnectorWs) TryNotify(packet *model.Packet) bool {
+func (a *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
 	clientConn, ok := a.clients[packet.ComputerId]
 	if !ok {
 		// All ok, not connected to ws
@@ -119,11 +121,6 @@ func (a *ConnectorWs) TryNotify(packet *model.Packet) bool {
 		return false
 	}
 
-	/*err := clientConn.WriteMessage(websocket.TextMessage, []byte("notification"))
-	if err != nil {
-		log.Infof("Websocket for host %s closed when trying to write: %s", packet.ComputerId, err.Error())
-		return
-	}*/
 	log.Infof("Client %s notified about new packet via WS", packet.ComputerId)
 
 	return true

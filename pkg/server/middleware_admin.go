@@ -33,7 +33,7 @@ func (s *Middleware) AdminAddNewPacket(packet model.Packet) {
 	s.frontendManager.FrontendWs.broadcastPacket(packetInfo)
 
 	// Send to client, if they are connected via Websocket
-	ok := s.connectorManager.ConnectorWs.TryNotify(&packetInfo.Packet)
+	ok := s.connectorManager.ConnectorWs.TryViaWebsocket(&packetInfo.Packet)
 	if ok {
 		// only notify UI if we really sent a packet
 		s.frontendManager.FrontendWs.broadcastPacket(packetInfo)

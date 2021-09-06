@@ -24,8 +24,8 @@ type UpstreamManager struct {
 	config *ClientConfig
 	//campaign *campaign.Campaign
 
-	upstreamHttp Upstream
-	upstreamWs   Upstream
+	UpstreamHttp Upstream
+	UpstreamWs   Upstream
 }
 
 func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) UpstreamManager {
@@ -38,8 +38,8 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 		channel: make(chan model.Packet),
 		config:  config,
 		//campaign: campaign,
-		upstreamHttp: &upstreamHttp,
-		upstreamWs:   &upstreamWs,
+		UpstreamHttp: &upstreamHttp,
+		UpstreamWs:   &upstreamWs,
 	}
 	return u
 }
@@ -47,21 +47,21 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 // Connect will until the C2 can be reached
 func (d *UpstreamManager) Connect() error {
 	// Try: Websocket
-	err := d.upstreamWs.Connect()
+	err := d.UpstreamWs.Connect()
 	if err != nil {
 		return err
 	}
-	d.upstreamWs.Start()
+	d.UpstreamWs.Start()
 	d.sendPing()
 
 	var packet model.Packet
 	go func() {
 		for {
-			packet = <-d.upstreamWs.Channel()
+			packet = <-d.UpstreamWs.Channel()
 			d.channel <- packet
 
 			packet = <-d.channel
-			d.upstreamWs.OobChannel() <- packet
+			d.UpstreamWs.OobChannel() <- packet
 		}
 	}()
 
@@ -94,7 +94,7 @@ func (d *UpstreamManager) SendOutofband(packet model.Packet) error {
 	return d.upstreamHttp.SendOutofband(packet)
 	**/
 
-	d.upstreamWs.OobChannel() <- packet
+	d.UpstreamWs.OobChannel() <- packet
 
 	return nil
 }
