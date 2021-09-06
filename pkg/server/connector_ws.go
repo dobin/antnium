@@ -91,8 +91,6 @@ func (a *ConnectorWs) registerWs(computerId string, ws *websocket.Conn) {
 				continue
 			}
 
-			log.Info("AAA 2: %v", packet)
-
 			a.middleware.ClientSendPacket(packet, ws.RemoteAddr().String())
 		}
 	}()

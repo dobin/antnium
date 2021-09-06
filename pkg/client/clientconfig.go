@@ -58,6 +58,8 @@ func MakeClientConfig() ClientConfig {
 		arch = "windows"
 	} else if runtime.GOOS == "linux" {
 		arch = "linux"
+	} else if runtime.GOOS == "darwin" {
+		arch = "darwin"
 	}
 
 	// Process list
