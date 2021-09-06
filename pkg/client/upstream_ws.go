@@ -99,9 +99,6 @@ func (d *UpstreamWs) connectWs() error {
 	log.Info("Connecting to WS succeeded")
 	d.wsConn = ws
 
-	// Thread: Receiver Thread
-	//go d.Start()
-
 	return nil
 }
 

@@ -50,7 +50,7 @@ func (c *Client) Loop() {
 	var p model.Packet
 	for {
 		// Block until we receive a packet from server
-		p = <-c.UpstreamManager.channel
+		p = <-c.UpstreamManager.Channel
 
 		p, err := c.DownstreamManager.Do(p)
 		if err != nil {
@@ -58,6 +58,6 @@ func (c *Client) Loop() {
 		}
 
 		// Send answer back to server
-		c.UpstreamManager.channel <- p
+		c.UpstreamManager.Channel <- p
 	}
 }

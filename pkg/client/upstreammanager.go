@@ -19,7 +19,7 @@ if d.campaign.ClientUseWebsocket {
 */
 
 type UpstreamManager struct {
-	channel chan model.Packet
+	Channel chan model.Packet
 
 	config *ClientConfig
 	//campaign *campaign.Campaign
@@ -35,7 +35,7 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 	upstreamWs := MakeUpstreamWs(config, campaign)
 
 	u := UpstreamManager{
-		channel: make(chan model.Packet),
+		Channel: make(chan model.Packet),
 		config:  config,
 		//campaign: campaign,
 		UpstreamHttp: &upstreamHttp,
@@ -58,9 +58,9 @@ func (d *UpstreamManager) Connect() error {
 	go func() {
 		for {
 			packet = <-d.UpstreamWs.Channel()
-			d.channel <- packet
+			d.Channel <- packet
 
-			packet = <-d.channel
+			packet = <-d.Channel
 			d.UpstreamWs.OobChannel() <- packet
 		}
 	}()
