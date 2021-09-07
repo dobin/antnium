@@ -220,13 +220,13 @@ func makeFakeUpstream() *fakeUpstream {
 }
 
 func (d *fakeUpstream) Start() {
+	// Collect packets of the upstream
 	go func() {
 		for {
 			p := <-d.channel
 			d.oobPacket = &p
 		}
 	}()
-
 	go func() {
 		for {
 			p := <-d.oobChannel
