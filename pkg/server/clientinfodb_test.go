@@ -12,10 +12,18 @@ func TestClientInfoDb(t *testing.T) {
 	clientInfoDb.updateFor("1-1", "1.1.1.1")
 	clientInfoDb.updateFor("1-2", "1.1.1.2")
 
+	time.Sleep(time.Millisecond * 10) // Needs some time
+	clientInfoDb.updateFor("1-1", "1.1.1.1")
+
+	hostList := clientInfoDb.getAsList()
+	if len(hostList) != 2 {
+		t.Errorf("Len wrong")
+		return
+	}
+
 	// Get order as map is randomized...
 	var a int
 	var b int
-	hostList := clientInfoDb.getAsList()
 	if hostList[0].ComputerId == "1-1" {
 		a = 0
 		b = 1
@@ -24,15 +32,6 @@ func TestClientInfoDb(t *testing.T) {
 		b = 0
 	} else {
 		t.Errorf("Hmm")
-		return
-	}
-
-	time.Sleep(time.Millisecond * 10) // Needs some time
-	clientInfoDb.updateFor("1-1", "1.1.1.1")
-
-	hostList = clientInfoDb.getAsList()
-	if len(hostList) != 2 {
-		t.Errorf("Len wrong")
 		return
 	}
 
