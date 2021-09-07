@@ -13,6 +13,7 @@ import (
 func TestDownstreamClient(t *testing.T) {
 	// Test default Downstream: "Client"
 	client := NewClient()
+	client.Campaign.ClientUseWebsocket = false
 	packet := makeTestPacket()
 	packet, err := client.DownstreamManager.Do(packet)
 	if err != nil {
@@ -32,6 +33,7 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	// Test Localtcp Downstream
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
+	client.Campaign.ClientUseWebsocket = false
 	client.DownstreamManager.downstreamLocaltcp.listenAddr = downstreamTcpAddr
 
 	fakeUpstream := makeFakeUpstream()
@@ -102,6 +104,7 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 	// Test Localtcp Downstream
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
+	client.Campaign.ClientUseWebsocket = false
 	client.DownstreamManager.downstreamLocaltcp.listenAddr = downstreamTcpAddr
 
 	fakeUpstream := makeFakeUpstream()

