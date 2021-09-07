@@ -118,13 +118,6 @@ func (d *UpstreamWs) OobChannel() chan model.Packet {
 	return d.oobChannel
 }
 
-func (d *UpstreamWs) SendOutofband(packet model.Packet) error {
-	// Only used for client-initiated packets
-	//return d.sendPacket(packet)
-
-	return nil
-}
-
 func (d *UpstreamWs) IsConnected() bool {
 	if d.wsConn == nil {
 		return false
@@ -154,14 +147,14 @@ func (d *UpstreamWs) Start() {
 			}
 			log.Info("Received from server via WS")
 
-			d.channel <- packet
+			d.Channel() <- packet
 		}
 	}()
 
 	// OOB Reader
 	go func() {
 		for {
-			packet := <-d.oobChannel
+			packet := <-d.OobChannel()
 
 			packetData, err := d.coder.EncodeData(packet)
 			if err != nil {

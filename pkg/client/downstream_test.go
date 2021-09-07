@@ -24,6 +24,18 @@ func TestDownstreamClient(t *testing.T) {
 		t.Errorf("Incorrect output")
 		return
 	}
+
+	// make a second time
+	packet = makeTestPacket()
+	packet, err = client.DownstreamManager.Do(packet)
+	if err != nil {
+		t.Errorf("Could not do packet: %s", err.Error())
+		return
+	}
+	if !strings.Contains(packet.Response["stdout"], "test") {
+		t.Errorf("Incorrect output")
+		return
+	}
 }
 
 func TestDownstreamLocaltcp(t *testing.T) {
@@ -245,10 +257,6 @@ func (d *fakeUpstream) OobChannel() chan model.Packet {
 }
 func (d *fakeUpstream) Connected() bool {
 	return true
-}
-func (d *fakeUpstream) SendOutofband(packet model.Packet) error {
-	d.oobPacket = &packet
-	return nil
 }
 func (d *fakeUpstream) GetPacket() (model.Packet, error) {
 	return model.Packet{}, nil

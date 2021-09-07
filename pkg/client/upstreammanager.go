@@ -73,16 +73,19 @@ func (d *UpstreamManager) Connect() error {
 			return err
 		}
 		d.UpstreamHttp.Start()
-		//d.sendPing()
 
 		var packet model.Packet
 		go func() {
-			packet = <-d.UpstreamHttp.Channel()
-			d.Channel <- packet
+			for {
+				packet = <-d.UpstreamHttp.Channel()
+				d.Channel <- packet
 
-			packet = <-d.Channel
-			d.UpstreamHttp.OobChannel() <- packet
+				packet = <-d.Channel
+				d.UpstreamHttp.OobChannel() <- packet
+			}
 		}()
+
+		d.sendPing()
 	}
 
 	// Wait

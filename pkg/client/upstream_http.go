@@ -51,17 +51,6 @@ func (d *UpstreamHttp) Connect() error {
 			log.Warnf("Could not parse proxy %s: %s", proxyUrl, err.Error())
 		}
 	}
-
-	//// TODO: IMPLEMENT HTTP PING CHECK
-
-	arguments := make(model.PacketArgument)
-	response := make(model.PacketResponse)
-	packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
-	err := d.SendOutofband(packet)
-	if err != nil {
-		log.Warnf("Initial test ping: Could not reach server %s (yet, i keep trying...)", d.campaign.ServerUrl)
-	}
-
 	return nil
 }
 
@@ -74,11 +63,6 @@ func (d *UpstreamHttp) Channel() chan model.Packet {
 }
 func (d *UpstreamHttp) OobChannel() chan model.Packet {
 	return d.oobChannel
-}
-
-func (d *UpstreamHttp) SendOutofband(packet model.Packet) error {
-	// Only used for client-initiated packets
-	return d.sendPacket(packet)
 }
 
 // Start is a Thread responsible for receiving packets from server, lifetime:app
@@ -103,15 +87,16 @@ func (d *UpstreamHttp) Start() {
 				// Sleep and try again
 				continue
 			}
-
 			// Notify state that we received a packet
 			d.state.gotPacket()
 
 			// Send it to Client
-			d.channel <- packet
+			d.Channel() <- packet
 
 			// Receive answer from Client
-			packet = <-d.channel // oobChannel?
+			/*packet = <-d.channel // oobChannel?
+
+			log.Infof("BBB UpstreamHttp: 4")
 
 			// Send answer back to server
 			err = d.sendPacket(packet)
@@ -120,16 +105,14 @@ func (d *UpstreamHttp) Start() {
 					"packet": packet,
 					"error":  err,
 				}).Info("Error sending packet")
-			}
+			}*/
 		}
 
 	}()
 
 	go func() {
 		for {
-			time.Sleep(d.state.getSleepDuration())
-
-			packet := <-d.oobChannel
+			packet := <-d.OobChannel()
 
 			// Send answer to server
 			err := d.sendPacket(packet)
