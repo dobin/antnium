@@ -52,12 +52,14 @@ func (c *Client) Loop() {
 		// Block until we receive a packet from server
 		p = <-c.UpstreamManager.Channel
 
-		p, err := c.DownstreamManager.Do(p)
-		if err != nil {
-			log.Error("Err: ", err.Error())
-		}
+		go func() {
+			p, err := c.DownstreamManager.Do(p)
+			if err != nil {
+				log.Error("Err: ", err.Error())
+			}
 
-		// Send answer back to server
-		c.UpstreamManager.Channel <- p
+			// Send answer back to server
+			c.UpstreamManager.Channel <- p
+		}()
 	}
 }
