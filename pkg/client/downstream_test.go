@@ -158,9 +158,11 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 	// Connect downstream
 	downstreamClient := downstreamclient.MakeDownstreamClient()
 	go downstreamClient.StartClient(downstreamTcpAddr)
+	downstreamClient2 := downstreamclient.MakeDownstreamClient()
+	go downstreamClient2.StartClient(downstreamTcpAddr)
 	// Rudimentary way to wait for client to connect
 	n := 0
-	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 1 {
+	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 2 {
 		if n == 10 {
 			t.Error("Waiting 1s for tcp downstream to connect, which didnt happen")
 			return
@@ -188,7 +190,7 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 
 	// Check if it works
 	packet := makeTestPacket()
-	packet.DownstreamId = "net#0"
+	packet.DownstreamId = "net#1"
 	packet, err = client.DownstreamManager.Do(packet)
 	if err != nil {
 		t.Errorf("Could not do packet: %s", err.Error())

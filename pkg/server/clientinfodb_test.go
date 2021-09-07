@@ -68,7 +68,7 @@ func TestClientInfoDb(t *testing.T) {
 	if len(hostList) != 2 {
 		t.Errorf("Len wrong")
 	}
-	if hostList[a].LastIp != "1.1.1.3" { // 1-1 is always @0
-		t.Errorf("Error: IP is %s", hostList[0].LastIp)
+	if !((hostList[0].LastIp == "1.1.1.3" && hostList[1].LastIp == "1.1.1.2") || (hostList[1].LastIp == "1.1.1.3" && hostList[0].LastIp == "1.1.1.2")) {
+		t.Errorf("Wrong: %v", hostList)
 	}
 }
