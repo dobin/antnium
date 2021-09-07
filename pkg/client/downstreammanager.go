@@ -25,7 +25,7 @@ type DownstreamManager struct {
 	downstreamClientInfo string
 
 	downstreamLocaltcp       *DownstreamLocaltcp
-	downstreamLocaltcpNotify chan struct{}
+	downstreamLocaltcpNotify chan struct{} // Notifies DownstreamManager about new connected downstreamclient
 }
 
 func MakeDownstreamManager(upstreamManager *UpstreamManager) DownstreamManager {

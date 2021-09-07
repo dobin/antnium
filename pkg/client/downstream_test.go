@@ -65,7 +65,13 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	}
 
 	// check if we received oob message
-	time.Sleep(100 * time.Millisecond)
+	i := 10
+	for i > 0 {
+		if fakeUpstream.oobPacket == nil {
+			time.Sleep(10)
+		}
+		i -= 1
+	}
 	if fakeUpstream.oobPacket == nil {
 		t.Errorf("No OOB message")
 		return
@@ -161,6 +167,13 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 	}
 
 	// check if we received oob message
+	i := 10
+	for i > 0 {
+		if fakeUpstream.oobPacket == nil {
+			time.Sleep(10)
+		}
+		i -= 1
+	}
 	if fakeUpstream.oobPacket == nil {
 		t.Errorf("No OOB message")
 		return
@@ -187,13 +200,15 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 }
 
 type fakeUpstream struct {
-	oobPacket *model.Packet
-	channel   chan model.Packet
+	oobPacket  *model.Packet
+	channel    chan model.Packet
+	oobChannel chan model.Packet
 }
 
 func makeFakeUpstream() *fakeUpstream {
 	f := fakeUpstream{
 		nil,
+		make(chan model.Packet),
 		make(chan model.Packet),
 	}
 	return &f
@@ -202,7 +217,14 @@ func makeFakeUpstream() *fakeUpstream {
 func (d *fakeUpstream) Start() {
 	go func() {
 		for {
-			p := <-d.Channel()
+			p := <-d.channel
+			d.oobPacket = &p
+		}
+	}()
+
+	go func() {
+		for {
+			p := <-d.oobChannel
 			d.oobPacket = &p
 		}
 	}()
@@ -214,7 +236,7 @@ func (d *fakeUpstream) Channel() chan model.Packet {
 	return d.channel
 }
 func (d *fakeUpstream) OobChannel() chan model.Packet {
-	return d.channel
+	return d.oobChannel
 }
 func (d *fakeUpstream) Connected() bool {
 	return true

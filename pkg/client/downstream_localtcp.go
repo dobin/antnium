@@ -113,7 +113,7 @@ func (d *DownstreamLocaltcp) StartServer() error {
 	return nil
 }
 
-// ListenerLoop is a Thread which waits for new tcp downstream client connections and integrates them
+// ListenerLoop is a Thread which waits for new tcp downstream client connections and integrates them via DownstreamManager
 func (d *DownstreamLocaltcp) ListenerLoop(downstreamLocaltcpNotify chan struct{}) error {
 	if d.listener == nil {
 		return fmt.Errorf("Can't loop without connection")
