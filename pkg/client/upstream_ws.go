@@ -14,8 +14,8 @@ import (
 )
 
 type UpstreamWs struct {
-	channel    chan model.Packet
-	oobChannel chan model.Packet
+	chanIncoming chan model.Packet
+	chanOutgoing chan model.Packet
 
 	// state?
 	coder model.Coder
@@ -110,12 +110,12 @@ func (d *UpstreamWs) connectWs() error {
 	return nil
 }
 
-func (d *UpstreamWs) Channel() chan model.Packet {
-	return d.channel
+func (d *UpstreamWs) ChanIncoming() chan model.Packet {
+	return d.chanIncoming
 }
 
-func (d *UpstreamWs) OobChannel() chan model.Packet {
-	return d.oobChannel
+func (d *UpstreamWs) ChanOutgoing() chan model.Packet {
+	return d.chanOutgoing
 }
 
 func (d *UpstreamWs) IsConnected() bool {
@@ -147,14 +147,14 @@ func (d *UpstreamWs) Start() {
 			}
 			log.Info("Received from server via WS")
 
-			d.Channel() <- packet
+			d.ChanIncoming() <- packet
 		}
 	}()
 
 	// OOB Reader
 	go func() {
 		for {
-			packet := <-d.OobChannel()
+			packet := <-d.ChanOutgoing()
 
 			packetData, err := d.coder.EncodeData(packet)
 			if err != nil {

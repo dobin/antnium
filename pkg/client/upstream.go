@@ -9,8 +9,8 @@ type Upstream interface {
 	Connect() error
 	Connected() bool
 	Start()
-	Channel() chan model.Packet
-	OobChannel() chan model.Packet
+	ChanIncoming() chan model.Packet
+	ChanOutgoing() chan model.Packet
 }
 
 func getProxy(campaign *campaign.Campaign) (string, bool) {

@@ -14,8 +14,8 @@ import (
 )
 
 type UpstreamHttp struct {
-	channel    chan model.Packet
-	oobChannel chan model.Packet
+	chanIncoming chan model.Packet
+	chanOutgoing chan model.Packet
 
 	state *ClientState
 	coder model.Coder
@@ -30,12 +30,12 @@ func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) Upstrea
 	clientState := MakeClientState()
 
 	u := UpstreamHttp{
-		channel:    make(chan model.Packet),
-		oobChannel: make(chan model.Packet),
-		state:      &clientState,
-		coder:      coder,
-		config:     config,
-		campaign:   campaign,
+		chanIncoming: make(chan model.Packet),
+		chanOutgoing: make(chan model.Packet),
+		state:        &clientState,
+		coder:        coder,
+		config:       config,
+		campaign:     campaign,
 	}
 	return u
 }
@@ -58,11 +58,11 @@ func (d *UpstreamHttp) Connected() bool {
 	return true
 }
 
-func (d *UpstreamHttp) Channel() chan model.Packet {
-	return d.channel
+func (d *UpstreamHttp) ChanIncoming() chan model.Packet {
+	return d.chanIncoming
 }
-func (d *UpstreamHttp) OobChannel() chan model.Packet {
-	return d.oobChannel
+func (d *UpstreamHttp) ChanOutgoing() chan model.Packet {
+	return d.chanOutgoing
 }
 
 // Start is a Thread responsible for receiving packets from server, lifetime:app
@@ -91,28 +91,14 @@ func (d *UpstreamHttp) Start() {
 			d.state.gotPacket()
 
 			// Send it to Client
-			d.Channel() <- packet
-
-			// Receive answer from Client
-			/*packet = <-d.channel // oobChannel?
-
-			log.Infof("BBB UpstreamHttp: 4")
-
-			// Send answer back to server
-			err = d.sendPacket(packet)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"packet": packet,
-					"error":  err,
-				}).Info("Error sending packet")
-			}*/
+			d.ChanIncoming() <- packet
 		}
 
 	}()
 
 	go func() {
 		for {
-			packet := <-d.OobChannel()
+			packet := <-d.ChanOutgoing()
 
 			// Send answer to server
 			err := d.sendPacket(packet)

