@@ -19,8 +19,9 @@ func MakeClientInfoDb() ClientInfoDb {
 	return db
 }
 
-func (db *ClientInfoDb) updateFor(computerId string, ip string) {
+func (db *ClientInfoDb) updateFor(computerId string, ip string, connectorType string) {
 	if _, ok := db.clientInfoDb[computerId]; !ok {
+		log.Infof("New client %s: %s via %s", ip, computerId, connectorType)
 		// Init, without ping (misses a lot of data)
 		db.clientInfoDb[computerId] = &ClientInfo{
 			ComputerId: computerId,
@@ -28,21 +29,23 @@ func (db *ClientInfoDb) updateFor(computerId string, ip string) {
 			LastSeen:   time.Now(),
 			LastIp:     ip,
 
-			Hostname:   "",
-			LocalIps:   nil,
-			Arch:       "",
-			Processes:  nil,
-			IsAdmin:    "",
-			IsElevated: "",
+			Hostname:      "",
+			LocalIps:      nil,
+			Arch:          "",
+			Processes:     nil,
+			IsAdmin:       "",
+			IsElevated:    "",
+			ConnectorType: connectorType,
 		}
 	} else {
 		// Update
 		db.clientInfoDb[computerId].LastSeen = time.Now()
 		db.clientInfoDb[computerId].LastIp = ip
+		db.clientInfoDb[computerId].ConnectorType = connectorType
 	}
 }
 
-func (db *ClientInfoDb) updateFromPing(computerId, ip string, response model.PacketResponse) {
+func (db *ClientInfoDb) updateFromPing(computerId, ip string, connectorType string, response model.PacketResponse) {
 	if _, ok := db.clientInfoDb[computerId]; !ok {
 		// Init
 		db.clientInfoDb[computerId] = &ClientInfo{
@@ -51,12 +54,13 @@ func (db *ClientInfoDb) updateFromPing(computerId, ip string, response model.Pac
 			LastSeen:   time.Now(),
 			LastIp:     ip,
 
-			Hostname:   "",
-			LocalIps:   nil,
-			Arch:       "",
-			Processes:  nil,
-			IsAdmin:    "",
-			IsElevated: "",
+			Hostname:      "",
+			LocalIps:      nil,
+			Arch:          "",
+			Processes:     nil,
+			IsAdmin:       "",
+			IsElevated:    "",
+			ConnectorType: "",
 		}
 	}
 

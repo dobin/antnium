@@ -35,7 +35,7 @@ func (s *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	packet, ok := s.middleware.ClientGetPacket(computerId, r.RemoteAddr)
+	packet, ok := s.middleware.ClientGetPacket(computerId, r.RemoteAddr, "rest")
 	if !ok {
 		// No packet, just return
 		return
@@ -70,15 +70,7 @@ func (s *ConnectorRest) sendPacket(rw http.ResponseWriter, r *http.Request) {
 		log.Error("Could not decode")
 		return
 	}
-	/*
-		log.WithFields(log.Fields{
-			"computerId":   packet.ComputerId,
-			"packetId":     packet.PacketId,
-			"downstreamId": packet.DownstreamId,
-			"packetType":   packet.PacketType,
-			"argumetns":    packet.Arguments,
-		}).Info("Recv from Client")
-	*/
+
 	log.WithFields(log.Fields{
 		"1_computerId":   packet.ComputerId,
 		"2_packetId":     packet.PacketId,
@@ -88,7 +80,7 @@ func (s *ConnectorRest) sendPacket(rw http.ResponseWriter, r *http.Request) {
 		"6_response":     "...",
 	}).Info("FromClient ")
 
-	s.middleware.ClientSendPacket(packet, r.RemoteAddr)
+	s.middleware.ClientSendPacket(packet, r.RemoteAddr, "rest")
 
 	fmt.Fprint(rw, "asdf")
 }

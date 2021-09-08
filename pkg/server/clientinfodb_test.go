@@ -9,11 +9,11 @@ func TestClientInfoDb(t *testing.T) {
 
 	clientInfoDb := MakeClientInfoDb()
 
-	clientInfoDb.updateFor("1-1", "1.1.1.1")
-	clientInfoDb.updateFor("1-2", "1.1.1.2")
+	clientInfoDb.updateFor("1-1", "1.1.1.1", "")
+	clientInfoDb.updateFor("1-2", "1.1.1.2", "")
 
 	time.Sleep(time.Millisecond * 10) // Needs some time
-	clientInfoDb.updateFor("1-1", "1.1.1.1")
+	clientInfoDb.updateFor("1-1", "1.1.1.1", "")
 
 	hostList := clientInfoDb.getAsList()
 	if len(hostList) != 2 {
@@ -62,7 +62,7 @@ func TestClientInfoDb(t *testing.T) {
 
 	// Check update
 	time.Sleep(time.Millisecond * 10) // Needs some time
-	clientInfoDb.updateFor("1-1", "1.1.1.3")
+	clientInfoDb.updateFor("1-1", "1.1.1.3", "")
 	hostList = clientInfoDb.getAsList()
 	if len(hostList) != 2 {
 		t.Errorf("Len wrong")

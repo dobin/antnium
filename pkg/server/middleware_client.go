@@ -10,18 +10,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string) {
+func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, connectorType string) {
 	if packet.PacketType == "ping" {
-		s.clientInfoDb.updateFromPing(packet.ComputerId, remoteAddr, packet.Response)
+		s.clientInfoDb.updateFromPing(packet.ComputerId, remoteAddr, connectorType, packet.Response)
 		return
 	}
 
-	s.addNewClientPacket(packet, remoteAddr)
+	s.addNewClientPacket(packet, remoteAddr, connectorType)
 }
 
-func (s *Middleware) addNewClientPacket(packet model.Packet, remoteAddr string) {
+func (s *Middleware) addNewClientPacket(packet model.Packet, remoteAddr string, connectorType string) {
 	// Update Client DB
-	s.clientInfoDb.updateFor(packet.ComputerId, remoteAddr)
+	s.clientInfoDb.updateFor(packet.ComputerId, remoteAddr, connectorType)
 
 	// Update Package DB
 	packetInfo := s.packetDb.update(packet)
@@ -30,9 +30,9 @@ func (s *Middleware) addNewClientPacket(packet model.Packet, remoteAddr string) 
 	s.frontendManager.FrontendWs.broadcastPacket(packetInfo)
 }
 
-func (s *Middleware) ClientGetPacket(computerId string, remoteAddr string) (model.Packet, bool) {
+func (s *Middleware) ClientGetPacket(computerId string, remoteAddr string, connectorType string) (model.Packet, bool) {
 	// Update last seen for this host
-	s.clientInfoDb.updateFor(computerId, remoteAddr)
+	s.clientInfoDb.updateFor(computerId, remoteAddr, connectorType)
 
 	packetInfo, err := s.packetDb.getPacketFor(computerId)
 	if err != nil {

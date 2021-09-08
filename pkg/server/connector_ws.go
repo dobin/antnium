@@ -72,24 +72,23 @@ func (a *ConnectorWs) registerWs(computerId string, ws *websocket.Conn) {
 		for {
 			_, packetData, err := ws.ReadMessage()
 			if err != nil {
-				log.Infof("ws_client error: %s", err.Error())
 				ws.Close()
 				a.clients[computerId] = nil
 				break
 			}
 			packet, err := a.coder.DecodeData(packetData)
 			if err != nil {
-				log.Infof("ws_client error: %s", err.Error())
+				log.Infof("registerWs error: %s", err.Error())
 				continue
 			}
 
-			a.middleware.ClientSendPacket(packet, ws.RemoteAddr().String())
+			a.middleware.ClientSendPacket(packet, ws.RemoteAddr().String(), "ws")
 		}
 	}()
 
 	// send all packets which havent yet been answered
 	for {
-		packet, ok := a.middleware.ClientGetPacket(computerId, "")
+		packet, ok := a.middleware.ClientGetPacket(computerId, ws.RemoteAddr().String(), "ws")
 		if !ok {
 			break
 		}
