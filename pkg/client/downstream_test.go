@@ -109,6 +109,10 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	}
 }
 
+func TestDownstreamDoManager(t *testing.T) {
+
+}
+
 func TestDownstreamLocaltcpRestart(t *testing.T) {
 	port := "50013"
 	downstreamTcpAddr := "localhost:60000"
