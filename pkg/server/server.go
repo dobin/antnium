@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -41,8 +42,9 @@ type Server struct {
 	Campaign         *campaign.Campaign
 	connectorManager *ConnectorManager
 	frontendManager  *FrontendManager
-	middleware       *Middleware
+	Middleware       *Middleware
 	wsUpgrader       websocket.Upgrader
+	httpServer       *http.Server
 }
 
 func NewServer(srvAddr string) Server {
@@ -64,9 +66,21 @@ func NewServer(srvAddr string) Server {
 		&middleware,
 
 		websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
+		nil, // Set in Serve()
 	}
 
 	return w
+}
+
+func (s *Server) Shutdown() {
+	// We only need to shut down the HTTP server
+	err := s.httpServer.Shutdown(context.Background())
+	if err != nil {
+		log.Errorf("On Shutdown: %s", err.Error())
+	}
+
+	// And our websockets..
+	// TODO
 }
 
 func (s *Server) DbLoad() error {
@@ -82,7 +96,7 @@ func (s *Server) DbLoad() error {
 		if err != nil {
 			return fmt.Errorf("Read file decode error: %s", err.Error())
 		}
-		s.middleware.packetDb.Set(packetInfos)
+		s.Middleware.packetDb.Set(packetInfos)
 		fmt.Printf("Loaded %d packets from %s\n", len(packetInfos), dbPackets)
 	}
 
@@ -98,7 +112,7 @@ func (s *Server) DbLoad() error {
 		if err != nil {
 			return fmt.Errorf("Read file decode error: %s", err.Error())
 		}
-		s.middleware.clientInfoDb.Set(clients)
+		s.Middleware.clientInfoDb.Set(clients)
 		fmt.Printf("Loaded %d clients from %s\n", len(clients), dbClients)
 	}
 
@@ -107,7 +121,7 @@ func (s *Server) DbLoad() error {
 
 func (s *Server) DumpDbPackets() error {
 	log.Debug("DB Dump: Packets")
-	packets := s.middleware.packetDb.getAll()
+	packets := s.Middleware.packetDb.getAll()
 	packetBytes, err := json.Marshal(packets)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
@@ -125,7 +139,7 @@ func (s *Server) DumpDbPackets() error {
 
 func (s *Server) DumpDbClients() error {
 	log.Debug("DB Dump: Clients")
-	clients := s.middleware.clientInfoDb.getAll()
+	clients := s.Middleware.clientInfoDb.getAll()
 	clientsBytes, err := json.Marshal(clients)
 	if err != nil {
 		log.Errorf("could not marshal config json: %v", err)
@@ -148,7 +162,7 @@ func (s *Server) PeriodicDbDump() {
 	lastClientsLen := 0  // len of array. at least we get all clients
 	for {
 		// Packets
-		packets := s.middleware.packetDb.getAll()
+		packets := s.Middleware.packetDb.getAll()
 		packetBytes, err := json.Marshal(packets)
 		if err != nil {
 			log.Errorf("could not marshal config json: %v", err)
@@ -159,7 +173,7 @@ func (s *Server) PeriodicDbDump() {
 		}
 
 		// Clients
-		clients := s.middleware.clientInfoDb.getAll()
+		clients := s.Middleware.clientInfoDb.getAll()
 		if len(clients) != lastClientsLen {
 			s.DumpDbClients() // ignore err
 			lastClientsLen = len(clients)

@@ -39,7 +39,7 @@ func TestDownstreamClient(t *testing.T) {
 }
 
 func TestDownstreamLocaltcp(t *testing.T) {
-	port := "50010"
+	port := "50013"
 	downstreamTcpAddr := "localhost:50011"
 
 	// Test Localtcp Downstream
@@ -217,9 +217,9 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 }
 
 type fakeUpstream struct {
-	oobPacket  *model.Packet
-	channel    chan model.Packet
-	oobChannel chan model.Packet
+	oobPacket    *model.Packet
+	chanIncoming chan model.Packet
+	chanOutgoing chan model.Packet
 }
 
 func makeFakeUpstream() *fakeUpstream {
@@ -235,13 +235,13 @@ func (d *fakeUpstream) Start() {
 	// Collect packets of the upstream
 	go func() {
 		for {
-			p := <-d.channel
+			p := <-d.chanIncoming
 			d.oobPacket = &p
 		}
 	}()
 	go func() {
 		for {
-			p := <-d.oobChannel
+			p := <-d.chanOutgoing
 			d.oobPacket = &p
 		}
 	}()
@@ -249,11 +249,11 @@ func (d *fakeUpstream) Start() {
 func (d *fakeUpstream) Connect() error {
 	return nil
 }
-func (d *fakeUpstream) Channel() chan model.Packet {
-	return d.channel
+func (d *fakeUpstream) ChanIncoming() chan model.Packet {
+	return d.chanIncoming
 }
-func (d *fakeUpstream) OobChannel() chan model.Packet {
-	return d.oobChannel
+func (d *fakeUpstream) ChanOutgoing() chan model.Packet {
+	return d.chanOutgoing
 }
 func (d *fakeUpstream) Connected() bool {
 	return true

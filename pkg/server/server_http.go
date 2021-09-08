@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -39,6 +40,7 @@ func (s *Server) getRandomPacketId() string {
 }
 
 func (s *Server) Serve() {
+
 	myRouter := mux.NewRouter().StrictSlash(true)
 
 	// Admin Authenticated
@@ -85,7 +87,15 @@ func (s *Server) Serve() {
 	handler := c.Handler(myRouter)
 
 	fmt.Println("Starting webserver on " + s.srvaddr)
-	log.Fatal(http.ListenAndServe(s.srvaddr, handler))
+	httpServer := &http.Server{
+		Addr:           s.srvaddr,
+		Handler:        handler,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+	s.httpServer = httpServer
+	log.Info(httpServer.ListenAndServe())
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {

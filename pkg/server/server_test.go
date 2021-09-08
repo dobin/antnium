@@ -29,7 +29,7 @@ func TestServerClientIntegrationHttp(t *testing.T) {
 	response := make(model.PacketResponse)
 	packet := model.NewPacket("test", computerId, packetId, arguments, response)
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
-	s.middleware.packetDb.add(packetInfo)
+	s.Middleware.AddPacketInfo(packetInfo)
 	// make server go
 	go s.Serve()
 
