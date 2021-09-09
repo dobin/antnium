@@ -118,14 +118,6 @@ func (d *UpstreamWs) ChanOutgoing() chan model.Packet {
 	return d.chanOutgoing
 }
 
-func (d *UpstreamWs) IsConnected() bool {
-	if d.wsConn == nil {
-		return false
-	} else {
-		return true
-	}
-}
-
 // Start is a Thread responsible for receiving packets from server, lifetime:websocket connection
 func (d *UpstreamWs) Start() {
 	// Thread: Incoming websocket message reader
@@ -140,6 +132,7 @@ func (d *UpstreamWs) Start() {
 
 				// Shutdown websocket
 				d.wsConn.Close()
+				d.wsConn = nil
 
 				// Notify that we are disconnected
 				close(d.ChanIncoming()) // Notify UpstreamManager

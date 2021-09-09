@@ -29,6 +29,12 @@ func MakeConnectorWs(campaign *campaign.Campaign, middleware *Middleware) Connec
 	return a
 }
 
+func (cw ConnectorWs) Shutdown() {
+	for _, conn := range cw.clients {
+		conn.Close()
+	}
+}
+
 // wsHandler is the entry point for new websocket connections
 func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
