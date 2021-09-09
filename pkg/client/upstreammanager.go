@@ -39,12 +39,22 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 func (d *UpstreamManager) Connect() error {
 	// The Main Loop
 	var packet model.Packet
+	var connected bool
 	go func() {
 		for {
 			// We dont care which upstream we connected to
 			select {
-			case packet = <-d.UpstreamWs.ChanIncoming():
-			case packet = <-d.UpstreamHttp.ChanIncoming():
+			case packet, connected = <-d.UpstreamWs.ChanIncoming():
+				if !connected {
+					// Throw away old UpstreamWs, and try to connect again
+					upstreamWs := MakeUpstreamWs(d.config, d.campaign)
+					d.UpstreamWs = &upstreamWs
+					log.Infof("Upstream websocket disconnectd")
+					d.Connect2()
+					continue // We are connected again, do as before
+				}
+
+			case packet, connected = <-d.UpstreamHttp.ChanIncoming():
 			}
 
 			d.Channel <- packet
@@ -54,27 +64,33 @@ func (d *UpstreamManager) Connect() error {
 		}
 	}()
 
+	d.Connect2()
+	return nil
+}
+
+func (d *UpstreamManager) Connect2() error {
 	for {
 		if d.campaign.ClientUseWebsocket {
 			// Try: Websocket
 			err := d.UpstreamWs.Connect()
 			if err == nil {
+				log.Infof("Connected to WS")
 				d.UpstreamWs.Start()
+				d.sendPing()
+				break
+			}
+		} else {
+			err := d.UpstreamHttp.Connect()
+			if err == nil {
+				log.Infof("Connected to HTTP")
+				d.UpstreamHttp.Start()
 				d.sendPing()
 				break
 			}
 		}
 
-		err := d.UpstreamHttp.Connect()
-		if err == nil {
-			d.UpstreamHttp.Start()
-			d.sendPing()
-			break
-		}
-
 		log.Info("Could not connect, sleeping...")
 		time.Sleep(time.Second * 3)
-
 	}
 
 	return nil

@@ -128,15 +128,24 @@ func (d *UpstreamWs) IsConnected() bool {
 
 // Start is a Thread responsible for receiving packets from server, lifetime:websocket connection
 func (d *UpstreamWs) Start() {
-	// WS Reader
+	// Thread: Incoming websocket message reader
 	go func() {
 		defer d.wsConn.Close()
 		for {
 			// Get packets (blocking)
 			_, message, err := d.wsConn.ReadMessage()
 			if err != nil {
+				// e.g.: Server quit
 				log.Errorf("WS read error: %s", err.Error())
-				d.wsConn = nil
+
+				// Shutdown websocket
+				d.wsConn.Close()
+
+				// Notify that we are disconnected
+				close(d.ChanIncoming()) // Notify UpstreamManager
+				close(d.ChanOutgoing()) // Notify ChanOutgoing() thread
+
+				// And exit thread
 				break
 			}
 
@@ -151,10 +160,13 @@ func (d *UpstreamWs) Start() {
 		}
 	}()
 
-	// OOB Reader
+	// Thread: Outgoing websocket message writer
 	go func() {
 		for {
-			packet := <-d.ChanOutgoing()
+			packet, ok := <-d.ChanOutgoing()
+			if !ok {
+				break
+			}
 
 			packetData, err := d.coder.EncodeData(packet)
 			if err != nil {
@@ -163,7 +175,10 @@ func (d *UpstreamWs) Start() {
 			}
 			log.Info("Send to server via WS")
 
-			d.wsConn.WriteMessage(websocket.TextMessage, packetData)
+			err = d.wsConn.WriteMessage(websocket.TextMessage, packetData)
+			if err != nil {
+				log.Errorf("%s", err.Error())
+			}
 		}
 	}()
 }
