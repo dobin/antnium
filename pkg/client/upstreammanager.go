@@ -54,29 +54,28 @@ func (d *UpstreamManager) Connect() error {
 		}
 	}()
 
-	go func() {
-		for {
-			if d.campaign.ClientUseWebsocket {
-				// Try: Websocket
-				err := d.UpstreamWs.Connect()
-				if err == nil {
-					d.UpstreamWs.Start()
-					d.sendPing() // AFTER the thread above
-					break
-				}
-			}
-
-			err := d.UpstreamHttp.Connect()
+	for {
+		if d.campaign.ClientUseWebsocket {
+			// Try: Websocket
+			err := d.UpstreamWs.Connect()
 			if err == nil {
-				d.UpstreamHttp.Start()
-				d.sendPing() // AFTER the thread above
+				d.UpstreamWs.Start()
+				d.sendPing()
+				break
 			}
-
-			log.Info("Could not connect, sleeping...")
-			time.Sleep(time.Second * 3)
-
 		}
-	}()
+
+		err := d.UpstreamHttp.Connect()
+		if err == nil {
+			d.UpstreamHttp.Start()
+			d.sendPing()
+			break
+		}
+
+		log.Info("Could not connect, sleeping...")
+		time.Sleep(time.Second * 3)
+
+	}
 
 	return nil
 }

@@ -51,7 +51,18 @@ func (d *UpstreamHttp) Connect() error {
 			log.Warnf("Could not parse proxy %s: %s", proxyUrl, err.Error())
 		}
 	}
-	return nil
+
+	arguments := make(model.PacketArgument)
+	response := make(model.PacketResponse)
+	packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
+	err := d.sendPacket(packet)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Info("Error sending packet")
+	}
+
+	return err
 }
 
 func (d *UpstreamHttp) Connected() bool {
@@ -104,8 +115,7 @@ func (d *UpstreamHttp) Start() {
 			err := d.sendPacket(packet)
 			if err != nil {
 				log.WithFields(log.Fields{
-					"packet": packet,
-					"error":  err,
+					"error": err,
 				}).Info("Error sending packet")
 			}
 		}
@@ -159,7 +169,7 @@ func (d *UpstreamHttp) sendPacket(packet model.Packet) error {
 
 	resp, err := d.HttpPost(url, bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("Could not send answer to URL %s: %s", url, err.Error())
+		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
