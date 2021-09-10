@@ -10,10 +10,10 @@ import (
 	"github.com/dobin/antnium/pkg/model"
 )
 
+// TestDownstreamClient tests default Downstream: "Client"
 func TestDownstreamClient(t *testing.T) {
 	t.Parallel()
 
-	// Test default Downstream: "Client"
 	client := NewClient()
 	packet := makeExecTestPacket()
 	packet, err := client.DownstreamManager.DoIncomingPacket(packet)
@@ -39,6 +39,7 @@ func TestDownstreamClient(t *testing.T) {
 	}
 }
 
+// TestDownstreamLocaltcp tests if localtcp downstream works
 func TestDownstreamLocaltcp(t *testing.T) {
 	t.Parallel()
 
@@ -118,6 +119,7 @@ func TestDownstreamDoManager(t *testing.T) {
 
 }
 
+// TestDownstreamLocaltcpRestart tests if the downstream servers survives a restart
 func TestDownstreamLocaltcpRestart(t *testing.T) {
 	t.Parallel()
 

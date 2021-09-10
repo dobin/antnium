@@ -18,6 +18,7 @@ func makeSimpleCmdPacket(computerId string, packetId string, commandline string)
 	return packet
 }
 
+// TestClientExecWs tests if the client executes a packet from the perspective of a server
 func TestClientExecWs(t *testing.T) {
 	t.Parallel()
 
@@ -66,6 +67,7 @@ func TestClientExecWs(t *testing.T) {
 	}
 }
 
+// TestClientParalellExecWs starts two execs in a client and checks that the quick one returns first
 func TestClientParalellExecWs(t *testing.T) {
 	t.Parallel()
 
@@ -118,6 +120,12 @@ func TestClientParalellExecWs(t *testing.T) {
 		return
 	}
 	if packetInfos[1].State != server.STATE_ANSWERED {
+		t.Error("Wrong state")
+		return
+	}
+
+	// test if we received only the quick to respond answer
+	if packetInfos[0].State == server.STATE_ANSWERED {
 		t.Error("Wrong state")
 		return
 	}

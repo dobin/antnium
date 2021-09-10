@@ -17,10 +17,10 @@ func makeSimpleTestPacket(computerId string, packetId string) server.PacketInfo 
 	return packetInfo
 }
 
+// Test Upstream REST connection with running server
 func TestUpstreamServerRest(t *testing.T) {
 	t.Parallel()
 
-	// Test Upstream REST connection with running server
 	port := "55041"
 	packetId := "packetid-421"
 	computerId := "computerid-23"
@@ -48,10 +48,10 @@ func TestUpstreamServerRest(t *testing.T) {
 	}
 }
 
+// Test Upstream websocket connection with running server
 func TestUpstreamServerWs(t *testing.T) {
 	t.Parallel()
 
-	// Test Upstream websocket connection with running server
 	port := "55141"
 	packetId := "packetid-422"
 	computerId := "computerid-23"
@@ -89,10 +89,10 @@ func TestUpstreamServerWs(t *testing.T) {
 	}
 }
 
+// Test Upstream REST connection with server first down and started later
 func TestUpstreamServerWsConnectLate(t *testing.T) {
 	t.Parallel()
 
-	// Test Upstream REST connection with server first down and started later
 	port := "55046"
 	packetId := "packetid-423"
 	computerId := "computerid-23"
@@ -127,10 +127,10 @@ func TestUpstreamServerWsConnectLate(t *testing.T) {
 	}
 }
 
+// Test Upstream websocket connection by killing the server once
 func TestUpstreamServerWsReconnect(t *testing.T) {
 	t.Parallel()
 
-	// Test Upstream websocket connection by killing the server once
 	port := "55047"
 	packetId1 := "packetid-42a"
 	packetId2 := "packetid-42b"
@@ -198,10 +198,10 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	s.Shutdown()
 }
 
+// Test Upstream REST with server first down and started later
 func TestUpstreamServerHttpConnectLate(t *testing.T) {
 	t.Parallel()
 
-	// Test Upstream REST with server first down and started later
 	port := "55077"
 	packetId := "packetid-42"
 	computerId := "computerid-23"
