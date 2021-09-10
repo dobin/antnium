@@ -25,14 +25,10 @@ func TestUpstreamServerRest(t *testing.T) {
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
-	defer s.Shutdown()
-
-	// Test: REST
-	s.Campaign.ClientUseWebsocket = false
-
-	// Make a example packet the client should receive and start server
+	s.Campaign.ClientUseWebsocket = false // Test: REST
 	packetInfo := makeSimpleTestPacket(computerId, packetId)
 	s.Middleware.AddPacketInfo(packetInfo)
+	defer s.Shutdown()
 	go s.Serve()
 
 	// Test: Upstream Rest
@@ -42,7 +38,7 @@ func TestUpstreamServerRest(t *testing.T) {
 	client.Config.ComputerId = computerId
 	client.Start()
 
-	// Just receive, no execute
+	// Test: Just receive, no execute
 	packet := <-client.UpstreamManager.Channel
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
@@ -58,24 +54,20 @@ func TestUpstreamServerWs(t *testing.T) {
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
-	defer s.Shutdown()
-
-	// Test: Websocket
-	s.Campaign.ClientUseWebsocket = true
-
-	// Make a example packet the client should receive and start server
+	s.Campaign.ClientUseWebsocket = true // Test: Websocket
 	packetInfo := makeSimpleTestPacket(computerId, packetId)
 	s.Middleware.AddPacketInfo(packetInfo)
+	defer s.Shutdown()
 	go s.Serve()
 
 	// Test: Upstream Ws
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
-	client.Campaign.ClientUseWebsocket = true
+	client.Campaign.ClientUseWebsocket = true // Test: Websocket
 	client.Config.ComputerId = computerId
 	client.Start()
 
-	// expect packet to be received upon connection (its already added)
+	// Test: expect packet to be received upon connection (its already added)
 	packet := <-client.UpstreamManager.Channel
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
@@ -85,7 +77,7 @@ func TestUpstreamServerWs(t *testing.T) {
 	// Add a test packet via Admin REST
 	s.Middleware.AdminAddNewPacket(packet)
 
-	// Expect it
+	// Test: Expect it
 	packet = <-client.UpstreamManager.Channel
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
@@ -106,8 +98,7 @@ func TestUpstreamServerWsConnectLate(t *testing.T) {
 	client.Config.ComputerId = computerId
 	go client.Start() // start in background, as it tries to connect
 
-	// TODO Test: No server connection
-
+	// Test: should have no server connection
 	time.Sleep(10 * time.Millisecond)
 	if client.UpstreamManager.UpstreamWs.Connected() {
 		t.Error("Client connected?")
@@ -177,7 +168,6 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 
 	// Start 2nd server
 	s = server.NewServer("127.0.0.1:" + port)
-	// Make a example packet the client should receive
 	s.Campaign.ClientUseWebsocket = true
 	packetInfo = makeSimpleTestPacket(computerId, packetId2) // make sure to take another packetId here
 	s.Middleware.AddPacketInfo(packetInfo)
@@ -213,9 +203,7 @@ func TestUpstreamServerHttpConnectLate(t *testing.T) {
 	client.Config.ComputerId = computerId
 	go client.Start() // start in background, as it tries to connect
 
-	// Test: No server connection
-	// TODO
-
+	// Test: should have no server connection
 	time.Sleep(10 * time.Millisecond)
 	if client.UpstreamManager.UpstreamWs.Connected() {
 		t.Error("Client connected?")
@@ -237,5 +225,4 @@ func TestUpstreamServerHttpConnectLate(t *testing.T) {
 		t.Error("Err")
 		return
 	}
-
 }

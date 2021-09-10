@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Upstreammanger makes sure there is a connection to the server via one of the upstreams
+// Upstreammanger provides a connection to the server via Channel
 type UpstreamManager struct {
 	Channel chan model.Packet
 
