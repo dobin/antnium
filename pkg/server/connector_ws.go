@@ -31,7 +31,9 @@ func MakeConnectorWs(campaign *campaign.Campaign, middleware *Middleware) Connec
 
 func (cw ConnectorWs) Shutdown() {
 	for _, conn := range cw.clients {
-		conn.Close()
+		if conn != nil {
+			conn.Close()
+		}
 	}
 }
 
