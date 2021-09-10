@@ -104,7 +104,6 @@ func (d *UpstreamWs) connectWs() error {
 		return err
 	}
 
-	log.Info("Connecting to WS succeeded")
 	d.wsConn = ws
 
 	return nil
@@ -118,6 +117,13 @@ func (d *UpstreamWs) ChanOutgoing() chan model.Packet {
 	return d.chanOutgoing
 }
 
+func (d *UpstreamWs) Shutdown() {
+	// Shutdown websocket
+	d.wsConn.Close()
+	d.wsConn = nil
+
+}
+
 // Start is a Thread responsible for receiving packets from server, lifetime:websocket connection
 func (d *UpstreamWs) Start() {
 	// Thread: Incoming websocket message reader
@@ -128,18 +134,13 @@ func (d *UpstreamWs) Start() {
 			_, message, err := d.wsConn.ReadMessage()
 			if err != nil {
 				// e.g.: Server quit
-				log.Errorf("WS read error: %s", err.Error())
-
-				// Shutdown websocket
-				d.wsConn.Close()
-				d.wsConn = nil
+				//log.Errorf("WS read error: %s", err.Error())
 
 				// Notify that we are disconnected
 				close(d.ChanIncoming()) // Notify UpstreamManager
 				close(d.ChanOutgoing()) // Notify ChanOutgoing() thread
-
-				// And exit thread
-				break
+				d.Shutdown()
+				break // And exit thread
 			}
 
 			packet, err := d.coder.DecodeData(message)
@@ -147,7 +148,7 @@ func (d *UpstreamWs) Start() {
 				log.Error("Could not decode")
 				continue
 			}
-			log.Info("Received from server via WS")
+			log.Debugf("Received from server via WS")
 
 			d.ChanIncoming() <- packet
 		}
@@ -166,11 +167,18 @@ func (d *UpstreamWs) Start() {
 				log.Error("Could not decode")
 				return
 			}
-			log.Info("Send to server via WS")
+			log.Debugf("Send to server via WS: %s", packet.PacketId)
+
+			if d.wsConn == nil {
+				log.Infof("WS Outgoing reader: wsConn nil")
+				break
+			}
 
 			err = d.wsConn.WriteMessage(websocket.TextMessage, packetData)
 			if err != nil {
-				log.Errorf("%s", err.Error())
+				log.Errorf("WS write error: %s", err.Error())
+				//d.Shutdown()
+				break
 			}
 		}
 	}()

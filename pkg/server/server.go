@@ -73,14 +73,16 @@ func NewServer(srvAddr string) Server {
 }
 
 func (s *Server) Shutdown() {
-	// And our websockets..
-	s.connectorManager.ConnectorWs.Shutdown()
+	log.Info("Shutdown")
 
 	// We only need to shut down the HTTP server
 	err := s.httpServer.Shutdown(context.Background())
 	if err != nil {
 		log.Errorf("On Shutdown: %s", err.Error())
 	}
+
+	// And our websockets..
+	s.connectorManager.ConnectorWs.Shutdown()
 
 }
 

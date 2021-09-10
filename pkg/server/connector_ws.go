@@ -35,7 +35,7 @@ func (cw ConnectorWs) Shutdown() {
 	}
 }
 
-// wsHandler is the entry point for new websocket connections
+// wsHandlerClient is the entry point for new client initiated websocket connections
 func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -59,18 +59,17 @@ func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 		log.Warn("ClientWebsocket: incorrect key: " + authToken.Key)
 		return
 	}
+	// register client as auth succeeded
+	a.clients[authToken.ComputerId] = ws
 
-	a.registerWs(authToken.ComputerId, ws)
+	a.handleWs(authToken.ComputerId, ws)
 }
 
-// wsHandler is the entry point for new websocket connections
-func (a *ConnectorWs) registerWs(computerId string, ws *websocket.Conn) {
+func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 	if ws == nil {
-		log.Error("registerWs with nil arg")
+		log.Error("handleWs with invalid websocket connection")
 		return
 	}
-	// register client as auth succeeded
-	a.clients[computerId] = ws
 
 	// Thread which reads from the client connection
 	// Lifetime: Websocket connection
@@ -93,13 +92,21 @@ func (a *ConnectorWs) registerWs(computerId string, ws *websocket.Conn) {
 	}()
 
 	// send all packets which havent yet been answered
+	// make sure its a copy, and only iterate once.
+	// If server is not available (WS disconnected), the packet response is lost.
+
+	// make it a thread, so we return and all the stuff works
 	//go func() {
+	packets := make([]model.Packet, 0)
 	for {
 		packet, ok := a.middleware.ClientGetPacket(computerId, ws.RemoteAddr().String(), "ws")
 		if !ok {
 			break
 		}
-		ok = a.TryViaWebsocket(&packet)
+		packets = append(packets, packet)
+	}
+	for _, packet := range packets {
+		ok := a.TryViaWebsocket(&packet)
 		if !ok {
 			log.Warn("Sending of initial packets via websocket failed")
 		}
@@ -131,7 +138,7 @@ func (a *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
 		return false
 	}
 
-	log.Infof("Sent packet %s to client %s via WS", packet.PacketId, packet.ComputerId)
+	log.Debugf("Sent packet %s to client %s via WS", packet.PacketId, packet.ComputerId)
 
 	return true
 }

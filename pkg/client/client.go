@@ -59,7 +59,7 @@ func (c *Client) Loop() {
 			}
 
 			// Send answer back to server
-			c.UpstreamManager.Channel <- p
+			c.UpstreamManager.SendOutofband(p)
 		}()
 	}
 }

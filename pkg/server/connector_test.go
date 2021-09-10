@@ -38,7 +38,6 @@ func TestConnectorHttp(t *testing.T) {
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
 	}
-	client.UpstreamManager.Channel <- packet
 
 	// Add a test packet via Admin REST
 	s.Middleware.AdminAddNewPacket(packet)
@@ -48,5 +47,5 @@ func TestConnectorHttp(t *testing.T) {
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
 	}
-	client.UpstreamManager.Channel <- packet
+
 }

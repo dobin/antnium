@@ -42,7 +42,6 @@ func TestServerClientIntegrationHttp(t *testing.T) {
 	c.Start()
 
 	packet = <-c.UpstreamManager.Channel
-	c.UpstreamManager.Channel <- packet
 	/*
 		if err != nil {
 			t.Errorf("Error when receiving packet: " + err.Error())
@@ -56,6 +55,7 @@ func TestServerClientIntegrationHttp(t *testing.T) {
 		t.Errorf("Packet received, but wrong args: %v", packet.Arguments)
 		return
 	}
+	s.Shutdown()
 }
 
 // TestServerClientIntegrationHttp will check if client and server can communicate via HTTP+WS
@@ -118,7 +118,6 @@ func TestServerClientIntegrationHttpAndWebsocket(t *testing.T) {
 	// this should return immediately, as notified via websocket
 	var p model.Packet
 	p = <-c.UpstreamManager.Channel
-	c.UpstreamManager.Channel <- p // fake response so it doesnt block
 
 	if p.PacketId != packetId {
 		t.Errorf("Unittest error: Packet received, but wrong packetid: %s", packet.PacketId)
@@ -128,6 +127,8 @@ func TestServerClientIntegrationHttpAndWebsocket(t *testing.T) {
 		t.Errorf("Unittest error: Packet received, but wrong args: %v", packet.Arguments)
 		return
 	}
+
+	s.Shutdown()
 }
 
 func TestServerAuthAdmin(t *testing.T) {
@@ -155,6 +156,8 @@ func TestServerAuthAdmin(t *testing.T) {
 		t.Errorf("Unittest error: Could access admin API without authentication")
 		return
 	}
+
+	s.Shutdown()
 }
 
 /*

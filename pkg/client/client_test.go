@@ -7,7 +7,6 @@ import (
 
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/dobin/antnium/pkg/server"
-	log "github.com/sirupsen/logrus"
 )
 
 func TestClientExecWs(t *testing.T) {
@@ -117,7 +116,6 @@ func TestClientParalellExecWs(t *testing.T) {
 	}
 
 	packetInfos := s.Middleware.AdminGetAllPacket()
-	log.Infof("%v", packetInfos)
 	if packetInfos[1].Packet.Arguments["commandline"] != "echo test" {
 		t.Error("wrong packet")
 	}

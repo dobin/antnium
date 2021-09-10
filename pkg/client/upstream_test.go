@@ -10,7 +10,7 @@ import (
 
 func TestUpstreamServerHttp(t *testing.T) {
 	port := "55041"
-	packetId := "packetid-42"
+	packetId := "packetid-421"
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
@@ -46,7 +46,7 @@ func TestUpstreamServerHttp(t *testing.T) {
 
 func TestUpstreamServerWs(t *testing.T) {
 	port := "55141"
-	packetId := "packetid-42"
+	packetId := "packetid-422"
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
@@ -76,7 +76,6 @@ func TestUpstreamServerWs(t *testing.T) {
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
 	}
-	client.UpstreamManager.Channel <- packet
 
 	// Add a test packet via Admin REST
 	s.Middleware.AdminAddNewPacket(packet)
@@ -86,12 +85,13 @@ func TestUpstreamServerWs(t *testing.T) {
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
 	}
-	client.UpstreamManager.Channel <- packet
+
+	s.Shutdown()
 }
 
 func TestUpstreamServerWsConnect(t *testing.T) {
 	port := "55046"
-	packetId := "packetid-42"
+	packetId := "packetid-423"
 	computerId := "computerid-23"
 
 	// make client
@@ -128,12 +128,15 @@ func TestUpstreamServerWsConnect(t *testing.T) {
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
 	}
-	client.UpstreamManager.Channel <- packet
+	packet.Response["ret"] = "ret"
+
+	s.Shutdown()
 }
 
 func TestUpstreamServerWsReconnect(t *testing.T) {
 	port := "55047"
-	packetId := "packetid-42"
+	packetId1 := "packetid-42a"
+	packetId2 := "packetid-42b"
 	computerId := "computerid-23"
 
 	// Start Server
@@ -143,7 +146,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
-	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	packet := model.NewPacket("test", computerId, packetId1, arguments, response)
 	packetInfo := server.NewPacketInfo(packet, server.STATE_RECORDED)
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
@@ -157,10 +160,9 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 
 	// Get packet
 	packet = <-client.UpstreamManager.Channel
-	if packet.PacketId != packetId || packet.ComputerId != computerId {
+	if packet.PacketId != packetId1 || packet.ComputerId != computerId {
 		t.Error("Err")
 	}
-	client.UpstreamManager.Channel <- packet
 
 	if !client.UpstreamManager.UpstreamWs.Connected() {
 		t.Error("Client not connected?")
@@ -184,7 +186,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	arguments = make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response = make(model.PacketResponse)
-	packet = model.NewPacket("test", computerId, packetId, arguments, response)
+	packet = model.NewPacket("test", computerId, packetId2, arguments, response)
 	packetInfo = server.NewPacketInfo(packet, server.STATE_RECORDED)
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
@@ -192,15 +194,16 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	// Test: Client reconnected
 	// expect packet to be received upon connection (its already added)
 	packet = <-client.UpstreamManager.Channel
-	if packet.PacketId != packetId || packet.ComputerId != computerId {
+	if packet.PacketId != packetId2 || packet.ComputerId != computerId {
 		t.Error("Err")
 	}
-	client.UpstreamManager.Channel <- packet
 
 	if !client.UpstreamManager.UpstreamWs.Connected() {
 		t.Error("Client not connected?")
 		return
 	}
+
+	s.Shutdown()
 }
 
 func TestUpstreamServerHttpConnect(t *testing.T) {
@@ -242,5 +245,6 @@ func TestUpstreamServerHttpConnect(t *testing.T) {
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
 	}
-	client.UpstreamManager.Channel <- packet
+
+	s.Shutdown()
 }
