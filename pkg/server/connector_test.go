@@ -22,8 +22,7 @@ func TestConnectorHttp(t *testing.T) {
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
 	packet := model.NewPacket("test", computerId, packetId, arguments, response)
-	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
-	s.Middleware.AddPacketInfo(packetInfo)
+	s.Middleware.AdminAddNewPacket(packet)
 	// make server go
 	go s.Serve()
 

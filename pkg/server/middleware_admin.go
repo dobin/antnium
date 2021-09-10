@@ -5,19 +5,19 @@ import (
 )
 
 func (s *Middleware) AdminAddNewPacket(packet model.Packet) {
-	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
-
-	// Add to DB and get updated one
-	packetInfo = s.packetDb.add(packetInfo)
+	// Add to packet DB and get packetInfo
+	packetInfo := s.packetDb.addFromAdmin(packet)
 
 	// Notify UI immediately (for initial STATE_RECORDED)
-	s.frontendManager.FrontendWs.broadcastPacket(packetInfo)
+	s.frontendManager.FrontendWs.broadcastPacket(*packetInfo)
 
 	// Send to client, if they are connected via Websocket
 	ok := s.connectorManager.ConnectorWs.TryViaWebsocket(&packetInfo.Packet)
 	if ok {
+		s.packetDb.sentToClient(packet.PacketId, "")
+
 		// only notify UI if we really sent a packet
-		s.frontendManager.FrontendWs.broadcastPacket(packetInfo)
+		s.frontendManager.FrontendWs.broadcastPacket(*packetInfo)
 	}
 }
 

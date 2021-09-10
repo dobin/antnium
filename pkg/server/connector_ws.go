@@ -93,13 +93,18 @@ func (a *ConnectorWs) registerWs(computerId string, ws *websocket.Conn) {
 	}()
 
 	// send all packets which havent yet been answered
+	//go func() {
 	for {
 		packet, ok := a.middleware.ClientGetPacket(computerId, ws.RemoteAddr().String(), "ws")
 		if !ok {
 			break
 		}
-		a.TryViaWebsocket(&packet)
+		ok = a.TryViaWebsocket(&packet)
+		if !ok {
+			log.Warn("Sending of initial packets via websocket failed")
+		}
 	}
+	//}()
 
 }
 
@@ -126,7 +131,7 @@ func (a *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
 		return false
 	}
 
-	log.Infof("Client %s notified about new packet via WS", packet.ComputerId)
+	log.Infof("Sent packet %s to client %s via WS", packet.PacketId, packet.ComputerId)
 
 	return true
 }

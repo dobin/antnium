@@ -45,7 +45,7 @@ func TestUpstreamServerHttp(t *testing.T) {
 }
 
 func TestUpstreamServerWs(t *testing.T) {
-	port := "55041"
+	port := "55141"
 	packetId := "packetid-42"
 	computerId := "computerid-23"
 

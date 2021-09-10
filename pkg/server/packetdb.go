@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/pkg/model"
+	log "github.com/sirupsen/logrus"
 )
 
 type PacketDb struct {
@@ -18,10 +19,9 @@ func MakePacketDb() PacketDb {
 	return db
 }
 
-func (db *PacketDb) add(packetInfo PacketInfo) PacketInfo {
+func (db *PacketDb) add(packetInfo PacketInfo) {
 	packetInfo.TimeRecorded = time.Now()
 	db.packetInfo = append(db.packetInfo, packetInfo)
-	return packetInfo
 }
 
 func (db *PacketDb) getAll() []PacketInfo {
@@ -32,25 +32,24 @@ func (db *PacketDb) Set(packetInfos []PacketInfo) {
 	db.packetInfo = packetInfos
 }
 
-func (db *PacketDb) ByPacketId(packetId string) (PacketInfo, error) {
-	for _, packetInfo := range db.packetInfo {
+func (db *PacketDb) ByPacketId(packetId string) (*PacketInfo, bool) {
+	for n, packetInfo := range db.packetInfo {
 		if packetInfo.Packet.PacketId == packetId {
-			return packetInfo, nil
+			return &db.packetInfo[n], true
 		}
 	}
 
-	return PacketInfo{}, fmt.Errorf("Nothing found")
+	return nil, false
 }
 
-func (db *PacketDb) getPacketFor(computerId string) (*PacketInfo, error) {
+func (db *PacketDb) getPacketForClient(computerId string) (*PacketInfo, error) {
 	for i, packetInfo := range db.packetInfo {
 		if packetInfo.State != STATE_RECORDED {
 			continue
 		}
-		packetInfoComputerId := packetInfo.Packet.ComputerId
-		if packetInfoComputerId == "0" || packetInfoComputerId == computerId {
-			db.packetInfo[i].State = STATE_SENT // FIXME
-			db.packetInfo[i].TimeSent = time.Now()
+		//packetInfoComputerId := packetInfo.Packet.ComputerId
+		//if packetInfoComputerId == "0" || packetInfoComputerId == computerId {
+		if packetInfo.Packet.ComputerId == computerId {
 			return &db.packetInfo[i], nil
 		}
 	}
@@ -58,23 +57,51 @@ func (db *PacketDb) getPacketFor(computerId string) (*PacketInfo, error) {
 	return &PacketInfo{}, fmt.Errorf("Nothing found")
 }
 
-func (db *PacketDb) update(packet model.Packet) PacketInfo {
-	// Update existing
-	for i, packetInfo := range db.packetInfo {
-		if packetInfo.Packet.PacketId == packet.PacketId {
-			db.packetInfo[i].State = STATE_ANSWERED
-			db.packetInfo[i].TimeAnswered = time.Now()
-			db.packetInfo[i].Packet.Response = packet.Response
-			db.packetInfo[i].Packet.ComputerId = packet.ComputerId
-			return db.packetInfo[i]
-		}
+func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {
+	packetInfo, ok := db.ByPacketId(packet.PacketId)
+	if !ok {
+		// Add new (always client initiated for now)
+		packetInfo := NewPacketInfo(packet, STATE_CLIENT)
+		t := time.Now()
+		packetInfo.TimeRecorded = t
+		packetInfo.TimeAnswered = t
+		db.add(packetInfo)
+		return &db.packetInfo[len(db.packetInfo)-1]
 	}
 
-	// Add new (client initiated)
-	fakePacketInfo := NewPacketInfo(packet, STATE_CLIENT)
-	fakePacketInfo.TimeRecorded = time.Now()
-	fakePacketInfo.TimeAnswered = time.Now()
+	if packetInfo.State != STATE_SENT {
+		log.Errorf("Wrong packet source state for packetDb.Update(), expect STATE_SENT, got %d", packetInfo.State)
+	}
+	packetInfo.State = STATE_ANSWERED
+	packetInfo.TimeAnswered = time.Now()
+	packetInfo.Packet.Response = packet.Response
 
-	db.add(fakePacketInfo)
-	return fakePacketInfo
+	return packetInfo
+}
+
+func (db *PacketDb) addFromAdmin(packet model.Packet) *PacketInfo {
+	// Add new (always client initiated for now)
+	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
+	packetInfo.TimeRecorded = time.Now()
+
+	db.add(packetInfo)
+	return &db.packetInfo[len(db.packetInfo)-1]
+}
+
+func (db *PacketDb) sentToClient(packetId string, remoteAddr string) (*PacketInfo, error) {
+	packetInfo, ok := db.ByPacketId(packetId)
+	if !ok {
+		return nil, fmt.Errorf("sentToClient: Packet %s does not exist ", packetId)
+	}
+
+	if packetInfo.State != STATE_RECORDED {
+		log.Warnf("sentToClient: source packet not STATE_RECORDED: %d", packetInfo.State)
+		return nil, fmt.Errorf("sentToClient: source packet not STATE_RECORDED: %d", packetInfo.State)
+	}
+
+	packetInfo.ClientIp = remoteAddr
+	packetInfo.State = STATE_SENT
+	packetInfo.TimeSent = time.Now()
+
+	return packetInfo, nil
 }

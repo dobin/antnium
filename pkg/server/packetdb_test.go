@@ -27,13 +27,13 @@ func TestPacketDb(t *testing.T) {
 	}
 
 	// Client Packet: Should not exist
-	_, err := packetDb.getPacketFor("xxx")
+	_, err := packetDb.getPacketForClient("xxx")
 	if err == nil {
 		t.Errorf("Error packetInfoNotExisting")
 	}
 
 	// Client Packet: Should exist
-	packetInfoExisting, err := packetDb.getPacketFor("23")
+	packetInfoExisting, err := packetDb.getPacketForClient("23")
 	if err != nil {
 		t.Errorf("Error packetInfoExisting 1")
 	}
@@ -41,8 +41,11 @@ func TestPacketDb(t *testing.T) {
 		t.Errorf("Error packetInfoExisting 2")
 	}
 
+	// Simulate that we handled that packet
+	packetDb.sentToClient("42", "")
+
 	// Client: Again, queue empty
-	_, err = packetDb.getPacketFor("23")
+	_, err = packetDb.getPacketForClient("23")
 	if err == nil {
 		t.Errorf("Error packetInfoExisting 11")
 	}
@@ -55,7 +58,7 @@ func TestPacketDb(t *testing.T) {
 
 	// add response from client
 	c.Response["ret"] = "oki"
-	packetDb.update(c)
+	packetDb.updateFromClient(c)
 
 	// Server: Should be right state
 	packetInfoAll = packetDb.getAll()
@@ -67,11 +70,11 @@ func TestPacketDb(t *testing.T) {
 	}
 
 	// Get the packet for our packet id
-	packetInfo, err = packetDb.ByPacketId("42")
-	if err != nil {
+	pi, ok := packetDb.ByPacketId("42")
+	if !ok {
 		t.Errorf("Error  5")
 	}
-	if packetInfo.Packet.ComputerId != "23" {
+	if pi.Packet.ComputerId != "23" {
 		t.Errorf("Error  6")
 	}
 }
