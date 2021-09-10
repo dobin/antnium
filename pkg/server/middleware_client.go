@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -16,7 +17,7 @@ func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 		s.clientInfoDb.updateFromPing(packet.ComputerId, remoteAddr, connectorType, packet.Response)
 		return
 	}
-	log.Debugf("Server: ClientSendPacket: %v", packet)
+	common.LogPacketDebug("Server:ClientSendPacket()", packet)
 
 	// Update Client DB
 	s.clientInfoDb.updateFor(packet.ComputerId, remoteAddr, connectorType)
@@ -29,7 +30,7 @@ func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 }
 
 func (s *Middleware) ClientGetPacket(computerId string, remoteAddr string, connectorType string) (model.Packet, bool) {
-	log.Debugf("Server: ClientGetPacket %s", computerId)
+	log.Debugf("Server:ClientGetPacket(): %s", computerId)
 
 	// Update last seen for this host
 	s.clientInfoDb.updateFor(computerId, remoteAddr, connectorType)

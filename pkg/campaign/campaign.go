@@ -58,3 +58,11 @@ func MakeCampaign() Campaign {
 	}
 	return c
 }
+
+func (c Campaign) GetProxy() (string, bool) {
+	if c.ProxyUrl != "" {
+		return c.ProxyUrl, true
+	} else {
+		return "", false
+	}
+}

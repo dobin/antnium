@@ -147,7 +147,7 @@ func (p *Executor) actionPing(packetArgument model.PacketArgument) (model.Packet
 
 func (p *Executor) actionTest(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
-	ret["response"] = "test answer"
+	ret["response"] = "response"
 	return ret, nil
 }
 

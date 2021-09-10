@@ -36,13 +36,13 @@ func NewClient() Client {
 }
 
 // Start will connect to upstream. Required before using Loop()
-func (c *Client) Start() error {
+func (c *Client) Start() {
 	// Connect even with invalid TLS certificates (e.g. Mitm proxy)
 	// by enable SkipVerify on all instances of http
 	//   https://stackoverflow.com/questions/12122159/how-to-do-a-https-request-with-bad-certificate
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-	return c.UpstreamManager.Connect()
+	c.UpstreamManager.Connect()
 }
 
 // Loop will forever check for new packets from server
