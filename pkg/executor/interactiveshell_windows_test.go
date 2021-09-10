@@ -92,6 +92,36 @@ func TestInteractiveShellCmdexeExit(t *testing.T) {
 		t.Errorf("Packet 1 error")
 		return
 	}
+
+	// closing
+	interactiveShell.Close()
+
+	// should generate error
+	stdout, _, err = interactiveShell.Issue("dir")
+	if err == nil {
+		t.Errorf("Packet 1 no error")
+		return
+	}
+	if !strings.Contains(err.Error(), "Shell not open") {
+		t.Errorf("Packet 1 error")
+		return
+	}
+
+	// try opening it again
+	stdout, _, err = interactiveShell.Open("cmd.exe", []string{"/a"})
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+	stdout, _, err = interactiveShell.Issue("echo test")
+	if err != nil {
+		t.Errorf("Packet 2 no error")
+		return
+	}
+	if !strings.Contains(stdout, "test") {
+		t.Errorf("Packet 2 error")
+		return
+	}
 }
 
 func TestInteractiveShellPowershell(t *testing.T) {
