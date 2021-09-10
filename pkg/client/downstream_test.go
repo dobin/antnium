@@ -11,6 +11,8 @@ import (
 )
 
 func TestDownstreamClient(t *testing.T) {
+	t.Parallel()
+
 	// Test default Downstream: "Client"
 	client := NewClient()
 	packet := makeExecTestPacket()
@@ -38,6 +40,8 @@ func TestDownstreamClient(t *testing.T) {
 }
 
 func TestDownstreamLocaltcp(t *testing.T) {
+	t.Parallel()
+
 	port := "50013"
 	downstreamTcpAddr := "localhost:50011"
 
@@ -115,6 +119,8 @@ func TestDownstreamDoManager(t *testing.T) {
 }
 
 func TestDownstreamLocaltcpRestart(t *testing.T) {
+	t.Parallel()
+
 	var err error
 	port := "50013"
 	downstreamTcpAddr := "localhost:60000"

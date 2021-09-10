@@ -9,30 +9,32 @@ import (
 	"github.com/dobin/antnium/pkg/server"
 )
 
+func makeSimpleCmdPacket(computerId string, packetId string, commandline string) model.Packet {
+	arguments := make(model.PacketArgument)
+	arguments["shelltype"] = "cmd"
+	arguments["commandline"] = commandline
+	response := make(model.PacketResponse)
+	packet := model.NewPacket("exec", computerId, packetId, arguments, response)
+	return packet
+}
+
 func TestClientExecWs(t *testing.T) {
-	// Add two commands, one sleep, one echo
+	t.Parallel()
 
 	port := "55191"
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
-
-	// disable websocket for HTTP only
 	s.Campaign.ClientUseWebsocket = true
 
 	// Make a example packet the client should receive
-	arguments := make(model.PacketArgument)
-	arguments["commandline"] = "echo test"
-	arguments["shelltype"] = "cmd"
-	response := make(model.PacketResponse)
-	packet := model.NewPacket("exec", computerId, "p42", arguments, response)
-	//packetInfo := server.NewPacketInfo(packet, server.STATE_RECORDED)
-	//s.Middleware.AddPacketInfo(packetInfo)
+	packet := makeSimpleCmdPacket(computerId, "p42", "echo test")
 	s.Middleware.AdminAddNewPacket(packet)
 
 	// make server go
 	go s.Serve()
+	defer s.Shutdown()
 
 	// Test Localtcp Downstream
 	client := NewClient()
@@ -62,44 +64,31 @@ func TestClientExecWs(t *testing.T) {
 	if packetInfos[0].State != server.STATE_ANSWERED {
 		t.Error("Wrong state")
 	}
-
-	s.Shutdown()
 }
 
 func TestClientParalellExecWs(t *testing.T) {
+	t.Parallel()
+
 	// Add two commands, one sleep, one echo
 	port := "55192"
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
-
-	// disable websocket for HTTP only
 	s.Campaign.ClientUseWebsocket = true
+	defer s.Shutdown()
 
 	// Make a example packet the client should receive
-	arguments := make(model.PacketArgument)
-	arguments["commandline"] = "ping localhost"
-	arguments["shelltype"] = "cmd"
-	response := make(model.PacketResponse)
-	packet := model.NewPacket("exec", computerId, "p42", arguments, response)
-	//packetInfo := server.NewPacketInfo(packet, server.STATE_RECORDED)
-	//s.Middleware.AddPacketInfo(packetInfo)
+	packet := makeSimpleCmdPacket(computerId, "p42", "ping localhost")
+	s.Middleware.AdminAddNewPacket(packet)
+	packet = makeSimpleCmdPacket(computerId, "p43", "echo test")
 	s.Middleware.AdminAddNewPacket(packet)
 
-	arguments = make(model.PacketArgument)
-	arguments["commandline"] = "echo test"
-	arguments["shelltype"] = "cmd"
-	response = make(model.PacketResponse)
-	packet = model.NewPacket("exec", computerId, "p43", arguments, response)
-	//packetInfo = server.NewPacketInfo(packet, server.STATE_RECORDED)
-	//s.Middleware.AddPacketInfo(packetInfo)
-	s.Middleware.AdminAddNewPacket(packet)
-
-	// make server go
+	// Start server
 	go s.Serve()
+	defer s.Shutdown()
 
-	// Test Localtcp Downstream
+	// Start client
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.Campaign.ClientUseWebsocket = true
@@ -116,16 +105,20 @@ func TestClientParalellExecWs(t *testing.T) {
 	}
 
 	packetInfos := s.Middleware.AdminGetAllPacket()
+	if len(packetInfos) != 2 {
+		t.Error("Not 2")
+		return
+	}
 	if packetInfos[1].Packet.Arguments["commandline"] != "echo test" {
 		t.Error("wrong packet")
+		return
 	}
 	if !strings.Contains(packetInfos[1].Packet.Response["stdout"], "test") {
 		t.Error("wrong stdout")
+		return
 	}
-
 	if packetInfos[1].State != server.STATE_ANSWERED {
 		t.Error("Wrong state")
+		return
 	}
-
-	s.Shutdown()
 }
