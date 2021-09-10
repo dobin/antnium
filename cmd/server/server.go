@@ -25,6 +25,14 @@ func main() {
 	fmt.Println("Antnium 0.1")
 	s := server.NewServer(*flagListenAddr)
 
+	lvl := "debug"
+	ll, err := log.ParseLevel(lvl)
+	if err != nil {
+		ll = log.DebugLevel
+	}
+	// set global log level
+	log.SetLevel(ll)
+
 	// Check prerequisites
 	if _, err := os.Stat("./static/"); os.IsNotExist(err) {
 		log.Errorf("Could not find required direcotry: %s", "./static/")

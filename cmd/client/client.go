@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/dobin/antnium/pkg/client"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -14,6 +15,13 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("Antnium 0.1")
+	lvl := "debug"
+	ll, err := log.ParseLevel(lvl)
+	if err != nil {
+		ll = log.DebugLevel
+	}
+	// set global log level
+	log.SetLevel(ll)
 
 	c := client.NewClient()
 
