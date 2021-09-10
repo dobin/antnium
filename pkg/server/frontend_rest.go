@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -104,7 +105,7 @@ func (s *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request)
 }
 
 func (s *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
-	dirList, err := model.ListDirectory("./upload")
+	dirList, err := common.ListDirectory("./upload")
 	if err != nil {
 		log.Error("Could not: ", err)
 		return
@@ -118,7 +119,7 @@ func (s *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) 
 }
 
 func (s *FrontendRest) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
-	dirList, err := model.ListDirectory("./static")
+	dirList, err := common.ListDirectory("./static")
 	if err != nil {
 		log.Error("Could not: ", err)
 		return

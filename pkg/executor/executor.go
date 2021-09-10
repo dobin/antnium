@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/dobin/antnium/pkg/arch"
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -251,7 +252,7 @@ func (p *Executor) actionDir(packetArgument model.PacketArgument) (model.PacketR
 		return ret, fmt.Errorf("No argument 'path' given")
 	}
 
-	dirList, err := model.ListDirectory(path)
+	dirList, err := common.ListDirectory(path)
 	if err != nil {
 		return ret, err
 	}
