@@ -42,16 +42,12 @@ func (d *UpstreamManager) Connect() error {
 	var connected bool
 	go func() {
 		for {
-			// We dont care which upstream we connected to
+			// We dont care which upstream we are connected to
 			select {
 			case packet, connected = <-d.UpstreamWs.ChanIncoming():
 				if !connected {
-					// Throw away old UpstreamWs, and try to connect again
-					upstreamWs := MakeUpstreamWs(d.config, d.campaign)
-					d.UpstreamWs = &upstreamWs
-					log.Infof("Upstream websocket disconnectd")
-					d.Connect2()
-					continue // We are connected again, do as before
+					d.Reconnect() // Blocks until we can reach server again
+					continue      // We are connected again, do as before
 				}
 
 			case packet, connected = <-d.UpstreamHttp.ChanIncoming():
@@ -66,6 +62,14 @@ func (d *UpstreamManager) Connect() error {
 
 	d.Connect2()
 	return nil
+}
+
+func (d *UpstreamManager) Reconnect() {
+	// Throw away old UpstreamWs, and try to connect again
+	upstreamWs := MakeUpstreamWs(d.config, d.campaign)
+	d.UpstreamWs = &upstreamWs
+	log.Infof("Upstream websocket disconnectd")
+	d.Connect2()
 }
 
 func (d *UpstreamManager) Connect2() error {
