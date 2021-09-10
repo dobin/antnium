@@ -53,7 +53,7 @@ func (c *Client) Loop() {
 		p = <-c.UpstreamManager.Channel
 
 		go func() {
-			p, err := c.DownstreamManager.Do(p)
+			p, err := c.DownstreamManager.DoIncomingPacket(p)
 			if err != nil {
 				log.Error("Err: ", err.Error())
 			}

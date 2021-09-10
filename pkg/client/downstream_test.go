@@ -13,9 +13,8 @@ import (
 func TestDownstreamClient(t *testing.T) {
 	// Test default Downstream: "Client"
 	client := NewClient()
-	client.Campaign.ClientUseWebsocket = false
-	packet := makeTestPacket()
-	packet, err := client.DownstreamManager.Do(packet)
+	packet := makeExecTestPacket()
+	packet, err := client.DownstreamManager.DoIncomingPacket(packet)
 	if err != nil {
 		t.Errorf("Could not do packet: %s", err.Error())
 		return
@@ -26,8 +25,8 @@ func TestDownstreamClient(t *testing.T) {
 	}
 
 	// make a second time
-	packet = makeTestPacket()
-	packet, err = client.DownstreamManager.Do(packet)
+	packet = makeExecTestPacket()
+	packet, err = client.DownstreamManager.DoIncomingPacket(packet)
 	if err != nil {
 		t.Errorf("Could not do packet: %s", err.Error())
 		return
@@ -45,20 +44,21 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	// Test Localtcp Downstream
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
-	client.Campaign.ClientUseWebsocket = false
 	client.DownstreamManager.downstreamLocaltcp.listenAddr = downstreamTcpAddr
 
+	// We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
 	fakeUpstream := makeFakeUpstream()
-	client.UpstreamManager.UpstreamHttp = fakeUpstream // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
+	client.UpstreamManager.UpstreamHttp = fakeUpstream
 	client.UpstreamManager.UpstreamWs = fakeUpstream
 
+	// Start client, and downstream listeners
 	client.Start()
 	client.DownstreamManager.StartListeners()
 
 	// Downstream did not yet connect, this should result an error
-	packet := makeTestPacket()
+	packet := makeExecTestPacket()
 	packet.DownstreamId = "net#0"
-	packet, err := client.DownstreamManager.Do(packet)
+	packet, err := client.DownstreamManager.DoIncomingPacket(packet)
 	if err == nil {
 		t.Errorf("Could do packet with net#0, even though it should not exist")
 		return
@@ -67,6 +67,7 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	// Connect downstreamClient
 	downstreamClient := downstreamclient.MakeDownstreamClient()
 	go downstreamClient.StartClient(downstreamTcpAddr)
+
 	// Rudimentary way to wait for client to connect
 	n := 0
 	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 1 {
@@ -96,9 +97,9 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	}
 
 	// Check if it works
-	packet = makeTestPacket()
+	packet = makeExecTestPacket()
 	packet.DownstreamId = "net#0"
-	packet, err = client.DownstreamManager.Do(packet)
+	packet, err = client.DownstreamManager.DoIncomingPacket(packet)
 	if err != nil {
 		t.Errorf("Could not do packet: %s", err.Error())
 		return
@@ -114,23 +115,22 @@ func TestDownstreamDoManager(t *testing.T) {
 }
 
 func TestDownstreamLocaltcpRestart(t *testing.T) {
+	var err error
 	port := "50013"
 	downstreamTcpAddr := "localhost:60000"
 
 	// Test Localtcp Downstream
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
-	client.Campaign.ClientUseWebsocket = false
 	client.DownstreamManager.downstreamLocaltcp.listenAddr = downstreamTcpAddr
 
+	// We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
 	fakeUpstream := makeFakeUpstream()
-	client.UpstreamManager.UpstreamHttp = fakeUpstream // We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
+	client.UpstreamManager.UpstreamHttp = fakeUpstream
 	client.UpstreamManager.UpstreamWs = fakeUpstream
 	client.Start()
 
-	var err error
-
-	// Test: Server list 1
+	// Test: 1 connected
 	if len(client.DownstreamManager.DownstreamServers()) != 1 {
 		t.Error("1")
 		return
@@ -142,20 +142,23 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	// Test: Server list 2
+
+	// Test: 2 connected
 	if len(client.DownstreamManager.DownstreamServers()) != 2 {
 		t.Error("2")
 		return
 	}
+
 	// Test: Client Connect ?
 
 	// Test: Shutdown
 	client.DownstreamManager.StopListeners()
-	// Test: Server list 1
+	// Test: 1 connected
 	if len(client.DownstreamManager.DownstreamServers()) != 1 {
 		t.Error("3")
 		return
 	}
+
 	// Test: Client not connect ?
 
 	// Test: Start DownstreamServer
@@ -164,7 +167,7 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	// Test: Server list 2
+	// Test: 2 connected
 	if len(client.DownstreamManager.DownstreamServers()) != 2 {
 		t.Error("4")
 		return
@@ -172,10 +175,10 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 
 	// Test: Exec
 	// Connect downstream
-	downstreamClient := downstreamclient.MakeDownstreamClient()
-	go downstreamClient.StartClient(downstreamTcpAddr)
-	downstreamClient2 := downstreamclient.MakeDownstreamClient()
-	go downstreamClient2.StartClient(downstreamTcpAddr)
+	downstreamClient0 := downstreamclient.MakeDownstreamClient()
+	go downstreamClient0.StartClient(downstreamTcpAddr)
+	downstreamClient1 := downstreamclient.MakeDownstreamClient()
+	go downstreamClient1.StartClient(downstreamTcpAddr)
 	// Rudimentary way to wait for client to connect
 	n := 0
 	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 2 {
@@ -204,10 +207,10 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 		return
 	}
 
-	// Check if it works
-	packet := makeTestPacket()
-	packet.DownstreamId = "net#1"
-	packet, err = client.DownstreamManager.Do(packet)
+	// Check if upstream0 it works
+	packet := makeExecTestPacket()
+	packet.DownstreamId = "net#0"
+	packet, err = client.DownstreamManager.DoIncomingPacket(packet)
 	if err != nil {
 		t.Errorf("Could not do packet: %s", err.Error())
 		return
@@ -217,7 +220,27 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 		return
 	}
 
-	//t.Error("asdf")
+	// Check if upstream1 it works
+	packet = makeExecTestPacket()
+	packet.DownstreamId = "net#1"
+	packet, err = client.DownstreamManager.DoIncomingPacket(packet)
+	if err != nil {
+		t.Errorf("Could not do packet: %s", err.Error())
+		return
+	}
+	if !strings.Contains(packet.Response["stdout"], "test") {
+		t.Errorf("Wrong output, got: %v", packet.Response)
+		return
+	}
+
+	// Check if upstream3 does not work
+	packet = makeExecTestPacket()
+	packet.DownstreamId = "net#3"
+	packet, err = client.DownstreamManager.DoIncomingPacket(packet)
+	if err == nil {
+		t.Errorf("Could do packet: %v", packet)
+		return
+	}
 }
 
 type fakeUpstream struct {
@@ -266,7 +289,7 @@ func (d *fakeUpstream) GetPacket() (model.Packet, error) {
 	return model.Packet{}, nil
 }
 
-func makeTestPacket() model.Packet {
+func makeExecTestPacket() model.Packet {
 	arguments := make(model.PacketArgument)
 
 	if runtime.GOOS == "windows" {

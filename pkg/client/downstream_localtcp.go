@@ -41,27 +41,18 @@ func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
 	return u
 }
 
-func (d *DownstreamLocaltcp) Shutdown() error {
-	d.listener.Close()
-	d.listener = nil
-	d.downstreams = make(DownstreamInfoTcpMap, 0)
-	return nil
-}
-
-// Do handles a incoming packet destined for this downstream by sending it from the appropriate socket
+// Do handles a incoming packet destined for this downstream (localtcp). StartServer() should have been called first.
 func (d *DownstreamLocaltcp) Do(packet model.Packet) (model.Packet, error) {
 	d.downstreamsMutex.Lock()
 	downstreamInfo, ok := d.downstreams[packet.DownstreamId]
 	d.downstreamsMutex.Unlock()
 	if !ok {
-		log.Errorf("Did not find downstream: %s in %v", packet.DownstreamId, d.downstreams)
 		return model.Packet{}, fmt.Errorf("Did not find: %s", packet.DownstreamId)
 	}
 
 	packet, err := d.doConn(downstreamInfo.conn, packet)
 	if err != nil {
-		log.Error("Error: ", err.Error())
-		// Add error to packet response
+		log.Error("Error doing localtcp packet: ", err.Error())
 		packet.Response["error"] = err.Error()
 	}
 	return packet, err
@@ -82,7 +73,7 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 		d.downstreamsMutex.Unlock()
 
 		// Notify about deleted downstream
-		downstreamLocaltcpNotify <- struct{}{}
+		downstreamChangeNotifyChan <- struct{}{}
 		*/
 		return packet, err
 	}
@@ -102,7 +93,7 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 }
 
 // StartServer starts the TCP listener
-func (d *DownstreamLocaltcp) StartServer() error {
+func (d *DownstreamLocaltcp) StartServer(downstreamChangeNotifyChan chan struct{}) error {
 	log.Info("Start Downstream: LocalTcp on " + d.listenAddr)
 	ln, err := net.Listen("tcp", d.listenAddr)
 	if err != nil {
@@ -110,11 +101,13 @@ func (d *DownstreamLocaltcp) StartServer() error {
 		return err
 	}
 	d.listener = ln
+
+	go d.NewConnectionReceiver(downstreamChangeNotifyChan)
 	return nil
 }
 
-// ListenerLoop is a Thread which waits for new tcp downstream client connections and integrates them via DownstreamManager
-func (d *DownstreamLocaltcp) ListenerLoop(downstreamLocaltcpNotify chan struct{}) error {
+// NewConnectionReceiver is a Thread which waits for new tcp downstream client connections, adds it to the local db and integrates them via DownstreamManager
+func (d *DownstreamLocaltcp) NewConnectionReceiver(downstreamChangeNotifyChan chan struct{}) error {
 	if d.listener == nil {
 		return fmt.Errorf("Can't loop without connection")
 	}
@@ -153,7 +146,7 @@ func (d *DownstreamLocaltcp) ListenerLoop(downstreamLocaltcpNotify chan struct{}
 		d.downstreamsMutex.Unlock()
 
 		// Notify about new downstream
-		downstreamLocaltcpNotify <- struct{}{}
+		downstreamChangeNotifyChan <- struct{}{}
 
 		n += 1
 	}
@@ -194,4 +187,11 @@ func (d *DownstreamLocaltcp) Started() bool {
 
 func (d *DownstreamLocaltcp) ListenAddr() string {
 	return d.listenAddr
+}
+
+func (d *DownstreamLocaltcp) Shutdown() error {
+	d.listener.Close()
+	d.listener = nil
+	d.downstreams = make(DownstreamInfoTcpMap, 0)
+	return nil
 }
