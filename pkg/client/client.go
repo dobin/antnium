@@ -59,7 +59,7 @@ func (c *Client) Loop() {
 			}
 
 			// Send answer back to server
-			c.UpstreamManager.SendOutofband(p)
+			c.UpstreamManager.DoOutgoingPacket(p)
 		}()
 	}
 }

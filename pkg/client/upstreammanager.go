@@ -107,7 +107,7 @@ func (d *UpstreamManager) ReconnectWebsocket() {
 }
 
 // SendOutofBand will send a packet to the server according to a connected upstream
-func (d *UpstreamManager) SendOutofband(packet model.Packet) error {
+func (d *UpstreamManager) DoOutgoingPacket(packet model.Packet) error {
 	for {
 		if d.UpstreamWs.Connected() {
 			d.UpstreamWs.ChanOutgoing() <- packet
@@ -140,5 +140,5 @@ func (d *UpstreamManager) sendPing() {
 	}
 
 	packet := model.NewPacket("ping", d.config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
-	d.SendOutofband(packet)
+	d.DoOutgoingPacket(packet)
 }

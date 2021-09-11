@@ -179,7 +179,7 @@ func (dm *DownstreamManager) SendDownstreamDataToServer() {
 	}
 	packet := model.NewPacket("downstreams", "", strconv.Itoa(int(rand.Uint64())), arguments, response)
 
-	err := dm.upstreamManager.SendOutofband(packet)
+	err := dm.upstreamManager.DoOutgoingPacket(packet)
 	if err != nil {
 		log.Errorf("Senddownstreams send error: %s", err.Error())
 	}
