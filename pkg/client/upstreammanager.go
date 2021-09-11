@@ -21,18 +21,22 @@ type UpstreamManager struct {
 
 	UpstreamHttp Upstream
 	UpstreamWs   Upstream
+
+	reconnectTimer *SleepTimer
 }
 
 func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) UpstreamManager {
 	upstreamHttp := MakeUpstreamHttp(config, campaign)
 	upstreamWs := MakeUpstreamWs(config, campaign)
+	reconnectTimer := MakeSleepTimer()
 
 	u := UpstreamManager{
-		Channel:      make(chan model.Packet),
-		config:       config,
-		campaign:     campaign,
-		UpstreamHttp: &upstreamHttp,
-		UpstreamWs:   &upstreamWs,
+		Channel:        make(chan model.Packet),
+		config:         config,
+		campaign:       campaign,
+		UpstreamHttp:   &upstreamHttp,
+		UpstreamWs:     &upstreamWs,
+		reconnectTimer: &reconnectTimer,
 	}
 	return u
 }
@@ -65,6 +69,7 @@ func (d *UpstreamManager) Connect() {
 
 // ConnectRetryForever will try to connect to the server, forever. Then starts upstreams
 func (d *UpstreamManager) ConnectRetryForever() error {
+	d.reconnectTimer.tick()
 	for {
 		if d.campaign.ClientUseWebsocket {
 			// Try: Websocket
@@ -86,7 +91,7 @@ func (d *UpstreamManager) ConnectRetryForever() error {
 		}
 
 		log.Debug("Could not connect, sleeping...")
-		time.Sleep(time.Second * 3)
+		time.Sleep(d.reconnectTimer.getSleepDuration())
 	}
 
 	return nil

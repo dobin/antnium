@@ -35,7 +35,7 @@ func MakeUpstreamWs(config *ClientConfig, campaign *campaign.Campaign) UpstreamW
 		coder,
 		config,
 		campaign,
-		nil,
+		nil, // no active connection
 	}
 	return u
 }

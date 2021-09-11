@@ -21,8 +21,8 @@ type UpstreamHttp struct {
 	chanIncoming chan model.Packet // Provides packets from server to client
 	chanOutgoing chan model.Packet // Consumes packets from client to server
 
-	state *ClientState
-	coder model.Coder
+	packetGetTimer *SleepTimer
+	coder          model.Coder
 
 	config   *ClientConfig
 	campaign *campaign.Campaign
@@ -31,15 +31,15 @@ type UpstreamHttp struct {
 func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) UpstreamHttp {
 	coder := model.MakeCoder(campaign)
 
-	clientState := MakeClientState()
+	packetGetTimer := MakeSleepTimer()
 
 	u := UpstreamHttp{
-		chanIncoming: make(chan model.Packet),
-		chanOutgoing: make(chan model.Packet),
-		state:        &clientState,
-		coder:        coder,
-		config:       config,
-		campaign:     campaign,
+		chanIncoming:   make(chan model.Packet),
+		chanOutgoing:   make(chan model.Packet),
+		packetGetTimer: &packetGetTimer,
+		coder:          coder,
+		config:         config,
+		campaign:       campaign,
 	}
 	return u
 }
@@ -76,7 +76,7 @@ func (d *UpstreamHttp) Start() {
 	go func() {
 
 		for {
-			time.Sleep(d.state.getSleepDuration())
+			time.Sleep(d.packetGetTimer.getSleepDuration())
 
 			// Try getting a packet from server
 			packet, err := d.GetPacket()
@@ -94,7 +94,7 @@ func (d *UpstreamHttp) Start() {
 				continue
 			}
 			// Notify state that we received a packet
-			d.state.gotPacket()
+			d.packetGetTimer.tick()
 
 			// Send it to Client
 			d.ChanIncoming() <- packet
