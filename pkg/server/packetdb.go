@@ -14,7 +14,7 @@ type PacketDb struct {
 
 func MakePacketDb() PacketDb {
 	db := PacketDb{
-		make([]PacketInfo, 0),
+		make([]PacketInfo, 0, 512),
 	}
 	return db
 }
