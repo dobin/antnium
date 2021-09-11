@@ -16,26 +16,8 @@ import (
 )
 
 /*
-	// Clients connected via websocket do not send regular ping packets (that's the idea of it)
-	// Sadly this makes LastSeen useless - but the user wants to know if the client is still connected.
-	// Here we regularly check the clients connected to ClientWebsocket, and update their LastSeen
-	// Lifetime: App
-	go func() {
-		clientInfoDb2 := &clientInfoDb
-		for {
-			time.Sleep(10 * time.Second)
-			c := clientWebsocket.clients
-			for computerId, conn := range c {
-				if conn == nil {
-					continue
-				}
-				clientInfoDb2.updateFor(computerId, conn.RemoteAddr().String())
-			}
 
-			// Todo: When to quit?
-		}
-	}()
-*/
+ */
 
 type Server struct {
 	srvaddr          string
@@ -57,6 +39,27 @@ func NewServer(srvAddr string) Server {
 	// Init random for packet id generation
 	// Doesnt need to be secure
 	rand.Seed(time.Now().Unix())
+
+	// Clients connected via websocket do not send regular ping packets (that's the idea of it)
+	// Sadly this makes LastSeen useless - but the user wants to know if the client is still connected.
+	// Here we regularly check the clients connected to ClientWebsocket, and update their LastSeen
+	// Lifetime: App
+	go func() {
+		clientInfoDb2 := &middleware.clientInfoDb
+		for {
+			time.Sleep(10 * time.Second)
+
+			c := connectorManager.ConnectorWs.clients
+			for computerId, conn := range c {
+				if conn == nil {
+					continue
+				}
+				clientInfoDb2.updateFor(computerId, conn.RemoteAddr().String(), "ws")
+			}
+
+			// Todo: When to quit?
+		}
+	}()
 
 	w := Server{
 		srvAddr,
