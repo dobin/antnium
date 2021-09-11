@@ -13,6 +13,7 @@ import (
 )
 
 type DownstreamClient struct {
+	conn net.Conn
 }
 
 func MakeDownstreamClient() DownstreamClient {
@@ -47,16 +48,23 @@ func (e *DownstreamClient) StartClient(destination string) {
 		return
 	}
 	// no answer required
+	e.conn = conn
 
-	e.Loop(conn)
+	e.Loop()
 }
 
-func (e *DownstreamClient) Loop(conn net.Conn) {
+func (e *DownstreamClient) Shutdown() {
+	if e.conn != nil {
+		e.conn.Close()
+	}
+}
+
+func (e *DownstreamClient) Loop() {
 	executor := executor.MakeExecutor()
 
 	for {
 		// Read
-		jsonStr, err := bufio.NewReader(conn).ReadString('\n')
+		jsonStr, err := bufio.NewReader(e.conn).ReadString('\n')
 		if err == io.EOF {
 			break
 		}
@@ -86,13 +94,13 @@ func (e *DownstreamClient) Loop(conn net.Conn) {
 		if err != nil {
 			log.Error("Error: ", err.Error())
 		}
-		n, err := conn.Write(packetEncoded)
+		n, err := e.conn.Write(packetEncoded)
 		if err != nil {
 			log.Error("Error")
 
 			// TODO ERR
 		}
-		conn.Write([]byte("\n"))
+		e.conn.Write([]byte("\n"))
 		fmt.Printf("Written: %d bytes", n)
 	}
 }

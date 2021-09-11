@@ -113,6 +113,18 @@ func TestDownstreamLocaltcp(t *testing.T) {
 		t.Errorf("Wrong output, got: %v", packet.Response)
 		return
 	}
+
+	// Shutdown client
+	downstreamClient.Shutdown()
+
+	// Check if error works, as client is not connected anymore
+	packet = makeExecTestPacket()
+	packet.DownstreamId = "net#0"
+	packet, err = client.DownstreamManager.DoIncomingPacket(packet)
+	if err == nil {
+		t.Errorf("Could do packet")
+		return
+	}
 }
 
 func TestDownstreamDoManager(t *testing.T) {
