@@ -26,6 +26,6 @@ func (m *Middleware) SetTODO(connectorManager *ConnectorManager, frontendManager
 	m.frontendManager = frontendManager
 }
 
-func (m *Middleware) AddPacketInfo(packetInfo PacketInfo) {
+func (m *Middleware) AddPacketInfo(packetInfo *PacketInfo) {
 	m.packetDb.add(packetInfo)
 }

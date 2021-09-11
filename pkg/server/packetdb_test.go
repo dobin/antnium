@@ -15,7 +15,7 @@ func TestPacketDb(t *testing.T) {
 	response := make(model.PacketResponse)
 	c := model.NewPacket("test", "23", "42", arguments, response)
 	packetInfo := NewPacketInfo(c, STATE_RECORDED)
-	packetDb.add(packetInfo)
+	packetDb.add(&packetInfo)
 
 	// Get all packets
 	packetInfoAll := packetDb.getAll()

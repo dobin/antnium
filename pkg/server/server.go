@@ -97,7 +97,7 @@ func (s *Server) DbLoad() error {
 		if err != nil {
 			return fmt.Errorf("Read file error: %s", err.Error())
 		}
-		var packetInfos []PacketInfo
+		var packetInfos []*PacketInfo
 		err = json.Unmarshal(packetsBytes, &packetInfos)
 		if err != nil {
 			return fmt.Errorf("Read file decode error: %s", err.Error())

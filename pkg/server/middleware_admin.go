@@ -21,7 +21,7 @@ func (s *Middleware) AdminAddNewPacket(packet model.Packet) {
 	}
 }
 
-func (s *Middleware) AdminGetAllPacket() []PacketInfo {
+func (s *Middleware) AdminGetAllPacket() []*PacketInfo {
 	return s.packetDb.getAll()
 }
 
@@ -30,7 +30,7 @@ func (s *Middleware) AdminGetPacketById(computerId string) []PacketInfo {
 	packetInfos := s.packetDb.getAll()
 	for _, packetInfo := range packetInfos {
 		if packetInfo.Packet.ComputerId == computerId {
-			filteredPackets = append(filteredPackets, packetInfo)
+			filteredPackets = append(filteredPackets, *packetInfo)
 		}
 	}
 	return filteredPackets

@@ -8,13 +8,13 @@ import (
 	"github.com/dobin/antnium/pkg/server"
 )
 
-func makeSimpleTestPacket(computerId string, packetId string) server.PacketInfo {
+func makeSimpleTestPacket(computerId string, packetId string) *server.PacketInfo {
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
 	packet := model.NewPacket("test", computerId, packetId, arguments, response)
 	packetInfo := server.NewPacketInfo(packet, server.STATE_RECORDED)
-	return packetInfo
+	return &packetInfo
 }
 
 // Test Upstream REST connection with running server

@@ -9,33 +9,33 @@ import (
 )
 
 type PacketDb struct {
-	packetInfo []PacketInfo
+	packetInfo []*PacketInfo
 }
 
 func MakePacketDb() PacketDb {
 	db := PacketDb{
-		make([]PacketInfo, 0, 512),
+		make([]*PacketInfo, 0, 512),
 	}
 	return db
 }
 
-func (db *PacketDb) add(packetInfo PacketInfo) {
+func (db *PacketDb) add(packetInfo *PacketInfo) {
 	packetInfo.TimeRecorded = time.Now()
 	db.packetInfo = append(db.packetInfo, packetInfo)
 }
 
-func (db *PacketDb) getAll() []PacketInfo {
+func (db *PacketDb) getAll() []*PacketInfo {
 	return db.packetInfo
 }
 
-func (db *PacketDb) Set(packetInfos []PacketInfo) {
+func (db *PacketDb) Set(packetInfos []*PacketInfo) {
 	db.packetInfo = packetInfos
 }
 
 func (db *PacketDb) ByPacketId(packetId string) (*PacketInfo, bool) {
-	for n, packetInfo := range db.packetInfo {
+	for _, packetInfo := range db.packetInfo {
 		if packetInfo.Packet.PacketId == packetId {
-			return &db.packetInfo[n], true
+			return packetInfo, true
 		}
 	}
 
@@ -43,18 +43,16 @@ func (db *PacketDb) ByPacketId(packetId string) (*PacketInfo, bool) {
 }
 
 func (db *PacketDb) getPacketForClient(computerId string) (*PacketInfo, error) {
-	for i, packetInfo := range db.packetInfo {
+	for _, packetInfo := range db.packetInfo {
 		if packetInfo.State != STATE_RECORDED {
 			continue
 		}
-		//packetInfoComputerId := packetInfo.Packet.ComputerId
-		//if packetInfoComputerId == "0" || packetInfoComputerId == computerId {
 		if packetInfo.Packet.ComputerId == computerId {
-			return &db.packetInfo[i], nil
+			return packetInfo, nil
 		}
 	}
 
-	return &PacketInfo{}, fmt.Errorf("Nothing found")
+	return nil, fmt.Errorf("Nothing found")
 }
 
 func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {
@@ -65,8 +63,8 @@ func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {
 		t := time.Now()
 		packetInfo.TimeRecorded = t
 		packetInfo.TimeAnswered = t
-		db.add(packetInfo)
-		return &db.packetInfo[len(db.packetInfo)-1]
+		db.add(&packetInfo)
+		return &packetInfo
 	}
 
 	if packetInfo.State != STATE_SENT {
@@ -84,8 +82,8 @@ func (db *PacketDb) addFromAdmin(packet model.Packet) *PacketInfo {
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
 	packetInfo.TimeRecorded = time.Now()
 
-	db.add(packetInfo)
-	return &db.packetInfo[len(db.packetInfo)-1]
+	db.add(&packetInfo)
+	return &packetInfo
 }
 
 func (db *PacketDb) sentToClient(packetId string, remoteAddr string) (*PacketInfo, error) {
