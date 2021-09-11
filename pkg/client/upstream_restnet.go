@@ -5,15 +5,15 @@ import (
 	"net/http"
 )
 
-func (d UpstreamHttp) PacketGetUrl() string {
+func (d UpstreamRest) PacketGetUrl() string {
 	return d.campaign.ServerUrl + d.campaign.PacketGetPath + d.config.ComputerId
 }
 
-func (d UpstreamHttp) PacketSendUrl() string {
+func (d UpstreamRest) PacketSendUrl() string {
 	return d.campaign.ServerUrl + d.campaign.PacketSendPath
 }
 
-func (d UpstreamHttp) HttpGet(url string) (*http.Response, error) {
+func (d UpstreamRest) HttpGet(url string) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -27,7 +27,7 @@ func (d UpstreamHttp) HttpGet(url string) (*http.Response, error) {
 	return res, nil
 }
 
-func (d UpstreamHttp) HttpPost(url string, data *bytes.Reader) (*http.Response, error) {
+func (d UpstreamRest) HttpPost(url string, data *bytes.Reader) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, data)
 	if err != nil {

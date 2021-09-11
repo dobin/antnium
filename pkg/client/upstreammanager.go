@@ -19,14 +19,14 @@ type UpstreamManager struct {
 	config   *ClientConfig
 	campaign *campaign.Campaign
 
-	UpstreamHttp Upstream
+	UpstreamRest Upstream
 	UpstreamWs   Upstream
 
 	reconnectTimer *SleepTimer
 }
 
 func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) UpstreamManager {
-	upstreamHttp := MakeUpstreamHttp(config, campaign)
+	upstreamRest := MakeUpstreamRest(config, campaign)
 	upstreamWs := MakeUpstreamWs(config, campaign)
 	reconnectTimer := MakeSleepTimer()
 
@@ -34,7 +34,7 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 		Channel:        make(chan model.Packet),
 		config:         config,
 		campaign:       campaign,
-		UpstreamHttp:   &upstreamHttp,
+		UpstreamRest:   &upstreamRest,
 		UpstreamWs:     &upstreamWs,
 		reconnectTimer: &reconnectTimer,
 	}
@@ -55,7 +55,7 @@ func (d *UpstreamManager) Connect() {
 					d.ReconnectWebsocket() // Blocks until we can reach server again
 					continue               // We are connected again, do as before
 				}
-			case packet, connected = <-d.UpstreamHttp.ChanIncoming():
+			case packet, connected = <-d.UpstreamRest.ChanIncoming():
 				// No reconnect handling atm
 			}
 
@@ -81,10 +81,10 @@ func (d *UpstreamManager) ConnectRetryForever() error {
 				break
 			}
 		} else {
-			err := d.UpstreamHttp.Connect()
+			err := d.UpstreamRest.Connect()
 			if err == nil {
 				log.Infof("Connected to HTTP")
-				d.UpstreamHttp.Start()
+				d.UpstreamRest.Start()
 				d.sendPing()
 				break
 			}
@@ -112,8 +112,8 @@ func (d *UpstreamManager) DoOutgoingPacket(packet model.Packet) error {
 		if d.UpstreamWs.Connected() {
 			d.UpstreamWs.ChanOutgoing() <- packet
 			break
-		} else if d.UpstreamHttp.Connected() {
-			d.UpstreamHttp.ChanOutgoing() <- packet
+		} else if d.UpstreamRest.Connected() {
+			d.UpstreamRest.ChanOutgoing() <- packet
 			break
 		} else {
 			log.Warn("OOB: No active upstreams, sleep and try again")

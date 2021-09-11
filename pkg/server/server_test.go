@@ -11,8 +11,8 @@ import (
 	"github.com/dobin/antnium/pkg/model"
 )
 
-// TestServerClientIntegrationHttp will check if client and server can communicate via HTTP.
-func TestServerClientIntegrationHttp(t *testing.T) {
+// TestServerClientIntegrationRest will check if client and server can communicate via HTTP.
+func TestServerClientIntegrationRest(t *testing.T) {
 	port := "55001"
 	packetId := "packetid-42"
 	computerId := "computerid-23"
@@ -20,7 +20,7 @@ func TestServerClientIntegrationHttp(t *testing.T) {
 	// Server in background, checking via client
 	s := NewServer("127.0.0.1:" + port)
 
-	// disable websocket for HTTP only
+	// disable websocket for REST only
 	s.Campaign.ClientUseWebsocket = false
 
 	// Make a example packet the client should receive
@@ -58,8 +58,8 @@ func TestServerClientIntegrationHttp(t *testing.T) {
 	s.Shutdown()
 }
 
-// TestServerClientIntegrationHttp will check if client and server can communicate via HTTP+WS
-func TestServerClientIntegrationHttpAndWebsocket(t *testing.T) {
+// TestServerClientIntegrationRest will check if client and server can communicate via HTTP+WS
+func TestServerClientIntegrationRestAndWebsocket(t *testing.T) {
 	port := "55005"
 	packetId := "packetid-42"
 	computerId := "computerid-23"
@@ -140,7 +140,7 @@ func TestServerAuthAdmin(t *testing.T) {
 	go s.Serve()
 
 	time.Sleep(100 * time.Millisecond)
-	// Create a default (non authenticated) HTTP client
+	// Create a default (non authenticated) REST client
 	unauthHttp := &http.Client{
 		Timeout: 1 * time.Second,
 	}
@@ -189,7 +189,7 @@ func TestServerAuthClient(t *testing.T) {
 	// Try first with invalid key (consumes one packet)
 	origEncKey := c.Campaign.EncKey
 	c.Campaign.EncKey = []byte("12345678123456781234567812345678")
-	//packet, err = c.UpstreamManager.UpstreamHttp.GetPacket()
+	//packet, err = c.UpstreamManager.UpstreamRest.GetPacket()
 	packet = <-c.UpstreamManager.Channel
 	c.UpstreamManager.Channel <- packet
 
@@ -201,7 +201,7 @@ func TestServerAuthClient(t *testing.T) {
 
 	// Test Client: Correct key (consumes one packet)
 	//s.middleware.packetDb.add(packetInfo) // changing var of a thread, dangerous but works
-	//packet, err = c.UpstreamManager.UpstreamHttp.GetPacket()
+	//packet, err = c.UpstreamManager.UpstreamRest.GetPacket()
 	packet = <-c.UpstreamManager.Channel
 	c.UpstreamManager.Channel <- packet
 
@@ -225,7 +225,7 @@ func TestServerAuthClient(t *testing.T) {
 	// Test Client: Wrong key
 	origApiKey := c.Campaign.ApiKey
 	c.Campaign.ApiKey = "not42"
-	//packet, err = c.UpstreamManager.UpstreamHttp.GetPacket()
+	//packet, err = c.UpstreamManager.UpstreamRest.GetPacket()
 	packet = <-c.UpstreamManager.Channel
 	c.UpstreamManager.Channel <- packet
 

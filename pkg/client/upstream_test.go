@@ -199,7 +199,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 }
 
 // Test Upstream REST with server first down and started later
-func TestUpstreamServerHttpConnectLate(t *testing.T) {
+func TestUpstreamServerRestConnectLate(t *testing.T) {
 	t.Parallel()
 
 	port := "55077"

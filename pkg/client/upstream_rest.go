@@ -17,7 +17,7 @@ import (
 )
 
 // UpstreamWs is a connection to the server via REST
-type UpstreamHttp struct {
+type UpstreamRest struct {
 	chanIncoming chan model.Packet // Provides packets from server to client
 	chanOutgoing chan model.Packet // Consumes packets from client to server
 
@@ -28,12 +28,12 @@ type UpstreamHttp struct {
 	campaign *campaign.Campaign
 }
 
-func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) UpstreamHttp {
+func MakeUpstreamRest(config *ClientConfig, campaign *campaign.Campaign) UpstreamRest {
 	coder := model.MakeCoder(campaign)
 
 	packetGetTimer := MakeSleepTimer()
 
-	u := UpstreamHttp{
+	u := UpstreamRest{
 		chanIncoming:   make(chan model.Packet),
 		chanOutgoing:   make(chan model.Packet),
 		packetGetTimer: &packetGetTimer,
@@ -45,7 +45,7 @@ func MakeUpstreamHttp(config *ClientConfig, campaign *campaign.Campaign) Upstrea
 }
 
 // Connect creates a REST connection to the server, or returns an error
-func (d *UpstreamHttp) Connect() error {
+func (d *UpstreamRest) Connect() error {
 	proxyUrl, ok := d.campaign.GetProxy()
 	if ok {
 		if proxyUrl, err := url.Parse(proxyUrl); err == nil && proxyUrl.Scheme != "" && proxyUrl.Host != "" {
@@ -72,7 +72,7 @@ func (d *UpstreamHttp) Connect() error {
 }
 
 // Start is a Thread responsible for receiving packets from server, lifetime:app
-func (d *UpstreamHttp) Start() {
+func (d *UpstreamRest) Start() {
 	go func() {
 
 		for {
@@ -117,7 +117,7 @@ func (d *UpstreamHttp) Start() {
 	}()
 }
 
-func (d *UpstreamHttp) GetPacket() (model.Packet, error) {
+func (d *UpstreamRest) GetPacket() (model.Packet, error) {
 	url := d.PacketGetUrl()
 	resp, err := d.HttpGet(url)
 	if err != nil {
@@ -142,13 +142,13 @@ func (d *UpstreamHttp) GetPacket() (model.Packet, error) {
 	return packet, nil
 }
 
-func (d *UpstreamHttp) sendPacket(packet model.Packet) error {
+func (d *UpstreamRest) sendPacket(packet model.Packet) error {
 	url := d.PacketSendUrl()
 
 	// Setup response
 	packet.ComputerId = d.config.ComputerId
 
-	common.LogPacket("UpstreamHttp:send()", packet)
+	common.LogPacket("UpstreamRest:send()", packet)
 
 	data, err := d.coder.EncodeData(packet)
 	if err != nil {
@@ -168,13 +168,13 @@ func (d *UpstreamHttp) sendPacket(packet model.Packet) error {
 }
 
 // Connected returns false if we know that that websocket connection is dead
-func (d *UpstreamHttp) Connected() bool {
+func (d *UpstreamRest) Connected() bool {
 	return true
 }
 
-func (d *UpstreamHttp) ChanIncoming() chan model.Packet {
+func (d *UpstreamRest) ChanIncoming() chan model.Packet {
 	return d.chanIncoming
 }
-func (d *UpstreamHttp) ChanOutgoing() chan model.Packet {
+func (d *UpstreamRest) ChanOutgoing() chan model.Packet {
 	return d.chanOutgoing
 }
