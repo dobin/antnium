@@ -267,13 +267,18 @@ func makeFakeUpstream() *fakeUpstream {
 }
 
 func (d *fakeUpstream) Start() {
-	// Collect packets of the upstream
-	go func() {
-		for {
-			p := <-d.chanIncoming
-			d.oobPacket = &p
-		}
-	}()
+	/*
+		// Collect packets sent to client
+		go func() {
+			for {
+				_ = <-d.chanIncoming
+				//p := <-d.chanIncoming
+				//d.oobPacket = &p
+			}
+		}()
+	*/
+
+	// Collect packets sent by client
 	go func() {
 		for {
 			p := <-d.chanOutgoing

@@ -18,5 +18,5 @@ type ClientInfo struct {
 	Processes     []string `json:"Processes"`
 	IsAdmin       string   `json:"isAdmin"`
 	IsElevated    string   `json:"isElevated"`
-	ConnectorType string   `json:"ConnectorType`
+	ConnectorType string   `json:"ConnectorType"`
 }
