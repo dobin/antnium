@@ -54,6 +54,7 @@ This will create:
 * /build/server.elf
 * /build/static/client.exe
 * /build/static/client.elf
+* /build/static/wingman.exe
 * /build/upload/
 * /build/webui/
 
@@ -139,6 +140,9 @@ Result is `server.exe`. Make sure to run it in the directory where you have or e
 * db.*.json
 
 as working directory.
+
+
+## Wingman
 
 
 ## Testing

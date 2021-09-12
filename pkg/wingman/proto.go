@@ -1,4 +1,4 @@
-package downstreamclient
+package wingman
 
 import (
 	"encoding/json"

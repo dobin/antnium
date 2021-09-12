@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/dobin/antnium/pkg/downstreamclient"
 	"github.com/dobin/antnium/pkg/model"
+	"github.com/dobin/antnium/pkg/wingman"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -61,7 +61,7 @@ func (d *DownstreamLocaltcp) Do(packet model.Packet) (model.Packet, error) {
 // doConn will send a packet to a socket and wait for its response
 func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.Packet, error) {
 	// Send it to the downstream executor
-	packetEncoded, err := downstreamclient.EncodePacket(packet)
+	packetEncoded, err := wingman.EncodePacket(packet)
 	if err != nil {
 		return packet, err
 	}
@@ -84,7 +84,7 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 	if err != nil {
 		return packet, err
 	}
-	packet, err = downstreamclient.DecodePacket(jsonStr)
+	packet, err = wingman.DecodePacket(jsonStr)
 	if err != nil {
 		return packet, err
 	}

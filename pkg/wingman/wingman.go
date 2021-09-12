@@ -1,4 +1,4 @@
-package downstreamclient
+package wingman
 
 import (
 	"bufio"
@@ -12,27 +12,27 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type DownstreamClient struct {
+type Wingman struct {
 	conn net.Conn
 }
 
-func MakeDownstreamClient() DownstreamClient {
-	executor := DownstreamClient{}
+func MakeWingman() Wingman {
+	executor := Wingman{}
 	return executor
 }
 
-func (e *DownstreamClient) StartClient(destination string) {
+func (e *Wingman) StartWingman(destination string) {
 	if destination == "" {
 		destination = "localhost:50000"
 	}
-	fmt.Println("DownstreamClient: connect to: " + destination)
+	fmt.Println("Wingman: connect to: " + destination)
 
 	conn, err := net.Dial("tcp", destination)
 	if err != nil {
 		log.Error("Could not connect: " + err.Error())
 		return
 	}
-	log.Info("DownstreamClient: Connected")
+	log.Info("Wingman: Connected")
 
 	// Send initial line
 	ex, err := os.Executable()
@@ -53,13 +53,13 @@ func (e *DownstreamClient) StartClient(destination string) {
 	e.Loop()
 }
 
-func (e *DownstreamClient) Shutdown() {
+func (e *Wingman) Shutdown() {
 	if e.conn != nil {
 		e.conn.Close()
 	}
 }
 
-func (e *DownstreamClient) Loop() {
+func (e *Wingman) Loop() {
 	executor := executor.MakeExecutor()
 
 	for {

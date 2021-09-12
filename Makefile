@@ -7,12 +7,12 @@ runserver:
 runclient: 
 	go run cmd/client/client.go
 
-rundownstreamclient:
-	go run cmd/downstreamclient/downstreamclient.go 
+runwingman:
+	go run cmd/wingman/wingman.go 
 
 
 # all
-compile: server client downstreamclient
+compile: server client wingman
 	
 server:
 	go build -o server.elf cmd/server/server.go 
@@ -22,8 +22,8 @@ client:
 	GOOS=windows GOARCH=amd64 go build -o client.exe -ldflags "-H windowsgui"  cmd/client/client.go
 	#GOOS=darwin GOARCH=amd64 go build -o client.darwin cmd/client/client.go
 
-downstreamclient:
-	GOOS=windows GOARCH=amd64 go build -o downstreamclient.exe cmd/downstreamclient/downstreamclient.go 
+wingman:
+	GOOS=windows GOARCH=amd64 go build -o wingman.exe cmd/wingman/wingman.go 
 
 
 deploy: compile
@@ -31,7 +31,7 @@ deploy: compile
 	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o client.elf cmd/client/client.go
 	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o client.exe cmd/client/client.go
 	# GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o client.darwin cmd/client/client.go
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o downstreamclient.exe cmd/downstreamclient/downstreamclient.go 
+	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o wingman.exe cmd/wingman/wingman.go 
 
 	# server
 	GOOS=linux GOARCH=amd64 go build cmd/server/server.go 
@@ -41,7 +41,7 @@ deploy: compile
 
 	cp server.elf build/
 	cp client.elf client.exe build/static/
-	cp downstreamclient.exe build/static/
+	cp wingman.exe build/static/
 	cp -R webui/* build/webui/
 
 
@@ -50,4 +50,4 @@ test:
 	go test ./...
 
 clean:
-	rm server.exe client.exe client.elf client.darwin downstreamclient.exe
+	rm server.exe client.exe client.elf client.darwin wingman.exe

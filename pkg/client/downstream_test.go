@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dobin/antnium/pkg/downstreamclient"
 	"github.com/dobin/antnium/pkg/model"
+	"github.com/dobin/antnium/pkg/wingman"
 )
 
 // TestDownstreamClient tests default Downstream: "Client"
@@ -69,9 +69,9 @@ func TestDownstreamLocaltcp(t *testing.T) {
 		return
 	}
 
-	// Connect downstreamClient
-	downstreamClient := downstreamclient.MakeDownstreamClient()
-	go downstreamClient.StartClient(downstreamTcpAddr)
+	// Connect wingman
+	wingman := wingman.MakeWingman()
+	go wingman.StartWingman(downstreamTcpAddr)
 
 	// Rudimentary way to wait for client to connect
 	n := 0
@@ -115,7 +115,7 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	}
 
 	// Shutdown client
-	downstreamClient.Shutdown()
+	wingman.Shutdown()
 
 	// Check if error works, as client is not connected anymore
 	packet = makeExecTestPacket()
@@ -195,10 +195,10 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 
 	// Test: Exec
 	// Connect downstream
-	downstreamClient0 := downstreamclient.MakeDownstreamClient()
-	go downstreamClient0.StartClient(downstreamTcpAddr)
-	downstreamClient1 := downstreamclient.MakeDownstreamClient()
-	go downstreamClient1.StartClient(downstreamTcpAddr)
+	wingman0 := wingman.MakeWingman()
+	go wingman0.StartWingman(downstreamTcpAddr)
+	wingman1 := wingman.MakeWingman()
+	go wingman1.StartWingman(downstreamTcpAddr)
 	// Rudimentary way to wait for client to connect
 	n := 0
 	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 2 {
