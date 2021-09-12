@@ -31,7 +31,7 @@ func TestClientExecWs(t *testing.T) {
 
 	// Make a example packet the client should receive
 	packet := makeSimpleCmdPacket(computerId, "p42", "echo test")
-	s.Middleware.AdminAddNewPacket(packet)
+	s.Middleware.AdminAddNewPacket(&packet)
 
 	// make server go
 	go s.Serve()
@@ -81,10 +81,10 @@ func TestClientParalellExecWs(t *testing.T) {
 	defer s.Shutdown()
 
 	// Make a example packet the client should receive
-	packet := makeSimpleCmdPacket(computerId, "p42", "ping localhost")
-	s.Middleware.AdminAddNewPacket(packet)
-	packet = makeSimpleCmdPacket(computerId, "p43", "echo test")
-	s.Middleware.AdminAddNewPacket(packet)
+	packetA := makeSimpleCmdPacket(computerId, "p42", "ping localhost")
+	s.Middleware.AdminAddNewPacket(&packetA)
+	packetB := makeSimpleCmdPacket(computerId, "p43", "echo test")
+	s.Middleware.AdminAddNewPacket(&packetB)
 
 	// Start server
 	go s.Serve()

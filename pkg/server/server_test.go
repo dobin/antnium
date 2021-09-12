@@ -11,25 +11,24 @@ import (
 	"github.com/dobin/antnium/pkg/model"
 )
 
-// TestServerClientIntegrationRest will check if client and server can communicate via HTTP.
-func TestServerClientIntegrationRest(t *testing.T) {
-	port := "55001"
-	packetId := "packetid-42"
-	computerId := "computerid-23"
-
-	// Server in background, checking via client
-	s := NewServer("127.0.0.1:" + port)
-
-	// disable websocket for REST only
-	s.Campaign.ClientUseWebsocket = false
-
-	// Make a example packet the client should receive
+func makeSimpleTestPacket(computerId string, packetId string) *model.Packet {
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
 	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	return &packet
+}
+
+// TestServerClientIntegrationRest will check if client and server can communicate via HTTP.
+func TestServerClientIntegrationRest(t *testing.T) {
+	port := "55001"
+	computerId := "computerid-23"
+	packetId := "packetid-42"
+
+	s := NewServer("127.0.0.1:" + port)
+	s.Campaign.ClientUseWebsocket = false // Test: REST
+	packet := makeSimpleTestPacket(computerId, packetId)
 	s.Middleware.AdminAddNewPacket(packet)
-	// make server go
 	go s.Serve()
 
 	// create client, receive the packet we added above
@@ -41,51 +40,38 @@ func TestServerClientIntegrationRest(t *testing.T) {
 	c.Config.ComputerId = computerId
 	c.Start()
 
-	packet = <-c.UpstreamManager.Channel
-	/*
-		if err != nil {
-			t.Errorf("Error when receiving packet: " + err.Error())
-			return
-		}*/
-	if packet.PacketId != packetId {
+	answerPacket := <-c.UpstreamManager.Channel
+	if answerPacket.PacketId != packetId {
 		t.Errorf("Packet received, but wrong packetid: %s", packet.PacketId)
 		return
 	}
-	if packet.Arguments["arg0"] != "value0" {
+	if answerPacket.Arguments["arg0"] != "value0" {
 		t.Errorf("Packet received, but wrong args: %v", packet.Arguments)
 		return
 	}
 	s.Shutdown()
 }
 
-// TestServerClientIntegrationRest will check if client and server can communicate via HTTP+WS
-func TestServerClientIntegrationRestAndWebsocket(t *testing.T) {
+// TestServerClientIntegrationWebsocket will check if client and server can communicate via websocket
+func TestServerClientIntegrationWebsocket(t *testing.T) {
 	port := "55005"
-	packetId := "packetid-42"
 	computerId := "computerid-23"
+	packetId := "packetid-42"
+
+	// Server
 	s := NewServer("127.0.0.1:" + port)
-
-	// Enable the websocket
-	s.Campaign.ClientUseWebsocket = true
-
-	// make server go
+	s.Campaign.ClientUseWebsocket = true // Test: WS
 	go s.Serve()
 
 	// Let the client connect
 	c := client.NewClient()
-	c.Campaign.ProxyUrl = "" // Always disable proxy
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
-	s.Campaign.ClientUseWebsocket = true
+	c.Campaign.ClientUseWebsocket = true // Test: WS
 	c.Config.ComputerId = computerId
-
-	// Start upstream thread
 	c.Start()
 
 	// Make a example packet the client should receive
-	arguments := make(model.PacketArgument)
-	arguments["arg0"] = "value0"
-	response := make(model.PacketResponse)
-	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	packet := makeSimpleTestPacket(computerId, packetId)
 
 	// Send test packet via admin interface
 	json_data, err := json.Marshal(packet)
@@ -102,10 +88,6 @@ func TestServerClientIntegrationRestAndWebsocket(t *testing.T) {
 	}
 	req.Header.Set("Authorization", c.Campaign.AdminApiKey)
 	res, err := client.Do(req)
-	if err != nil {
-		t.Errorf("Unittest error: %s", err.Error())
-		return
-	}
 	if err != nil {
 		t.Errorf("Unittest error: %s", err.Error())
 		return

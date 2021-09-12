@@ -4,12 +4,10 @@ import (
 	"testing"
 
 	"github.com/dobin/antnium/pkg/client"
-	"github.com/dobin/antnium/pkg/model"
 )
 
 func TestConnectorHttp(t *testing.T) {
 	port := "55044"
-	packetId := "packetid-42"
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
@@ -18,11 +16,8 @@ func TestConnectorHttp(t *testing.T) {
 	s.Campaign.ClientUseWebsocket = true
 
 	// Make a example packet the client should receive
-	arguments := make(model.PacketArgument)
-	arguments["arg0"] = "value0"
-	response := make(model.PacketResponse)
-	packet := model.NewPacket("test", computerId, packetId, arguments, response)
-	s.Middleware.AdminAddNewPacket(packet)
+	packetA := makeSimpleTestPacket(computerId, "001")
+	s.Middleware.AdminAddNewPacket(packetA)
 	// make server go
 	go s.Serve()
 
@@ -34,17 +29,18 @@ func TestConnectorHttp(t *testing.T) {
 	client.Start()
 
 	// expect packet to be received upon connection (its already added)
-	packet = <-client.UpstreamManager.Channel
-	if packet.PacketId != packetId || packet.ComputerId != computerId {
+	packetB := <-client.UpstreamManager.Channel
+	if packetB.PacketId != "001" || packetB.ComputerId != computerId {
 		t.Error("Err")
 	}
 
 	// Add a test packet via Admin REST
-	s.Middleware.AdminAddNewPacket(packet)
+	packetC := makeSimpleTestPacket(computerId, "002")
+	s.Middleware.AdminAddNewPacket(packetC)
 
 	// Expect it
-	packet = <-client.UpstreamManager.Channel
-	if packet.PacketId != packetId || packet.ComputerId != computerId {
+	packetD := <-client.UpstreamManager.Channel
+	if packetD.PacketId != "002" || packetD.ComputerId != computerId {
 		t.Error("Err")
 	}
 

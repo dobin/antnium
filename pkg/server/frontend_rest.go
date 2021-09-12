@@ -92,7 +92,11 @@ func (s *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.middleware.AdminAddNewPacket(packet)
+	err = s.middleware.AdminAddNewPacket(&packet)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
 }
 
 func (s *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {

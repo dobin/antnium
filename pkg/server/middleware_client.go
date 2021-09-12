@@ -12,10 +12,10 @@ import (
 )
 
 // ClientSendPacket handles packets sent by client (either answers, or client-initiated)
-func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, connectorType string) {
+func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, connectorType string) error {
 	if packet.PacketType == "ping" {
 		s.clientInfoDb.updateFromPing(packet.ComputerId, remoteAddr, connectorType, packet.Response)
-		return
+		return nil
 	}
 	common.LogPacketDebug("Server:ClientSendPacket()", packet)
 
@@ -27,6 +27,8 @@ func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 
 	// Notify UI
 	s.frontendManager.FrontendWs.broadcastPacket(*packetInfo)
+
+	return nil
 }
 
 func (s *Middleware) ClientGetPacket(computerId string, remoteAddr string, connectorType string) (model.Packet, bool) {

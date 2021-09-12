@@ -8,7 +8,15 @@ import (
 	"github.com/dobin/antnium/pkg/server"
 )
 
-func makeSimpleTestPacket(computerId string, packetId string) *server.PacketInfo {
+func makeSimpleTestPacket(computerId string, packetId string) *model.Packet {
+	arguments := make(model.PacketArgument)
+	arguments["arg0"] = "value0"
+	response := make(model.PacketResponse)
+	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	return &packet
+}
+
+func makeSimpleTestPacketInfo(computerId string, packetId string) *server.PacketInfo {
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
@@ -28,7 +36,7 @@ func TestUpstreamServerRest(t *testing.T) {
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = false // Test: REST
-	packetInfo := makeSimpleTestPacket(computerId, packetId)
+	packetInfo := makeSimpleTestPacketInfo(computerId, packetId)
 	s.Middleware.AddPacketInfo(packetInfo)
 	defer s.Shutdown()
 	go s.Serve()
@@ -52,14 +60,13 @@ func TestUpstreamServerRest(t *testing.T) {
 func TestUpstreamServerWs(t *testing.T) {
 	t.Parallel()
 
-	port := "55141"
-	packetId := "packetid-422"
+	port := "55143"
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true // Test: Websocket
-	packetInfo := makeSimpleTestPacket(computerId, packetId)
+	packetInfo := makeSimpleTestPacketInfo(computerId, "001")
 	s.Middleware.AddPacketInfo(packetInfo)
 	defer s.Shutdown()
 	go s.Serve()
@@ -73,17 +80,18 @@ func TestUpstreamServerWs(t *testing.T) {
 
 	// Test: expect packet to be received upon connection (its already added)
 	packet := <-client.UpstreamManager.Channel
-	if packet.PacketId != packetId || packet.ComputerId != computerId {
+	if packet.PacketId != "001" || packet.ComputerId != computerId {
 		t.Error("Err")
 		return
 	}
 
 	// Add a test packet via Admin REST
-	s.Middleware.AdminAddNewPacket(packet)
+	packetB := makeSimpleTestPacket(computerId, "002")
+	s.Middleware.AdminAddNewPacket(packetB)
 
 	// Test: Expect it
 	packet = <-client.UpstreamManager.Channel
-	if packet.PacketId != packetId || packet.ComputerId != computerId {
+	if packet.PacketId != "002" || packet.ComputerId != computerId {
 		t.Error("Err")
 		return
 	}
@@ -115,7 +123,7 @@ func TestUpstreamServerWsConnectLate(t *testing.T) {
 	s := server.NewServer("127.0.0.1:" + port)
 	defer s.Shutdown()
 	s.Campaign.ClientUseWebsocket = true // Test: WS
-	packetInfo := makeSimpleTestPacket(computerId, packetId)
+	packetInfo := makeSimpleTestPacketInfo(computerId, packetId)
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
 
@@ -139,7 +147,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	// Start Server
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true // Test: WS
-	packetInfo := makeSimpleTestPacket(computerId, packetId1)
+	packetInfo := makeSimpleTestPacketInfo(computerId, packetId1)
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
 
@@ -177,7 +185,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	// Start 2nd server
 	s = server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true
-	packetInfo = makeSimpleTestPacket(computerId, packetId2) // make sure to take another packetId here
+	packetInfo = makeSimpleTestPacketInfo(computerId, packetId2) // make sure to take another packetId here
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
 
@@ -223,7 +231,7 @@ func TestUpstreamServerRestConnectLate(t *testing.T) {
 	// Start Server
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = false // Test: REST
-	packetInfo := makeSimpleTestPacket(computerId, packetId)
+	packetInfo := makeSimpleTestPacketInfo(computerId, packetId)
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
 	defer s.Shutdown()

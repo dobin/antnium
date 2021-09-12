@@ -4,9 +4,12 @@ import (
 	"github.com/dobin/antnium/pkg/model"
 )
 
-func (s *Middleware) AdminAddNewPacket(packet model.Packet) {
+func (s *Middleware) AdminAddNewPacket(packet *model.Packet) error {
 	// Add to packet DB and get packetInfo
-	packetInfo := s.packetDb.addFromAdmin(packet)
+	packetInfo, err := s.packetDb.addFromAdmin(packet)
+	if err != nil {
+		return err
+	}
 
 	// Notify UI immediately (for initial STATE_RECORDED)
 	s.frontendManager.FrontendWs.broadcastPacket(*packetInfo)
@@ -19,6 +22,8 @@ func (s *Middleware) AdminAddNewPacket(packet model.Packet) {
 		// only notify UI if we really sent a packet
 		s.frontendManager.FrontendWs.broadcastPacket(*packetInfo)
 	}
+
+	return nil
 }
 
 func (s *Middleware) AdminGetAllPacket() []*PacketInfo {
