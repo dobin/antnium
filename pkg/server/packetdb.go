@@ -77,13 +77,18 @@ func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {
 	return packetInfo
 }
 
-func (db *PacketDb) addFromAdmin(packet model.Packet) *PacketInfo {
+func (db *PacketDb) addFromAdmin(packet *model.Packet) (*PacketInfo, error) {
+	_, ok := db.ByPacketId(packet.PacketId)
+	if ok {
+		return nil, fmt.Errorf("PacketId %s already exists in DB. Wont handle it.", packet.PacketId)
+	}
+
 	// Add new (always client initiated for now)
-	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
+	packetInfo := NewPacketInfo(*packet, STATE_RECORDED)
 	packetInfo.TimeRecorded = time.Now()
 
 	db.add(&packetInfo)
-	return &packetInfo
+	return &packetInfo, nil
 }
 
 func (db *PacketDb) sentToClient(packetId string, remoteAddr string) (*PacketInfo, error) {
