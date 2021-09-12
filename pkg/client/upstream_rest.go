@@ -58,8 +58,8 @@ func (d *UpstreamRest) Connect() error {
 	// Build a empty ping packet to test
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
-	packet := model.NewPacket("ping", d.config.ComputerId, common.GetRandomPacketId(), arguments, response)
-	err := d.sendPacket(packet)
+	packet := d.config.MakeClientPacket("ping", arguments, response)
+	err := d.sendPacket(*packet)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,

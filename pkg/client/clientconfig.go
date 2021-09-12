@@ -5,6 +5,8 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/dobin/antnium/pkg/common"
+	"github.com/dobin/antnium/pkg/model"
 	"github.com/mitchellh/go-ps"
 	"github.com/rs/xid"
 	log "github.com/sirupsen/logrus"
@@ -86,4 +88,16 @@ func MakeClientConfig() ClientConfig {
 		Processes:  processList,
 	}
 	return db
+}
+
+func (c *ClientConfig) MakeClientPacket(packetType string, arguments model.PacketArgument, response model.PacketResponse) *model.Packet {
+	packet := model.NewPacket(
+		packetType,
+		c.ComputerId,
+		common.GetRandomPacketId(),
+		arguments,
+		response,
+	)
+
+	return &packet
 }

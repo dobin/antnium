@@ -26,7 +26,7 @@ func NewClient() Client {
 	config := MakeClientConfig()
 	campaign := campaign.MakeCampaign()
 	upstreamManager := MakeUpstreamManager(&config, &campaign)
-	downstreamManager := MakeDownstreamManager(&upstreamManager)
+	downstreamManager := MakeDownstreamManager(&config, &upstreamManager)
 
 	// Init random for packet id generation
 	// Doesnt need to be secure

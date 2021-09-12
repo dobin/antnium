@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,7 +18,8 @@ type DownstreamInfo struct {
 }
 
 type DownstreamManager struct {
-	upstreamManager *UpstreamManager // used to send notifications about new downstream clients
+	config          *ClientConfig
+	upstreamManager *UpstreamManager // used to send data
 
 	downstreamClient     *DownstreamClient
 	downstreamClientInfo string
@@ -28,7 +28,7 @@ type DownstreamManager struct {
 	downstreamChangeNotifyChan chan struct{} // Notifies DownstreamManager about new connected downstreamclient
 }
 
-func MakeDownstreamManager(upstreamManager *UpstreamManager) DownstreamManager {
+func MakeDownstreamManager(config *ClientConfig, upstreamManager *UpstreamManager) DownstreamManager {
 	// Get our name (for channel identification)
 	ex, err := os.Executable()
 	if err != nil {
@@ -41,6 +41,7 @@ func MakeDownstreamManager(upstreamManager *UpstreamManager) DownstreamManager {
 	downstreamLocaltcp := MakeDownstreamLocaltcp("")
 
 	downstreamManager := DownstreamManager{
+		config:                     config,
 		upstreamManager:            upstreamManager,
 		downstreamClient:           &downstreamClient,
 		downstreamClientInfo:       downstreamClientInfo,
@@ -177,9 +178,9 @@ func (dm *DownstreamManager) SendDownstreamDataToServer() {
 		response["name"+idxStr] = downstreamInfo.Name
 		response["info"+idxStr] = downstreamInfo.Info
 	}
-	packet := model.NewPacket("downstreams", "", common.GetRandomPacketId(), arguments, response)
+	packet := dm.config.MakeClientPacket("downstreams", arguments, response)
 
-	err := dm.upstreamManager.DoOutgoingPacket(packet)
+	err := dm.upstreamManager.DoOutgoingPacket(*packet)
 	if err != nil {
 		log.Errorf("Senddownstreams send error: %s", err.Error())
 	}

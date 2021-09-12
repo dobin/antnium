@@ -6,7 +6,6 @@ import (
 
 	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/campaign"
-	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 
 	log "github.com/sirupsen/logrus"
@@ -139,6 +138,6 @@ func (d *UpstreamManager) sendPing() {
 		response["isAdmin"] = strconv.FormatBool(isAdmin)
 	}
 
-	packet := model.NewPacket("ping", d.config.ComputerId, common.GetRandomPacketId(), arguments, response)
-	d.DoOutgoingPacket(packet)
+	packet := d.config.MakeClientPacket("ping", arguments, response)
+	d.DoOutgoingPacket(*packet)
 }
