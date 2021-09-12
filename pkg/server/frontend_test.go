@@ -15,11 +15,11 @@ func TestServerPacketIdDuplicate(t *testing.T) {
 
 	packet := makeSimpleTestPacket(computerId, packetId)
 
-	err := s.Middleware.AdminAddNewPacket(packet)
+	err := s.Middleware.FrontendAddNewPacket(packet)
 	if err != nil {
 		t.Error("1")
 	}
-	err = s.Middleware.AdminAddNewPacket(packet)
+	err = s.Middleware.FrontendAddNewPacket(packet)
 	if err == nil {
 		t.Error("2")
 	}

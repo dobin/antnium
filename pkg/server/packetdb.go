@@ -77,7 +77,7 @@ func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {
 	return packetInfo
 }
 
-func (db *PacketDb) addFromAdmin(packet *model.Packet) (*PacketInfo, error) {
+func (db *PacketDb) addFromFrontend(packet *model.Packet) (*PacketInfo, error) {
 	_, ok := db.ByPacketId(packet.PacketId)
 	if ok {
 		return nil, fmt.Errorf("PacketId %s already exists in DB. Wont handle it.", packet.PacketId)

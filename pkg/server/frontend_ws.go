@@ -41,11 +41,11 @@ func MakeFrontendWs(campaign *campaign.Campaign) FrontendWs {
 	return a
 }
 
-// wsHandler is the entry point for new admin/UI websocket connections
-func (a *FrontendWs) wsHandlerAdmin(w http.ResponseWriter, r *http.Request) {
+// NewConnectionHandler is the entry point for new Frontend/UI websocket connections
+func (a *FrontendWs) NewConnectionHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Errorf("AdminWebsocket: %s", err.Error())
+		log.Errorf("FrontendWs: %s", err.Error())
 		return
 	}
 
@@ -54,18 +54,18 @@ func (a *FrontendWs) wsHandlerAdmin(w http.ResponseWriter, r *http.Request) {
 	var authToken AuthToken
 	_, message, err := ws.ReadMessage()
 	if err != nil {
-		log.Error("AdminWebsocket read error")
+		log.Error("FrontendWs read error")
 		return
 	}
 	err = json.Unmarshal(message, &authToken)
 	if err != nil {
-		log.Warnf("AdminWebsocket: could not decode auth: %v", message)
+		log.Warnf("FrontendWs: could not decode auth: %v", message)
 		return
 	}
 	if string(authToken) == a.campaign.AdminApiKey {
 		a.registerWs(ws)
 	} else {
-		log.Warn("AdminWebsocket: incorrect key: " + authToken)
+		log.Warn("FrontendWs: incorrect key: " + authToken)
 	}
 }
 
@@ -89,13 +89,15 @@ func (a *FrontendWs) Distributor() {
 		data, err := json.Marshal(guiData)
 		if err != nil {
 			log.Error("Could not JSON marshal")
+			continue
 		}
 
 		// send to every client that is currently connected
 		for client := range a.clients {
 			err := client.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
-				log.Printf("AdminWebsocket error: %s", err)
+				log.Debugf("FrontendWs::Distributor() error%s", err)
+				log.Debugf("FrontendWs::Distributor() closing WS socket: %s", client.RemoteAddr())
 				client.Close()
 				delete(a.clients, client)
 			}

@@ -4,9 +4,9 @@ import (
 	"github.com/dobin/antnium/pkg/model"
 )
 
-func (s *Middleware) AdminAddNewPacket(packet *model.Packet) error {
+func (s *Middleware) FrontendAddNewPacket(packet *model.Packet) error {
 	// Add to packet DB and get packetInfo
-	packetInfo, err := s.packetDb.addFromAdmin(packet)
+	packetInfo, err := s.packetDb.addFromFrontend(packet)
 	if err != nil {
 		return err
 	}
@@ -26,11 +26,11 @@ func (s *Middleware) AdminAddNewPacket(packet *model.Packet) error {
 	return nil
 }
 
-func (s *Middleware) AdminGetAllPacket() []*PacketInfo {
+func (s *Middleware) FrontendGetAllPacket() []*PacketInfo {
 	return s.packetDb.getAll()
 }
 
-func (s *Middleware) AdminGetPacketById(computerId string) []PacketInfo {
+func (s *Middleware) FrontendGetPacketById(computerId string) []PacketInfo {
 	var filteredPackets []PacketInfo = make([]PacketInfo, 0)
 	packetInfos := s.packetDb.getAll()
 	for _, packetInfo := range packetInfos {
@@ -41,18 +41,18 @@ func (s *Middleware) AdminGetPacketById(computerId string) []PacketInfo {
 	return filteredPackets
 }
 
-func (s *Middleware) AdminGetAllClients() []ClientInfo {
+func (s *Middleware) FrontendGetAllClients() []ClientInfo {
 	return s.clientInfoDb.getAsList()
 }
 
 /*
-func (s *Middleware) AdminGetCampaign() campaign.Campaign {
+func (s *Middleware) FrontendGetCampaign() campaign.Campaign {
 	return *s.Campaign
 }
 
-func (s *Middleware) AdminDirUpload() []model.DirEntry {
+func (s *Middleware) FrontendDirUpload() []model.DirEntry {
 }
 
-func (s *Middleware) AdminDirStatic() {
+func (s *Middleware) FrontendDirStatic() {
 }
 */

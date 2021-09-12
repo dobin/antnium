@@ -29,7 +29,7 @@ func (s *Server) Serve() {
 
 	// While technically part of admin, the adminWebsocket cannot be authenticated
 	// via HTTP headers. Make it public. Authenticate in the handler.
-	myRouter.HandleFunc("/adminws", s.frontendManager.FrontendWs.wsHandlerAdmin)
+	myRouter.HandleFunc("/adminws", s.frontendManager.FrontendWs.NewConnectionHandler)
 
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()

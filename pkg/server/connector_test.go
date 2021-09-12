@@ -17,7 +17,7 @@ func TestConnectorHttp(t *testing.T) {
 
 	// Make a example packet the client should receive
 	packetA := makeSimpleTestPacket(computerId, "001")
-	s.Middleware.AdminAddNewPacket(packetA)
+	s.Middleware.FrontendAddNewPacket(packetA)
 	// make server go
 	go s.Serve()
 
@@ -34,9 +34,9 @@ func TestConnectorHttp(t *testing.T) {
 		t.Error("Err")
 	}
 
-	// Add a test packet via Admin REST
+	// Add a test packet via Frontend REST
 	packetC := makeSimpleTestPacket(computerId, "002")
-	s.Middleware.AdminAddNewPacket(packetC)
+	s.Middleware.FrontendAddNewPacket(packetC)
 
 	// Expect it
 	packetD := <-client.UpstreamManager.Channel

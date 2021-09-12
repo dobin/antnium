@@ -27,7 +27,7 @@ func MakeFrontendRest(campaign *campaign.Campaign, middleware *Middleware) Front
 }
 
 func (s *FrontendRest) adminListPackets(rw http.ResponseWriter, r *http.Request) {
-	packetInfos := s.middleware.AdminGetAllPacket()
+	packetInfos := s.middleware.FrontendGetAllPacket()
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -43,7 +43,7 @@ func (s *FrontendRest) adminListPacketsComputerId(rw http.ResponseWriter, r *htt
 	if computerId == "" {
 		return
 	}
-	packetInfos := s.middleware.AdminGetPacketById(computerId)
+	packetInfos := s.middleware.FrontendGetPacketById(computerId)
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -53,7 +53,7 @@ func (s *FrontendRest) adminListPacketsComputerId(rw http.ResponseWriter, r *htt
 }
 
 func (s *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request) {
-	hostList := s.middleware.AdminGetAllClients()
+	hostList := s.middleware.FrontendGetAllClients()
 	json, err := json.Marshal(hostList)
 	if err != nil {
 		log.Error("Could not JSON marshal")
@@ -79,20 +79,14 @@ func (s *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"1_computerId":   packet.ComputerId,
-		"2_packetId":     packet.PacketId,
-		"3_downstreamId": packet.DownstreamId,
-		"4_packetType":   packet.PacketType,
-		"5_arguments":    packet.Arguments,
-	}).Info("Add Packet ")
+	common.LogPacket("FrontendRest: Add Packet", packet)
 
 	if packet.ComputerId == "" || packet.PacketId == "" || packet.PacketType == "" {
-		log.Errorf("Missing data in packet: %v", packet)
+		log.Errorf("FrontendRest: Missing data in packet: %v", packet)
 		return
 	}
 
-	err = s.middleware.AdminAddNewPacket(&packet)
+	err = s.middleware.FrontendAddNewPacket(&packet)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return

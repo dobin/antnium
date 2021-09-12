@@ -31,7 +31,7 @@ func TestClientExecWs(t *testing.T) {
 
 	// Make a example packet the client should receive
 	packet := makeSimpleCmdPacket(computerId, "p42", "echo test")
-	s.Middleware.AdminAddNewPacket(&packet)
+	s.Middleware.FrontendAddNewPacket(&packet)
 
 	// make server go
 	go s.Serve()
@@ -47,14 +47,14 @@ func TestClientExecWs(t *testing.T) {
 
 	// Wait for packet answer
 	for {
-		if s.Middleware.AdminGetAllPacket()[0].State == server.STATE_ANSWERED {
+		if s.Middleware.FrontendGetAllPacket()[0].State == server.STATE_ANSWERED {
 			break
 		}
 		time.Sleep(time.Millisecond * 50)
 	}
 
 	// Check them
-	packetInfos := s.Middleware.AdminGetAllPacket()
+	packetInfos := s.Middleware.FrontendGetAllPacket()
 	if packetInfos[0].Packet.Arguments["commandline"] != "echo test" {
 		t.Error("wrong packet")
 	}
@@ -82,9 +82,9 @@ func TestClientParalellExecWs(t *testing.T) {
 
 	// Make a example packet the client should receive
 	packetA := makeSimpleCmdPacket(computerId, "p42", "ping localhost")
-	s.Middleware.AdminAddNewPacket(&packetA)
+	s.Middleware.FrontendAddNewPacket(&packetA)
 	packetB := makeSimpleCmdPacket(computerId, "p43", "echo test")
-	s.Middleware.AdminAddNewPacket(&packetB)
+	s.Middleware.FrontendAddNewPacket(&packetB)
 
 	// Start server
 	go s.Serve()
@@ -99,16 +99,22 @@ func TestClientParalellExecWs(t *testing.T) {
 	go client.Loop()
 
 	// Wait for packet answer
+	n := 0
 	for {
-		if s.Middleware.AdminGetAllPacket()[1].State == server.STATE_ANSWERED {
+		n += 1
+		if s.Middleware.FrontendGetAllPacket()[1].State == server.STATE_ANSWERED {
 			break
+		}
+		if n == 10 {
+			t.Error("Packet not answerd in time")
+			return
 		}
 		time.Sleep(time.Millisecond * 50)
 	}
 
-	packetInfos := s.Middleware.AdminGetAllPacket()
-	if len(packetInfos) != 2 {
-		t.Error("Not 2")
+	packetInfos := s.Middleware.FrontendGetAllPacket()
+	if len(packetInfos) != 3 { // two packets and a clientinfo
+		t.Error("Not 3")
 		return
 	}
 	if packetInfos[1].Packet.Arguments["commandline"] != "echo test" {
