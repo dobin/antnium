@@ -13,14 +13,20 @@ import (
 
 // ClientSendPacket handles packets sent by client (either answers, or client-initiated)
 func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, connectorType string) error {
-	if packet.PacketType == "ping" {
-		s.clientInfoDb.updateFromPing(packet.ComputerId, remoteAddr, connectorType, packet.Response)
-		return nil
-	}
 	common.LogPacketDebug("Server:ClientSendPacket()", packet)
 
 	// Update Client DB
 	s.clientInfoDb.updateFor(packet.ComputerId, remoteAddr, connectorType)
+
+	// Special care packets
+	if packet.PacketType == "ping" {
+		// Dont store it, clientInfoDb update was enough
+		return nil
+	} else if packet.PacketType == "clientinfo" {
+		// Update our DB with client info data.
+		// But still store it, and broadcast it (used in the frontend to detect newly connected clients)
+		s.clientInfoDb.updateFromClientinfo(packet.ComputerId, remoteAddr, connectorType, packet.Response)
+	}
 
 	// Update Package DB
 	packetInfo := s.packetDb.updateFromClient(packet)

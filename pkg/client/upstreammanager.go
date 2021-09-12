@@ -76,7 +76,7 @@ func (d *UpstreamManager) ConnectRetryForever() error {
 			if err == nil {
 				log.Infof("Connected to WS")
 				d.UpstreamWs.Start()
-				d.sendPing()
+				d.sendClientinfo()
 				break
 			}
 		} else {
@@ -84,7 +84,7 @@ func (d *UpstreamManager) ConnectRetryForever() error {
 			if err == nil {
 				log.Infof("Connected to HTTP")
 				d.UpstreamRest.Start()
-				d.sendPing()
+				d.sendClientinfo()
 				break
 			}
 		}
@@ -123,10 +123,9 @@ func (d *UpstreamManager) DoOutgoingPacket(packet model.Packet) error {
 	return nil
 }
 
-// sendPing will send a ping message to the server
-func (d *UpstreamManager) sendPing() {
+// sendClientinfo will send client information (like process list) to the server
+func (d *UpstreamManager) sendClientinfo() {
 	arguments := make(model.PacketArgument)
-
 	response := make(model.PacketResponse)
 	response["hostname"] = d.config.Hostname
 	model.AddArrayToResponse("localIp", d.config.LocalIps, response)
@@ -138,6 +137,6 @@ func (d *UpstreamManager) sendPing() {
 		response["isAdmin"] = strconv.FormatBool(isAdmin)
 	}
 
-	packet := d.config.MakeClientPacket("ping", arguments, response)
+	packet := d.config.MakeClientPacket("clientinfo", arguments, response)
 	d.DoOutgoingPacket(*packet)
 }

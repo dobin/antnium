@@ -45,7 +45,7 @@ func (db *ClientInfoDb) updateFor(computerId string, ip string, connectorType st
 	}
 }
 
-func (db *ClientInfoDb) updateFromPing(computerId, ip string, connectorType string, response model.PacketResponse) {
+func (db *ClientInfoDb) updateFromClientinfo(computerId, ip string, connectorType string, response model.PacketResponse) {
 	if _, ok := db.clientInfoDb[computerId]; !ok {
 		// Init
 		db.clientInfoDb[computerId] = &ClientInfo{
