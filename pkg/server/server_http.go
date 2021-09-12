@@ -2,9 +2,7 @@ package server
 
 import (
 	"fmt"
-	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -12,35 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-/*
-type Server struct {
-	serverManager *ServerManager
-	Campaign      campaign.Campaign
-	coder         model.Coder
-	wsUpgrader    websocket.Upgrader
-}
-
-func MakeServer(serverManager *ServerManager) Server {
-	u := Server{
-		serverManager: serverManager,
-		Campaign:      *serverManager.Campaign,
-		coder:         model.MakeCoder(serverManager.Campaign),
-		wsUpgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				return true
-			},
-		},
-	}
-	return u
-}
-*/
-
-func (s *Server) getRandomPacketId() string {
-	return strconv.Itoa(rand.Int())
-}
-
 func (s *Server) Serve() {
-
 	myRouter := mux.NewRouter().StrictSlash(true)
 
 	// Admin Authenticated

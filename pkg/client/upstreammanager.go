@@ -1,12 +1,12 @@
 package client
 
 import (
-	"math/rand"
 	"strconv"
 	"time"
 
 	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 
 	log "github.com/sirupsen/logrus"
@@ -139,6 +139,6 @@ func (d *UpstreamManager) sendPing() {
 		response["isAdmin"] = strconv.FormatBool(isAdmin)
 	}
 
-	packet := model.NewPacket("ping", d.config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
+	packet := model.NewPacket("ping", d.config.ComputerId, common.GetRandomPacketId(), arguments, response)
 	d.DoOutgoingPacket(packet)
 }

@@ -2,11 +2,11 @@ package client
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -177,7 +177,7 @@ func (dm *DownstreamManager) SendDownstreamDataToServer() {
 		response["name"+idxStr] = downstreamInfo.Name
 		response["info"+idxStr] = downstreamInfo.Info
 	}
-	packet := model.NewPacket("downstreams", "", strconv.Itoa(int(rand.Uint64())), arguments, response)
+	packet := model.NewPacket("downstreams", "", common.GetRandomPacketId(), arguments, response)
 
 	err := dm.upstreamManager.DoOutgoingPacket(packet)
 	if err != nil {

@@ -3,7 +3,9 @@ package client
 import (
 	"crypto/tls"
 	"errors"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
@@ -25,6 +27,10 @@ func NewClient() Client {
 	campaign := campaign.MakeCampaign()
 	upstreamManager := MakeUpstreamManager(&config, &campaign)
 	downstreamManager := MakeDownstreamManager(&upstreamManager)
+
+	// Init random for packet id generation
+	// Doesnt need to be secure
+	rand.Seed(time.Now().Unix())
 
 	w := Client{
 		&config,

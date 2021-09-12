@@ -2,11 +2,17 @@ package common
 
 import (
 	"io/ioutil"
+	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
+
+func GetRandomPacketId() string {
+	return strconv.FormatUint(rand.Uint64(), 16)
+}
 
 type DirEntry struct {
 	Name     string    `json:"name"`

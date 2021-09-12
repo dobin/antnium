@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/dobin/antnium/pkg/campaign"
@@ -60,7 +58,7 @@ func (d *UpstreamRest) Connect() error {
 	// Build a empty ping packet to test
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
-	packet := model.NewPacket("ping", d.config.ComputerId, strconv.Itoa(int(rand.Uint64())), arguments, response)
+	packet := model.NewPacket("ping", d.config.ComputerId, common.GetRandomPacketId(), arguments, response)
 	err := d.sendPacket(packet)
 	if err != nil {
 		log.WithFields(log.Fields{
