@@ -6,3 +6,4 @@ upload/*
 static/*
 build/*
 client.*
+wingman.*

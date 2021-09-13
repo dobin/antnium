@@ -19,10 +19,13 @@ IF "%1"=="runserver" (
     go build -o wingman.exe -ldflags "-H windowsgui" cmd\wingman\wingman.go 
     SET GOOS=linux
     go build -o wingman.elf cmd\wingman\wingman.go 
+) ELSE IF "%1"=="wingmandll" (
+    go build -o wingman.dll -buildmode=c-shared .\cmd\wingman\wingman.go
 ) ELSE IF "%1"=="deploy" (
     .\makewin.bat client
     .\makewin.bat server
     .\makewin.bat wingman
+    .\makewin.bat wingmandll
     mkdir build\upload
     mkdir build\static
     mkdir build\webui
@@ -32,6 +35,7 @@ IF "%1"=="runserver" (
     copy client.elf build\static\
     copy wingman.exe build\static\
     copy wingman.elf build\static\
+    copy wingman.dll build\static\
     copy webui\* build\webui\
 ) ELSE IF "%1"=="coverage" (
     go test .\... -coverprofile="coverage.out"
