@@ -106,7 +106,7 @@ func TestClientParalellExecWs(t *testing.T) {
 			break
 		}
 		if n == 10 {
-			t.Error("Packet not answerd in time")
+			t.Errorf("Packet not answerd in time: %v", s.Middleware.FrontendGetAllPacket())
 			return
 		}
 		time.Sleep(time.Millisecond * 50)

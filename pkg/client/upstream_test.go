@@ -49,7 +49,7 @@ func TestUpstreamServerRest(t *testing.T) {
 	client.Start()
 
 	// Test: Just receive, no execute
-	packet := <-client.UpstreamManager.Channel
+	packet := <-client.UpstreamManager.ChannelIncoming
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
 		return
@@ -79,7 +79,7 @@ func TestUpstreamServerWs(t *testing.T) {
 	client.Start()
 
 	// Test: expect packet to be received upon connection (its already added)
-	packet := <-client.UpstreamManager.Channel
+	packet := <-client.UpstreamManager.ChannelIncoming
 	if packet.PacketId != "001" || packet.ComputerId != computerId {
 		t.Error("Err")
 		return
@@ -90,7 +90,7 @@ func TestUpstreamServerWs(t *testing.T) {
 	s.Middleware.FrontendAddNewPacket(packetB)
 
 	// Test: Expect it
-	packet = <-client.UpstreamManager.Channel
+	packet = <-client.UpstreamManager.ChannelIncoming
 	if packet.PacketId != "002" || packet.ComputerId != computerId {
 		t.Error("Err")
 		return
@@ -128,7 +128,7 @@ func TestUpstreamServerWsConnectLate(t *testing.T) {
 	go s.Serve()
 
 	// Test: Client connected
-	packet := <-client.UpstreamManager.Channel
+	packet := <-client.UpstreamManager.ChannelIncoming
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
 		return
@@ -159,7 +159,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	go client.Start() // start in background, as it tries to connect
 
 	// Get packet
-	packet := <-client.UpstreamManager.Channel
+	packet := <-client.UpstreamManager.ChannelIncoming
 	if packet.PacketId != packetId1 || packet.ComputerId != computerId {
 		t.Error("Err")
 		return
@@ -191,7 +191,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 
 	// Test: Client reconnected
 	// expect packet to be received upon connection (its already added)
-	packet = <-client.UpstreamManager.Channel
+	packet = <-client.UpstreamManager.ChannelIncoming
 	if packet.PacketId != packetId2 || packet.ComputerId != computerId {
 		t.Error("Err")
 		return
@@ -238,7 +238,7 @@ func TestUpstreamServerRestConnectLate(t *testing.T) {
 
 	// Test: Client connected
 	// expect packet to be received upon connection (its already added)
-	packet := <-client.UpstreamManager.Channel
+	packet := <-client.UpstreamManager.ChannelIncoming
 	if packet.PacketId != packetId || packet.ComputerId != computerId {
 		t.Error("Err")
 		return

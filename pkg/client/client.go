@@ -26,12 +26,12 @@ func NewClient() Client {
 	config := MakeClientConfig()
 	campaign := campaign.MakeCampaign()
 	upstreamManager := MakeUpstreamManager(&config, &campaign)
-	downstreamManager := MakeDownstreamManager(&config, &upstreamManager)
+	downstreamManager := MakeDownstreamManager(&config, upstreamManager.ChannelOutgoing)
 
 	if campaign.AutoStartDownstreams {
 		_, err := downstreamManager.StartListeners()
 		if err != nil {
-			log.Error("Error starting downstream listener: %s. Continue.", err.Error())
+			log.Errorf("Error starting downstream listener: %s. Continue.", err.Error())
 		}
 	}
 
@@ -63,7 +63,7 @@ func (c *Client) Loop() {
 	var p model.Packet
 	for {
 		// Block until we receive a packet from server
-		p = <-c.UpstreamManager.Channel
+		p = <-c.UpstreamManager.ChannelIncoming
 
 		go func() {
 			p, err := c.DownstreamManager.DoIncomingPacket(p)
@@ -72,7 +72,7 @@ func (c *Client) Loop() {
 			}
 
 			// Send answer back to server
-			c.UpstreamManager.DoOutgoingPacket(p)
+			c.UpstreamManager.ChannelOutgoing <- p
 		}()
 	}
 }

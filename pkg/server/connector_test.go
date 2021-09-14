@@ -29,7 +29,7 @@ func TestConnectorHttp(t *testing.T) {
 	client.Start()
 
 	// expect packet to be received upon connection (its already added)
-	packetB := <-client.UpstreamManager.Channel
+	packetB := <-client.UpstreamManager.ChannelIncoming
 	if packetB.PacketId != "001" || packetB.ComputerId != computerId {
 		t.Error("Err")
 	}
@@ -39,7 +39,7 @@ func TestConnectorHttp(t *testing.T) {
 	s.Middleware.FrontendAddNewPacket(packetC)
 
 	// Expect it
-	packetD := <-client.UpstreamManager.Channel
+	packetD := <-client.UpstreamManager.ChannelIncoming
 	if packetD.PacketId != "002" || packetD.ComputerId != computerId {
 		t.Error("Err")
 	}

@@ -40,7 +40,7 @@ func TestServerClientIntegrationRest(t *testing.T) {
 	c.Config.ComputerId = computerId
 	c.Start()
 
-	answerPacket := <-c.UpstreamManager.Channel
+	answerPacket := <-c.UpstreamManager.ChannelIncoming
 	if answerPacket.PacketId != packetId {
 		t.Errorf("Packet received, but wrong packetid: %s", packet.PacketId)
 		return
@@ -99,7 +99,7 @@ func TestServerClientIntegrationWebsocket(t *testing.T) {
 
 	// this should return immediately, as notified via websocket
 	var p model.Packet
-	p = <-c.UpstreamManager.Channel
+	p = <-c.UpstreamManager.ChannelIncoming
 
 	if p.PacketId != packetId {
 		t.Errorf("Unittest error: Packet received, but wrong packetid: %s", packet.PacketId)
@@ -172,8 +172,8 @@ func TestServerAuthClient(t *testing.T) {
 	origEncKey := c.Campaign.EncKey
 	c.Campaign.EncKey = []byte("12345678123456781234567812345678")
 	//packet, err = c.UpstreamManager.UpstreamRest.GetPacket()
-	packet = <-c.UpstreamManager.Channel
-	c.UpstreamManager.Channel <- packet
+	packet = <-c.UpstreamManager.ChannelIncoming
+	c.UpstreamManager.ChannelIncoming <- packet
 
 	if err == nil {
 		t.Errorf("Unittest error: Could get packet with wrong enckey! %v", packet)
@@ -184,8 +184,8 @@ func TestServerAuthClient(t *testing.T) {
 	// Test Client: Correct key (consumes one packet)
 	//s.middleware.packetDb.add(packetInfo) // changing var of a thread, dangerous but works
 	//packet, err = c.UpstreamManager.UpstreamRest.GetPacket()
-	packet = <-c.UpstreamManager.Channel
-	c.UpstreamManager.Channel <- packet
+	packet = <-c.UpstreamManager.ChannelIncoming
+	c.UpstreamManager.ChannelIncoming <- packet
 
 	if err != nil {
 		t.Errorf("Unittest error: Could not get packet: " + err.Error())
@@ -208,8 +208,8 @@ func TestServerAuthClient(t *testing.T) {
 	origApiKey := c.Campaign.ApiKey
 	c.Campaign.ApiKey = "not42"
 	//packet, err = c.UpstreamManager.UpstreamRest.GetPacket()
-	packet = <-c.UpstreamManager.Channel
-	c.UpstreamManager.Channel <- packet
+	packet = <-c.UpstreamManager.ChannelIncoming
+	c.UpstreamManager.ChannelIncoming <- packet
 
 	if err == nil {
 		t.Errorf("Unittest error: Could get packet with wrong apikey!")
