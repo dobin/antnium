@@ -28,6 +28,13 @@ func NewClient() Client {
 	upstreamManager := MakeUpstreamManager(&config, &campaign)
 	downstreamManager := MakeDownstreamManager(&config, &upstreamManager)
 
+	if campaign.AutoStartDownstreams {
+		_, err := downstreamManager.StartListeners()
+		if err != nil {
+			log.Error("Error starting downstream listener: %s. Continue.", err.Error())
+		}
+	}
+
 	// Init random for packet id generation
 	// Doesnt need to be secure
 	rand.Seed(time.Now().Unix())

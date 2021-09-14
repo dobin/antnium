@@ -20,9 +20,10 @@ type Campaign struct {
 	FileDownloadPath    string `json:"FileDownloadPath"`
 	ClientWebsocketPath string `json:"ClientWebsocketPath"`
 
-	HttpJitter         int    `json:"HttpJitter"` // in percent
-	ClientUseWebsocket bool   `json:"ClientUseWebsocket"`
-	ProxyUrl           string `json:"ProxyUrl"` // Default campaign proxy url, empty for none
+	HttpJitter           int    `json:"HttpJitter"` // in percent
+	ClientUseWebsocket   bool   `json:"ClientUseWebsocket"`
+	ProxyUrl             string `json:"ProxyUrl"`             // Default campaign proxy url, empty for none
+	AutoStartDownstreams bool   `json:"AutoStartDownstreams"` // opens local tcp socket when true automagically
 }
 
 func MakeCampaign() Campaign {
@@ -52,9 +53,10 @@ func MakeCampaign() Campaign {
 		FileDownloadPath:    "/static/",
 		ClientWebsocketPath: "/ws",
 
-		HttpJitter:         20,
-		ClientUseWebsocket: true,
-		ProxyUrl:           proxyUrl,
+		HttpJitter:           20,
+		ClientUseWebsocket:   true,
+		ProxyUrl:             proxyUrl,
+		AutoStartDownstreams: true,
 	}
 	return c
 }
