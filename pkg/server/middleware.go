@@ -1,29 +1,26 @@
 package server
 
+import "github.com/dobin/antnium/pkg/model"
+
 type Middleware struct {
 	packetDb     PacketDb
 	clientInfoDb ClientInfoDb
 
-	connectorManager *ConnectorManager
-	frontendManager  *FrontendManager
+	channelConnectorSend chan model.Packet
+	channelFrontendSend  chan PacketInfo
 }
 
-func MakeMiddleware() Middleware {
+func MakeMiddleware(channelConnectorSend chan model.Packet, channelFrontendSend chan PacketInfo) Middleware {
 	packetDb := MakePacketDb()
 	clientInfoDb := MakeClientInfoDb()
 
 	middleware := Middleware{
 		packetDb,
 		clientInfoDb,
-		nil,
-		nil,
+		channelConnectorSend,
+		channelFrontendSend,
 	}
 	return middleware
-}
-
-func (m *Middleware) SetTODO(connectorManager *ConnectorManager, frontendManager *FrontendManager) {
-	m.connectorManager = connectorManager
-	m.frontendManager = frontendManager
 }
 
 func (m *Middleware) AddPacketInfo(packetInfo *PacketInfo) {

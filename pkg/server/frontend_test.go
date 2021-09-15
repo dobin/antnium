@@ -4,7 +4,7 @@ import "testing"
 
 // TestServerPacketIdDuplicate checks if server throws an error when adding two packets with same PacketId
 func TestServerPacketIdDuplicate(t *testing.T) {
-	port := "55008"
+	port := "55608"
 	computerId := "computerid-23"
 	packetId := "packetid-43"
 

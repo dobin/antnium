@@ -12,16 +12,10 @@ func (s *Middleware) FrontendAddNewPacket(packet *model.Packet) error {
 	}
 
 	// Notify UI immediately (for initial STATE_RECORDED)
-	s.frontendManager.FrontendWs.broadcastPacket(*packetInfo)
+	s.channelFrontendSend <- *packetInfo
 
 	// Send to client, if they are connected via Websocket
-	ok := s.connectorManager.ConnectorWs.TryViaWebsocket(&packetInfo.Packet)
-	if ok {
-		s.packetDb.sentToClient(packet.PacketId, "")
-
-		// only notify UI if we really sent a packet
-		s.frontendManager.FrontendWs.broadcastPacket(*packetInfo)
-	}
+	s.channelConnectorSend <- packetInfo.Packet
 
 	return nil
 }

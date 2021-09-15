@@ -21,9 +21,9 @@ type WebsocketData struct {
 type AuthToken string
 
 type FrontendWs struct {
-	campaign *campaign.Campaign
-	clients  map[*websocket.Conn]bool
-	channel  chan *WebsocketData
+	campaign           *campaign.Campaign
+	clients            map[*websocket.Conn]bool
+	channelDistributor chan PacketInfo
 
 	wsUpgrader websocket.Upgrader
 }
@@ -32,7 +32,7 @@ func MakeFrontendWs(campaign *campaign.Campaign) FrontendWs {
 	a := FrontendWs{
 		campaign,
 		make(map[*websocket.Conn]bool),
-		make(chan *WebsocketData),
+		make(chan PacketInfo),
 		websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
 	}
 
@@ -74,19 +74,15 @@ func (a *FrontendWs) registerWs(wsConn *websocket.Conn) {
 	a.clients[wsConn] = true
 }
 
-func (a *FrontendWs) broadcastPacket(packetInfo PacketInfo) {
-	websocketData := WebsocketData{
-		packetInfo,
-	}
-	a.channel <- &websocketData
-}
-
 // Distributor is a Thread which distributes data to all connected websocket clients. Lifetime: app
 func (a *FrontendWs) Distributor() {
 	for {
-		guiData := <-a.channel
+		packetInfo := <-a.channelDistributor
+		websocketData := WebsocketData{
+			packetInfo,
+		}
 
-		data, err := json.Marshal(guiData)
+		data, err := json.Marshal(websocketData)
 		if err != nil {
 			log.Error("Could not JSON marshal")
 			continue

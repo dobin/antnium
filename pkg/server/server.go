@@ -11,13 +11,10 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
-
-/*
-
- */
 
 type Server struct {
 	srvaddr          string
@@ -31,10 +28,44 @@ type Server struct {
 
 func NewServer(srvAddr string) Server {
 	campaign := campaign.MakeCampaign()
-	middleware := MakeMiddleware()
+
+	channelConnectorSend := make(chan model.Packet, 0)
+	channelFrontendSend := make(chan PacketInfo, 0)
+
+	middleware := MakeMiddleware(channelConnectorSend, channelFrontendSend)
 	connectorManager := MakeConnectorManager(&campaign, &middleware)
 	frontendManager := MakeFrontendManager(&campaign, &middleware)
-	middleware.SetTODO(&connectorManager, &frontendManager)
+
+	// Handle packets from Frontend to Connector (Client)
+	go func() {
+		for {
+			packet, ok := <-channelConnectorSend
+			if !ok {
+				break
+			}
+			ok = connectorManager.ConnectorWs.TryViaWebsocket(&packet)
+			if ok {
+				packetInfo, err := middleware.packetDb.sentToClient(packet.PacketId, "")
+				if err != nil {
+					log.Errorf("Server error: %s", err.Error())
+				}
+
+				// only notify UI if we really sent a packet
+				channelFrontendSend <- *packetInfo
+			}
+		}
+	}()
+
+	// Handle packets from Connector (Client) to Client
+	go func() {
+		for {
+			packet, ok := <-channelFrontendSend
+			if !ok {
+				break
+			}
+			frontendManager.FrontendWs.channelDistributor <- packet
+		}
+	}()
 
 	// Init random for packet id generation
 	// Doesnt need to be secure
@@ -87,6 +118,9 @@ func (s *Server) Shutdown() {
 	// And our websockets..
 	s.connectorManager.ConnectorWs.Shutdown()
 
+	//log.Info("CLSOE")
+	//close(s.Middleware.channelConnectorSend)
+	//close(s.Middleware.channelFrontendSend)
 }
 
 func (s *Server) DbLoad() error {

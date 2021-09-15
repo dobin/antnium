@@ -7,7 +7,7 @@ import (
 )
 
 func TestConnectorHttp(t *testing.T) {
-	port := "55044"
+	port := "55144"
 	computerId := "computerid-23"
 
 	// Server in background, checking via client

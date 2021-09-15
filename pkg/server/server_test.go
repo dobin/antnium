@@ -21,7 +21,7 @@ func makeSimpleTestPacket(computerId string, packetId string) *model.Packet {
 
 // TestServerClientIntegrationRest will check if client and server can communicate via HTTP.
 func TestServerClientIntegrationRest(t *testing.T) {
-	port := "55001"
+	port := "55201"
 	computerId := "computerid-23"
 	packetId := "packetid-42"
 
@@ -54,7 +54,7 @@ func TestServerClientIntegrationRest(t *testing.T) {
 
 // TestServerClientIntegrationWebsocket will check if client and server can communicate via websocket
 func TestServerClientIntegrationWebsocket(t *testing.T) {
-	port := "55005"
+	port := "55305"
 	computerId := "computerid-23"
 	packetId := "packetid-42"
 
@@ -70,10 +70,8 @@ func TestServerClientIntegrationWebsocket(t *testing.T) {
 	c.Config.ComputerId = computerId
 	c.Start()
 
-	// Make a example packet the client should receive
-	packet := makeSimpleTestPacket(computerId, packetId)
-
 	// Send test packet via admin interface
+	packet := makeSimpleTestPacket(computerId, packetId)
 	json_data, err := json.Marshal(packet)
 	if err != nil {
 		t.Errorf("Error when receiving packet: " + err.Error())
@@ -117,7 +115,7 @@ func TestServerAuthAdmin(t *testing.T) {
 	var err error
 
 	// Start server in the background
-	port := "55002"
+	port := "55666"
 	s := NewServer("127.0.0.1:" + port)
 	go s.Serve()
 
@@ -128,7 +126,7 @@ func TestServerAuthAdmin(t *testing.T) {
 	}
 
 	// Test Admin
-	r, _ := http.NewRequest("GET", "http://127.0.0.1:55002/admin/packets", nil)
+	r, _ := http.NewRequest("GET", "http://127.0.0.1:"+port+"/admin/packets", nil)
 	resp, err := unauthHttp.Do(r)
 	if err != nil {
 		t.Errorf("Unittest error: HTTP get error: " + err.Error())

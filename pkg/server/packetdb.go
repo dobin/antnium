@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/dobin/antnium/pkg/model"
@@ -10,18 +11,23 @@ import (
 
 type PacketDb struct {
 	packetInfo []*PacketInfo
+	mutex      *sync.Mutex
 }
 
 func MakePacketDb() PacketDb {
 	db := PacketDb{
 		make([]*PacketInfo, 0, 512),
+		&sync.Mutex{},
 	}
 	return db
 }
 
 func (db *PacketDb) add(packetInfo *PacketInfo) {
 	packetInfo.TimeRecorded = time.Now()
+
+	db.mutex.Lock()
 	db.packetInfo = append(db.packetInfo, packetInfo)
+	db.mutex.Unlock()
 }
 
 func (db *PacketDb) getAll() []*PacketInfo {
@@ -29,7 +35,9 @@ func (db *PacketDb) getAll() []*PacketInfo {
 }
 
 func (db *PacketDb) Set(packetInfos []*PacketInfo) {
+	db.mutex.Lock()
 	db.packetInfo = packetInfos
+	db.mutex.Unlock()
 }
 
 func (db *PacketDb) ByPacketId(packetId string) (*PacketInfo, bool) {

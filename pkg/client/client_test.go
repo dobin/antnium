@@ -20,7 +20,7 @@ func makeSimpleCmdPacket(computerId string, packetId string, commandline string)
 
 // TestClientExecWs tests if the client executes a packet from the perspective of a server
 func TestClientExecWs(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	port := "55191"
 	computerId := "computerid-23"
@@ -69,7 +69,7 @@ func TestClientExecWs(t *testing.T) {
 
 // TestClientParalellExecWs starts two execs in a client and checks that the quick one returns first
 func TestClientParalellExecWs(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	// Add two commands, one sleep, one echo
 	port := "55192"
@@ -78,17 +78,12 @@ func TestClientParalellExecWs(t *testing.T) {
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true
-	defer s.Shutdown()
-
-	// Make a example packet the client should receive
 	packetA := makeSimpleCmdPacket(computerId, "p42", "ping localhost")
 	s.Middleware.FrontendAddNewPacket(&packetA)
 	packetB := makeSimpleCmdPacket(computerId, "p43", "echo test")
 	s.Middleware.FrontendAddNewPacket(&packetB)
-
-	// Start server
-	go s.Serve()
 	defer s.Shutdown()
+	go s.Serve()
 
 	// Start client
 	client := NewClient()
