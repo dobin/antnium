@@ -88,7 +88,7 @@ func NewServer(srvAddr string) Server {
 				clientInfoDb2.updateFor(computerId, conn.RemoteAddr().String(), "ws")
 			}
 
-			// Todo: When to quit?
+			// FIXME it does never exit, refactor
 		}
 	}()
 
@@ -117,10 +117,10 @@ func (s *Server) Shutdown() {
 
 	// And our websockets..
 	s.connectorManager.ConnectorWs.Shutdown()
+	s.frontendManager.FrontendWs.Shutdown()
 
-	//log.Info("CLSOE")
-	//close(s.Middleware.channelConnectorSend)
-	//close(s.Middleware.channelFrontendSend)
+	close(s.Middleware.channelConnectorSend)
+	close(s.Middleware.channelFrontendSend)
 }
 
 func (s *Server) DbLoad() error {

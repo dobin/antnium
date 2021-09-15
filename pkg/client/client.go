@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/pkg/campaign"
-	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -60,10 +59,12 @@ func (c *Client) Start() {
 
 // Loop will forever check for new packets from server
 func (c *Client) Loop() {
-	var p model.Packet
 	for {
 		// Block until we receive a packet from server
-		p = <-c.UpstreamManager.ChannelIncoming
+		p, ok := <-c.UpstreamManager.ChannelIncoming
+		if !ok {
+			break
+		}
 
 		go func() {
 			p, err := c.DownstreamManager.DoIncomingPacket(p)
@@ -75,4 +76,13 @@ func (c *Client) Loop() {
 			c.UpstreamManager.ChannelOutgoing <- p
 		}()
 	}
+}
+
+func (c *Client) Shutdown() {
+	close(c.UpstreamManager.UpstreamRest.ChanIncoming())
+	close(c.UpstreamManager.UpstreamRest.ChanOutgoing())
+	//close(c.UpstreamManager.UpstreamWs.ChanIncoming())
+	//close(c.UpstreamManager.UpstreamWs.ChanOutgoing())
+	//close(c.UpstreamManager.ChannelIncoming)
+	close(c.UpstreamManager.ChannelOutgoing)
 }

@@ -68,7 +68,10 @@ func (d *UpstreamManager) Connect() {
 	// Thread which sends outgoing packets
 	go func() {
 		for {
-			packet := <-d.ChannelOutgoing
+			packet, ok := <-d.ChannelOutgoing
+			if !ok {
+				break
+			}
 
 			if d.UpstreamWs.Connected() {
 				d.UpstreamWs.ChanOutgoing() <- packet

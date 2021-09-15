@@ -100,6 +100,7 @@ func (d *UpstreamWs) Start() {
 				//log.Errorf("WS read error: %s", err.Error())
 
 				// Notify that we are disconnected
+				log.Debug("UpstreamWs: Start(): Close!")
 				close(d.ChanIncoming()) // Notify UpstreamManager
 				close(d.ChanOutgoing()) // Notify ChanOutgoing() thread
 				d.Shutdown()

@@ -7,11 +7,14 @@ import (
 )
 
 func TestConnectorHttp(t *testing.T) {
+	//defer goleak.VerifyNone(t)
+
 	port := "55144"
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
 	s := NewServer("127.0.0.1:" + port)
+	defer s.Shutdown()
 
 	s.Campaign.ClientUseWebsocket = true
 
@@ -27,6 +30,7 @@ func TestConnectorHttp(t *testing.T) {
 	client.Campaign.ClientUseWebsocket = true
 	client.Config.ComputerId = computerId
 	client.Start()
+	defer client.Shutdown()
 
 	// expect packet to be received upon connection (its already added)
 	packetB := <-client.UpstreamManager.ChannelIncoming

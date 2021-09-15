@@ -77,7 +77,10 @@ func (a *FrontendWs) registerWs(wsConn *websocket.Conn) {
 // Distributor is a Thread which distributes data to all connected websocket clients. Lifetime: app
 func (a *FrontendWs) Distributor() {
 	for {
-		packetInfo := <-a.channelDistributor
+		packetInfo, ok := <-a.channelDistributor
+		if !ok {
+			break
+		}
 		websocketData := WebsocketData{
 			packetInfo,
 		}
@@ -99,4 +102,8 @@ func (a *FrontendWs) Distributor() {
 			}
 		}
 	}
+}
+
+func (a *FrontendWs) Shutdown() {
+	close(a.channelDistributor)
 }
