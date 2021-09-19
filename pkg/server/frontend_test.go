@@ -1,10 +1,14 @@
 package server
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/dobin/antnium/pkg/common"
+)
 
 // TestServerPacketIdDuplicate checks if server throws an error when adding two packets with same PacketId
 func TestServerPacketIdDuplicate(t *testing.T) {
-	port := "55608"
+	port, _ := common.GetFreePort()
 	computerId := "computerid-23"
 	packetId := "packetid-43"
 

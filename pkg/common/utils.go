@@ -3,6 +3,7 @@ package common
 import (
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"strconv"
 	"time"
 
@@ -63,4 +64,21 @@ func LogPacketDebug(s string, packet model.Packet) {
 		"5_arguments":    packet.Arguments,
 		"6_response":     "...",
 	}).Debug(s)
+}
+
+// GetFreePort asks the kernel for a free open port that is ready to use.
+func GetFreePort() (string, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return "", err
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return "", err
+	}
+	defer l.Close()
+
+	port := l.Addr().(*net.TCPAddr).Port
+	return strconv.Itoa(port), nil
 }

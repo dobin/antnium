@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/dobin/antnium/pkg/wingman"
 )
 
 // TestDownstreamClient tests default Downstream: "Client"
 func TestDownstreamClient(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 
 	client := NewClient()
 	packet := makeExecTestPacket()
@@ -41,10 +42,11 @@ func TestDownstreamClient(t *testing.T) {
 
 // TestDownstreamLocaltcp tests if localtcp downstream works
 func TestDownstreamLocaltcp(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 
-	port := "55014"
-	downstreamTcpAddr := "localhost:50011"
+	port, _ := common.GetFreePort()
+	portDownstream, _ := common.GetFreePort()
+	downstreamTcpAddr := "localhost:" + portDownstream
 
 	// Test Localtcp Downstream
 	client := NewClient()
@@ -133,11 +135,12 @@ func TestDownstreamDoManager(t *testing.T) {
 
 // TestDownstreamLocaltcpRestart tests if the downstream servers survives a restart
 func TestDownstreamLocaltcpRestart(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 
 	var err error
-	port := "55013"
-	downstreamTcpAddr := "localhost:60000"
+	port, _ := common.GetFreePort()
+	portDownstream, _ := common.GetFreePort()
+	downstreamTcpAddr := "localhost:" + portDownstream
 
 	// Test Localtcp Downstream
 	client := NewClient()

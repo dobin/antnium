@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/pkg/client"
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 )
 
@@ -21,7 +22,7 @@ func makeSimpleTestPacket(computerId string, packetId string) *model.Packet {
 
 // TestServerClientIntegrationRest will check if client and server can communicate via HTTP.
 func TestServerClientIntegrationRest(t *testing.T) {
-	port := "55202"
+	port, _ := common.GetFreePort()
 	computerId := "computerid-23"
 	packetId := "packetid-42"
 
@@ -53,7 +54,7 @@ func TestServerClientIntegrationRest(t *testing.T) {
 
 // TestServerClientIntegrationWebsocket will check if client and server can communicate via websocket
 func TestServerClientIntegrationWebsocket(t *testing.T) {
-	port := "55305"
+	port, _ := common.GetFreePort()
 	computerId := "computerid-23"
 	packetId := "packetid-42"
 
@@ -115,7 +116,7 @@ func TestServerAuthAdmin(t *testing.T) {
 	var err error
 
 	// Start server in the background
-	port := "55666"
+	port, _ := common.GetFreePort()
 	s := NewServer("127.0.0.1:" + port)
 	go s.Serve()
 

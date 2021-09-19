@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/dobin/antnium/pkg/server"
 )
@@ -28,9 +29,9 @@ func makeSimpleCmdPacket(computerId string, packetId string, commandline string)
 
 // TestClientExecWs tests if the client executes a packet from the perspective of a server
 func TestClientExecWs(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 
-	port := "55191"
+	port, _ := common.GetFreePort()
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
@@ -77,10 +78,10 @@ func TestClientExecWs(t *testing.T) {
 
 // TestClientParalellExecWs starts two execs in a client and checks that the quick one returns first
 func TestClientParalellExecWs(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 
 	// Add two commands, one sleep, one echo
-	port := "55192"
+	port, _ := common.GetFreePort()
 	computerId := "computerid-23"
 
 	// Server in background, checking via client

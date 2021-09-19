@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/dobin/antnium/pkg/client"
+	"github.com/dobin/antnium/pkg/common"
 )
 
 func TestConnectorHttp(t *testing.T) {
 	//defer goleak.VerifyNone(t)
 
-	port := "55144"
+	port, _ := common.GetFreePort()
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
@@ -50,7 +51,7 @@ func TestConnectorHttp(t *testing.T) {
 func TestConnectorWs(t *testing.T) {
 	//defer goleak.VerifyNone(t)
 
-	port := "55145"
+	port, _ := common.GetFreePort()
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
