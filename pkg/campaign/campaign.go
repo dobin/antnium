@@ -24,6 +24,7 @@ type Campaign struct {
 	ClientUseWebsocket   bool   `json:"ClientUseWebsocket"`
 	ProxyUrl             string `json:"ProxyUrl"`             // Default campaign proxy url, empty for none
 	AutoStartDownstreams bool   `json:"AutoStartDownstreams"` // opens local tcp socket when true automagically
+	DoClientInfo         bool   `json:"DoClientInfo"`         // If we want to disable ClientInfos
 }
 
 func MakeCampaign() Campaign {
@@ -57,6 +58,7 @@ func MakeCampaign() Campaign {
 		ClientUseWebsocket:   true,
 		ProxyUrl:             proxyUrl,
 		AutoStartDownstreams: false,
+		DoClientInfo:         false,
 	}
 	return c
 }

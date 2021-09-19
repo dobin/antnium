@@ -130,6 +130,10 @@ func (d *UpstreamManager) ReconnectWebsocket() {
 
 // sendClientinfo will send client information (like process list) to the server
 func (d *UpstreamManager) sendClientinfo() {
+	if !d.campaign.DoClientInfo {
+		return
+	}
+
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
 	response["hostname"] = d.config.Hostname
@@ -143,6 +147,5 @@ func (d *UpstreamManager) sendClientinfo() {
 	}
 
 	packet := d.config.MakeClientPacket("clientinfo", arguments, response)
-	//d.DoOutgoingPacket(*packet)
 	d.ChannelOutgoing <- *packet
 }
