@@ -1,6 +1,7 @@
 package client
 
 import (
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -11,7 +12,14 @@ import (
 
 func makeSimpleCmdPacket(computerId string, packetId string, commandline string) model.Packet {
 	arguments := make(model.PacketArgument)
-	arguments["shelltype"] = "cmd"
+
+	if runtime.GOOS == "linux" {
+		arguments["shelltype"] = "bash"
+	} else if runtime.GOOS == "windows" {
+		arguments["shelltype"] = "cmd"
+	} else if runtime.GOOS == "darwin" {
+		arguments["shelltype"] = "zsh"
+	}
 	arguments["commandline"] = commandline
 	response := make(model.PacketResponse)
 	packet := model.NewPacket("exec", computerId, packetId, arguments, response)
