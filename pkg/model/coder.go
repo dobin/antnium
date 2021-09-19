@@ -82,10 +82,6 @@ func (s *Coder) DecodeData(data []byte) (Packet, error) {
 	var packet Packet
 	err = json.Unmarshal(data, &packet)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"body":  data,
-			"error": err,
-		}).Info("Error sending packet")
 		return Packet{}, fmt.Errorf("JSON Unmarshall: %s: %v", string(data), err)
 	}
 

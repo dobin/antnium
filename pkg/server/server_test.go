@@ -21,7 +21,7 @@ func makeSimpleTestPacket(computerId string, packetId string) *model.Packet {
 
 // TestServerClientIntegrationRest will check if client and server can communicate via HTTP.
 func TestServerClientIntegrationRest(t *testing.T) {
-	port := "55201"
+	port := "55202"
 	computerId := "computerid-23"
 	packetId := "packetid-42"
 
@@ -34,9 +34,8 @@ func TestServerClientIntegrationRest(t *testing.T) {
 	// create client, receive the packet we added above
 	// This tests most of the stuff (encryption, encoding, campaign data, server paths and more)
 	c := client.NewClient()
-	c.Campaign.ProxyUrl = "" // Always disable proxy
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
-	c.Campaign.ClientUseWebsocket = false
+	c.Campaign.ClientUseWebsocket = false // Test: REST
 	c.Config.ComputerId = computerId
 	c.Start()
 

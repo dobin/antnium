@@ -63,7 +63,7 @@ func (d *UpstreamRest) Connect() error {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
-		}).Info("Error sending packet")
+		}).Info("Error sending packet in Connect() via REST")
 	}
 
 	return err
@@ -102,14 +102,17 @@ func (d *UpstreamRest) Start() {
 
 	go func() {
 		for {
-			packet := <-d.ChanOutgoing()
+			packet, ok := <-d.ChanOutgoing()
+			if !ok {
+				break
+			}
 
 			// Send answer to server
 			err := d.sendPacket(packet)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"error": err,
-				}).Info("Error sending packet")
+				}).Info("Error sending packet from ChanOutgoing to server via REST")
 			}
 		}
 	}()

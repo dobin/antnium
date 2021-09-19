@@ -79,6 +79,7 @@ func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 		for {
 			_, packetData, err := ws.ReadMessage()
 			if err != nil {
+				// Websocket closed, clean it up
 				ws.Close()
 				a.clients[computerId] = nil
 				break
@@ -88,7 +89,6 @@ func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 				log.Infof("registerWs error: %s", err.Error())
 				continue
 			}
-
 			a.middleware.ClientSendPacket(packet, ws.RemoteAddr().String(), "ws")
 		}
 	}()

@@ -15,7 +15,7 @@ func TestConnectorHttp(t *testing.T) {
 	// Server in background, checking via client
 	s := NewServer("127.0.0.1:" + port)
 	defer s.Shutdown()
-	s.Campaign.ClientUseWebsocket = false
+	s.Campaign.ClientUseWebsocket = false // Test: REST
 	packetA := makeSimpleTestPacket(computerId, "001")
 	s.Middleware.FrontendAddNewPacket(packetA)
 	go s.Serve()
@@ -23,7 +23,7 @@ func TestConnectorHttp(t *testing.T) {
 	// make client
 	client := client.NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
-	client.Campaign.ClientUseWebsocket = false
+	client.Campaign.ClientUseWebsocket = false // Test: REST
 	client.Config.ComputerId = computerId
 	client.Start()
 	defer client.Shutdown()
@@ -32,6 +32,7 @@ func TestConnectorHttp(t *testing.T) {
 	packetB := <-client.UpstreamManager.ChannelIncoming
 	if packetB.PacketId != "001" || packetB.ComputerId != computerId {
 		t.Error("Err")
+		return
 	}
 
 	// Add a test packet via Frontend REST
@@ -42,8 +43,8 @@ func TestConnectorHttp(t *testing.T) {
 	packetD := <-client.UpstreamManager.ChannelIncoming
 	if packetD.PacketId != "002" || packetD.ComputerId != computerId {
 		t.Error("Err")
+		return
 	}
-
 }
 
 func TestConnectorWs(t *testing.T) {

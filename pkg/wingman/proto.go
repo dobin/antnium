@@ -24,7 +24,7 @@ func DecodePacket(jsonStr string) (model.Packet, error) {
 		log.WithFields(log.Fields{
 			"body":  jsonStr,
 			"error": err,
-		}).Info("Error sending packet")
+		}).Info("Decoding packet")
 
 		return packet, err
 	}

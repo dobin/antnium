@@ -56,7 +56,7 @@ func NewServer(srvAddr string) Server {
 		}
 	}()
 
-	// Handle packets from Connector (Client) to Client
+	// Handle packets from Connector (Client) to Frontend
 	go func() {
 		for {
 			packet, ok := <-channelFrontendSend
