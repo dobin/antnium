@@ -58,7 +58,7 @@ func MakeCampaign() Campaign {
 		ClientUseWebsocket:   true,
 		ProxyUrl:             proxyUrl,
 		AutoStartDownstreams: false,
-		DoClientInfo:         false,
+		DoClientInfo:         true,
 	}
 	return c
 }

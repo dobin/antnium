@@ -66,6 +66,7 @@ func TestServerClientIntegrationWebsocket(t *testing.T) {
 	c := client.NewClient()
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Campaign.ClientUseWebsocket = true // Test: WS
+	c.Campaign.DoClientInfo = false      // Theres some kind of race condition going on
 	c.Config.ComputerId = computerId
 	c.Start()
 

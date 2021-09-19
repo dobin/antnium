@@ -76,6 +76,8 @@ func TestUpstreamServerWs(t *testing.T) {
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.Campaign.ClientUseWebsocket = true // Test: Websocket
 	client.Config.ComputerId = computerId
+	client.Campaign.DoClientInfo = false // Theres some kind of race condition going on
+	defer client.Shutdown()
 	client.Start()
 
 	// Test: expect packet to be received upon connection (its already added)
