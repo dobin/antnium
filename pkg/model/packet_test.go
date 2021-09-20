@@ -26,11 +26,13 @@ func TestPacketToJson(t *testing.T) {
 	reference := `{"computerid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"}`
 	u, err := json.Marshal(c)
 	if err != nil {
-		panic(err)
+		t.Errorf("Error jsonify: " + err.Error())
+		return
 	}
 	s := string(u)
 	if s != reference {
 		t.Errorf("Error jsonify: " + s)
+		return
 	}
 }
 

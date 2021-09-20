@@ -17,11 +17,13 @@ func TestToJson(t *testing.T) {
 	reference := `{"Packet":{"computerid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"},"State":0,"ClientIp":"","TimeRecorded":"0001-01-01T00:00:00Z","TimeSent":"0001-01-01T00:00:00Z","TimeAnswered":"0001-01-01T00:00:00Z"}`
 	u, err := json.Marshal(packetInfo)
 	if err != nil {
-		panic(err)
+		t.Errorf("Error: %s", err.Error())
+		return
 	}
 	s := string(u)
 	if s != reference {
 		t.Errorf("Error comparing with reference: " + s)
+		return
 	}
 }
 
@@ -36,7 +38,8 @@ func TestToJsonPacket(t *testing.T) {
 
 	u, err := json.Marshal(packetInfo.Packet)
 	if err != nil {
-		panic(err)
+		t.Errorf("Error: %s", err.Error())
+		return
 	}
 	s := string(u)
 	if s != reference {
