@@ -1,8 +1,9 @@
 package common
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"io/ioutil"
-	"math/rand"
 	"net"
 	"strconv"
 	"time"
@@ -12,7 +13,14 @@ import (
 )
 
 func GetRandomPacketId() string {
-	return strconv.FormatUint(rand.Uint64(), 16)
+	buf := make([]byte, 8)
+	_, err := rand.Read(buf)
+	if err != nil {
+		panic(err) // out of randomness, should never happen
+	}
+
+	data := binary.BigEndian.Uint64(buf)
+	return strconv.FormatUint(data, 16)
 }
 
 type DirEntry struct {

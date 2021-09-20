@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"os"
 	"time"
@@ -66,10 +65,6 @@ func NewServer(srvAddr string) Server {
 			frontendManager.FrontendWs.channelDistributor <- packet
 		}
 	}()
-
-	// Init random for packet id generation
-	// Doesnt need to be secure
-	rand.Seed(time.Now().Unix())
 
 	// Clients connected via websocket do not send regular ping packets (that's the idea of it)
 	// Sadly this makes LastSeen useless - but the user wants to know if the client is still connected.

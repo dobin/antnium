@@ -3,9 +3,7 @@ package client
 import (
 	"crypto/tls"
 	"errors"
-	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/dobin/antnium/pkg/campaign"
 	log "github.com/sirupsen/logrus"
@@ -33,10 +31,6 @@ func NewClient() Client {
 			log.Errorf("Error starting downstream listener: %s. Continue.", err.Error())
 		}
 	}
-
-	// Init random for packet id generation
-	// Doesnt need to be secure
-	rand.Seed(time.Now().Unix())
 
 	w := Client{
 		&config,
