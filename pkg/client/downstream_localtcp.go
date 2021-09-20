@@ -49,13 +49,15 @@ func (d *DownstreamLocaltcp) Do(packet model.Packet) (model.Packet, error) {
 	if !ok {
 		return model.Packet{}, fmt.Errorf("did not find downstreamId %s", packet.DownstreamId)
 	}
-
+	if downstreamInfo.conn == nil {
+		return model.Packet{}, fmt.Errorf("Downstream connection does not exist")
+	}
 	packet, err := d.doConn(downstreamInfo.conn, packet)
 	if err != nil {
 		log.Warnf("DownstreamLocaltcp: Could not send incoming packet to downstream %s: %s", packet.DownstreamId, err.Error())
-		packet.Response["error"] = err.Error()
+		return packet, err
 	}
-	return packet, err
+	return packet, nil
 }
 
 // doConn will send a packet to a socket and wait for its response

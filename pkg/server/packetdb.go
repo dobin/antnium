@@ -78,6 +78,11 @@ func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {
 	if packetInfo.State != STATE_SENT {
 		log.Warnf("PacketDb: wrong packet source state for packetDb.Update(), expect STATE_SENT, got %d", packetInfo.State)
 	}
+	if packet.Response == nil {
+		// Can this be?
+		log.Warnf("Packet Response nil")
+		packet.Response = make(model.PacketResponse)
+	}
 	packetInfo.State = STATE_ANSWERED
 	packetInfo.TimeAnswered = time.Now()
 	packetInfo.Packet.Response = packet.Response

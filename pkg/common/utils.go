@@ -1,9 +1,9 @@
 package common
 
 import (
-	"crypto/rand"
 	"encoding/binary"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"strconv"
 	"time"
@@ -78,18 +78,19 @@ func LogPacketDebug(s string, packet model.Packet) {
 func GetFreePort() (string, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
 	if err != nil {
-		log.Fatal("ResolveTCPAddr fatal error")
-		return "", err
+		log.Error("ResolveTCPAddr")
+		port := 50000 + rand.Intn(9999)
+		return strconv.Itoa(port), nil
 	}
 
-	/*l, err := net.ListenTCP("tcp", addr)
+	l, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		log.Error("AAAA2")
-		return "", err
+		log.Error("ListenTCP test")
+		port := 50000 + rand.Intn(9999)
+		return strconv.Itoa(port), nil
 	}
-	defer l.Close()*/
+	defer l.Close()
 
-	//port := l.Addr().(*net.TCPAddr).Port
-	port := addr.Port
+	port := l.Addr().(*net.TCPAddr).Port
 	return strconv.Itoa(port), nil
 }

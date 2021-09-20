@@ -55,17 +55,32 @@ func MakeDownstreamManager(config *ClientConfig, channelOutgoing chan model.Pack
 
 // DoIncomingPacket will handle an incoming packet by send it to the appropriate downstream
 func (dm *DownstreamManager) DoIncomingPacket(packet model.Packet) (model.Packet, error) {
-	// Do* will return serious/unrecoverable errors only
-	// errors related to downstream execution are returned in the packet (packet.Response["error"])
-	if packet.DownstreamId == "manager" {
-		return dm.doManager(packet)
-	} else if packet.DownstreamId == "client" {
-		return dm.downstreamClient.Do(packet)
-	} else if strings.HasPrefix(packet.DownstreamId, "net") { // e.g. "net#1"
-		return dm.downstreamLocaltcp.Do(packet)
-	} else {
-		return packet, fmt.Errorf("downstreamid %s unknown", packet.DownstreamId)
+	var err error
+
+	if len(packet.Response) != 0 {
+		//log.Errorf("DownstreamManager: got packet with response already set: %v", packet.Response)
+		return packet, fmt.Errorf("DownstreamManager: got packet with response already set: %v", packet.Response)
 	}
+	packet.Response = make(model.PacketResponse)
+
+	if packet.DownstreamId == "manager" {
+		packet, err = dm.doManager(packet)
+	} else if packet.DownstreamId == "client" {
+		packet, err = dm.downstreamClient.Do(packet)
+	} else if strings.HasPrefix(packet.DownstreamId, "net") { // e.g. "net#1
+		packet, err = dm.downstreamLocaltcp.Do(packet)
+	} else {
+		err = fmt.Errorf("downstreamid %s unknown", packet.DownstreamId)
+	}
+
+	if packet.Response == nil {
+		// FIXME why can this be? (on PacketType "exec")
+		packet.Response = make(model.PacketResponse)
+	}
+	if err != nil {
+		packet.Response["error"] = err.Error()
+	}
+	return packet, err
 }
 
 // doManager handles downstream server related packets (special downstream "manager")
@@ -78,7 +93,6 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 	case "downstreamServerStart":
 		ret, err := dm.StartListeners()
 		if err != nil {
-			packet.Response["error"] = err.Error()
 			return packet, err
 		} else {
 			packet.Response["ret"] = ret
@@ -87,7 +101,6 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 	case "downstreamServerStop":
 		ret, err := dm.StopListeners()
 		if err != nil {
-			packet.Response["error"] = err.Error()
 			return packet, err
 		} else {
 			packet.Response["ret"] = ret
@@ -102,7 +115,6 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 		}
 
 	default:
-		packet.Response["error"] = "packettype not known: " + packet.PacketType
 		return packet, fmt.Errorf("packetType %s is not known", packet.PacketType)
 	}
 

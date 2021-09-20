@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/dobin/antnium/pkg/common"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,7 +29,7 @@ func NewClient() Client {
 	if campaign.AutoStartDownstreams {
 		_, err := downstreamManager.StartListeners()
 		if err != nil {
-			log.Errorf("Error starting downstream listener: %s. Continue.", err.Error())
+			log.Errorf("Client: Could not start downstream listerner, continuing anyway: %s", err.Error())
 		}
 	}
 
@@ -61,13 +62,16 @@ func (c *Client) Loop() {
 		}
 
 		go func() {
-			p, err := c.DownstreamManager.DoIncomingPacket(p)
+			pIncoming := p
+			pAns, err := c.DownstreamManager.DoIncomingPacket(pIncoming)
 			if err != nil {
-				log.Error("Err: ", err.Error())
+				log.Errorf("Client::Loop(): Downstream was not able to handle incoming packet %s: ", err.Error())
+				common.LogPacket("Client::Loop():", p)
+				return
 			}
 
 			// Send answer back to server
-			c.UpstreamManager.ChannelOutgoing <- p
+			c.UpstreamManager.ChannelOutgoing <- pAns
 		}()
 	}
 }

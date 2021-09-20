@@ -19,7 +19,6 @@ func MakeDownstreamClient() DownstreamClient {
 func (d *DownstreamClient) Do(packet model.Packet) (model.Packet, error) {
 	packet, err := d.executor.Execute(packet)
 	if err != nil {
-		packet.Response["error"] = err.Error()
 		return packet, err
 	}
 	return packet, nil
