@@ -73,7 +73,7 @@ func (db *ClientInfoDb) updateFromClientinfo(computerId, ip string, connectorTyp
 	processes := model.ResponseToArray("processes", response)
 
 	if hostname == "" {
-		log.Warn("Empty ping")
+		log.Warn("ClientInfoDb: Empty ping")
 		return
 	}
 

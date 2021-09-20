@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"io"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/dobin/antnium/pkg/campaign"
 )
 
@@ -28,7 +26,6 @@ func (s *Coder) EncodeData(packet Packet) ([]byte, error) {
 	// Go to JSON
 	data, err := json.Marshal(packet)
 	if err != nil {
-		log.Error("Could not JSON marshal")
 		return nil, err
 	}
 

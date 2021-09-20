@@ -37,14 +37,14 @@ func (e *Wingman) StartWingman(destination string) {
 	// Send initial line
 	ex, err := os.Executable()
 	if err != nil {
-		log.Error("Error: " + err.Error())
+		log.Error("Wingman: Error: " + err.Error())
 		return
 	}
 	pid := strconv.Itoa(os.Getpid())
 	line := ex + ":" + pid + "\n"
 	_, err = conn.Write([]byte(line))
 	if err != nil {
-		log.Error("Error")
+		log.Error("Wingman: Error")
 		return
 	}
 	// no answer required
@@ -69,12 +69,12 @@ func (e *Wingman) Loop() {
 			break
 		}
 		if err != nil {
-			log.Error("Could not read: " + err.Error())
+			log.Error("Wingman: Could not read: " + err.Error())
 			break
 		}
 		packet, err := DecodePacket(jsonStr)
 		if err != nil {
-			log.Error("Error: ", err.Error())
+			log.Error("Wingman: Error: ", err.Error())
 			continue
 		}
 
@@ -84,7 +84,7 @@ func (e *Wingman) Loop() {
 			log.WithFields(log.Fields{
 				"packet": packet,
 				"error":  err,
-			}).Info("Error executing packet")
+			}).Info("Wingman: Error executing packet")
 
 			// TODO ERR
 		}
@@ -92,15 +92,15 @@ func (e *Wingman) Loop() {
 		// Answer: Go to JSON
 		packetEncoded, err := EncodePacket(packet)
 		if err != nil {
-			log.Error("Error: ", err.Error())
+			log.Error("Wingman: Error: ", err.Error())
 		}
 		n, err := e.conn.Write(packetEncoded)
 		if err != nil {
-			log.Error("Error")
+			log.Error("Wingman: Error")
 
 			// TODO ERR
 		}
 		e.conn.Write([]byte("\n"))
-		fmt.Printf("Written: %d bytes", n)
+		fmt.Printf("Wingman: Written: %d bytes", n)
 	}
 }

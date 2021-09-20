@@ -63,7 +63,7 @@ func (i *InteractiveShell) Close() error {
 }
 
 func (i *InteractiveShell) Open(executable string, args []string) (string, string, error) {
-	log.Debugf("Starting interactive shell: %s %v", executable, args)
+	log.Debugf("InteractiveShell: %s %v", executable, args)
 	exeCommand := exec.Command(executable, args...)
 	stdin, err := exeCommand.StdinPipe()
 	if err != nil {
@@ -126,7 +126,7 @@ func (i *InteractiveShell) Open(executable string, args []string) (string, strin
 
 func (i *InteractiveShell) Issue(commandline string) (string, string, error) {
 	if i.execCmd == nil || i.stdin == nil {
-		return "", "", fmt.Errorf("Shell not open")
+		return "", "", fmt.Errorf("InteractiveShell is not open")
 	}
 
 	// Give command to packet
@@ -140,7 +140,7 @@ func (i *InteractiveShell) Issue(commandline string) (string, string, error) {
 		i.stderr = nil
 		i.stdoutBuf = bytes.NewBuffer(nil)
 		i.stderrBuf = bytes.NewBuffer(nil)
-		return "", "", fmt.Errorf("Shell down: %s", err.Error())
+		return "", "", fmt.Errorf("InteractiveShell shutdown: %s", err.Error())
 	}
 
 	time.Sleep(100 * time.Millisecond) // Always give 100ms first

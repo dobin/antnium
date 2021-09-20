@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/dobin/antnium/pkg/campaign"
+	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -47,14 +48,7 @@ func (s *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"1_computerId":   packet.ComputerId,
-		"2_packetId":     packet.PacketId,
-		"3_downstreamId": packet.DownstreamId,
-		"4_packetType":   packet.PacketType,
-		"5_arguments":    packet.Arguments,
-	}).Info("ToClient   ")
-
+	common.LogPacket("ConnectorRest:ToClient", packet)
 	fmt.Fprint(rw, string(jsonData))
 }
 
@@ -62,26 +56,17 @@ func (s *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
 func (s *ConnectorRest) sendPacket(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Error("Could not read body")
+		log.Error("ConnectorRest: Could not read body")
 		return
 	}
 	packet, err := s.coder.DecodeData(reqBody)
 	if err != nil {
-		log.Error("Could not decode")
+		log.Error("ConnectorRest: Could not decode")
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"1_computerId":   packet.ComputerId,
-		"2_packetId":     packet.PacketId,
-		"3_downstreamId": packet.DownstreamId,
-		"4_packetType":   packet.PacketType,
-		"5_arguments":    packet.Arguments,
-		"6_response":     "...",
-	}).Info("FromClient ")
-
+	common.LogPacket("ConnectorRest:FromClient", packet)
 	s.middleware.ClientSendPacket(packet, r.RemoteAddr, "rest")
-
 	fmt.Fprint(rw, "asdf")
 }
 

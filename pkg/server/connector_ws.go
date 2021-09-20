@@ -41,7 +41,7 @@ func (cw ConnectorWs) Shutdown() {
 func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Errorf("ClientWebsocket: %s", err.Error())
+		log.Errorf("ClientWebsocket: Could not upgrade http socket: %s", err.Error())
 		return
 	}
 
@@ -49,16 +49,16 @@ func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 	var authToken model.ClientWebSocketAuth
 	_, message, err := ws.ReadMessage()
 	if err != nil {
-		log.Error("ClientWebsocket read error")
+		log.Errorf("ClientWebsocket: read initial websocket authentication error: %s", err.Error())
 		return
 	}
 	err = json.Unmarshal(message, &authToken)
 	if err != nil {
-		log.Errorf("ClientWebsocket: could not decode auth: %v", message)
+		log.Errorf("ClientWebsocket: could not decode websocket authentication: %v", message)
 		return
 	}
 	if authToken.Key != "antnium" {
-		log.Warn("ClientWebsocket: incorrect key: " + authToken.Key)
+		log.Warn("ClientWebsocket: incorrect key for websocket authentication: " + authToken.Key)
 		return
 	}
 	// register client as auth succeeded
@@ -69,7 +69,7 @@ func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 
 func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 	if ws == nil {
-		log.Error("handleWs with invalid websocket connection")
+		log.Error("ClientWebsocket: handleWs(): invalid websocket connection")
 		return
 	}
 
@@ -86,7 +86,7 @@ func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 			}
 			packet, err := a.coder.DecodeData(packetData)
 			if err != nil {
-				log.Infof("registerWs error: %s", err.Error())
+				log.Infof("ClientWebsocket: could not handle incoming websocket data (ignore): %s", err.Error())
 				continue
 			}
 			a.middleware.ClientSendPacket(packet, ws.RemoteAddr().String(), "ws")
@@ -110,7 +110,7 @@ func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 	for _, packet := range packets {
 		ok := a.TryViaWebsocket(&packet)
 		if !ok {
-			log.Warn("Sending of initial packets via websocket failed")
+			log.Errorf("ClientWebsocket: Sending of initial packets via websocket failed")
 		}
 	}
 	//}()
@@ -124,7 +124,7 @@ func (a *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
 		return false
 	}
 	if clientConn == nil {
-		log.Warn("WS Client connection nil")
+		log.Warn("ClientWebsocket: TryViaWebSocket(): clientConn nil")
 		return false
 	}
 
@@ -136,11 +136,11 @@ func (a *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
 
 	err = clientConn.WriteMessage(websocket.TextMessage, jsonData)
 	if err != nil {
-		log.Infof("Websocket for host %s closed when trying to write: %s", packet.ComputerId, err.Error())
+		log.Infof("ClientWebsocket: Websocket for host %s closed when trying to write: %s", packet.ComputerId, err.Error())
 		return false
 	}
 
-	log.Debugf("Sent packet %s to client %s via WS", packet.PacketId, packet.ComputerId)
+	log.Debugf("ClientWebsocket: Sent packet %s to client %s via WS", packet.PacketId, packet.ComputerId)
 
 	return true
 }

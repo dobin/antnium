@@ -35,11 +35,11 @@ func main() {
 
 	// Check prerequisites
 	if _, err := os.Stat("./static/"); os.IsNotExist(err) {
-		log.Errorf("Could not find required direcotry: %s", "./static/")
+		log.Errorf("Server: Could not find required directory: %s", "./static/")
 		return
 	}
 	if _, err := os.Stat("./upload/"); os.IsNotExist(err) {
-		log.Errorf("Could not find required direcotry: %s", "./upload/")
+		log.Errorf("Server: Could not find required directory: %s", "./upload/")
 		return
 	}
 
@@ -56,7 +56,7 @@ func main() {
 		// Load DB if any
 		err := s.DbLoad()
 		if err != nil {
-			log.Errorf("%s\n", err.Error())
+			log.Errorf("Server: Loading DB: %s\n", err.Error())
 		}
 	}
 
@@ -65,7 +65,7 @@ func main() {
 		// Test DB dump
 		err := s.DumpDbClients()
 		if err != nil {
-			log.Errorf("Could not write DB file in current directory, write access? %s", err.Error())
+			log.Errorf("Server: Could not write DB file in current directory, write access? %s", err.Error())
 			return
 		}
 

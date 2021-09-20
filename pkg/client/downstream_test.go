@@ -78,8 +78,8 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	// Rudimentary way to wait for client to connect
 	n := 0
 	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 1 {
-		if n == 10 {
-			t.Error("Waiting 1s for tcp downstream to connect, which didnt happen")
+		if n == 30 {
+			t.Error("Waiting 3s for tcp downstream to connect, which didnt happen")
 			return
 		}
 		time.Sleep(100 * time.Millisecond)

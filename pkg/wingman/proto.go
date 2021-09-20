@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/dobin/antnium/pkg/model"
-	log "github.com/sirupsen/logrus"
 )
 
 func EncodePacket(packet model.Packet) ([]byte, error) {
@@ -12,7 +11,6 @@ func EncodePacket(packet model.Packet) ([]byte, error) {
 	if err != nil {
 		return data, err
 	}
-
 	return data, nil
 }
 
@@ -21,13 +19,7 @@ func DecodePacket(jsonStr string) (model.Packet, error) {
 	var packet model.Packet
 	err := json.Unmarshal([]byte(jsonStr), &packet)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"body":  jsonStr,
-			"error": err,
-		}).Info("Decoding packet")
-
 		return packet, err
 	}
-
 	return packet, nil
 }

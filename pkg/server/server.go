@@ -46,7 +46,7 @@ func NewServer(srvAddr string) Server {
 			if ok {
 				packetInfo, err := middleware.packetDb.sentToClient(packet.PacketId, "")
 				if err != nil {
-					log.Errorf("Server error: %s", err.Error())
+					log.Errorf("could not update packet info: %s", err.Error())
 				}
 
 				// only notify UI if we really sent a packet
@@ -107,7 +107,7 @@ func (s *Server) Shutdown() {
 	// We only need to shut down the HTTP server
 	err := s.httpServer.Shutdown(context.Background())
 	if err != nil {
-		log.Errorf("On Shutdown: %s", err.Error())
+		log.Errorf("Server: error on shutdown http server %s", err.Error())
 	}
 
 	// And our websockets..
@@ -124,15 +124,15 @@ func (s *Server) DbLoad() error {
 	if _, err := os.Stat(dbPackets); !os.IsNotExist(err) {
 		packetsBytes, err := ioutil.ReadFile(dbPackets)
 		if err != nil {
-			return fmt.Errorf("Read file error: %s", err.Error())
+			return fmt.Errorf("Server: reading file %s error: %s", dbPackets, err.Error())
 		}
 		var packetInfos []*PacketInfo
 		err = json.Unmarshal(packetsBytes, &packetInfos)
 		if err != nil {
-			return fmt.Errorf("Read file decode error: %s", err.Error())
+			return fmt.Errorf("Server: reading file %s decode error: %s", dbPackets, err.Error())
 		}
 		s.Middleware.packetDb.Set(packetInfos)
-		fmt.Printf("Loaded %d packets from %s\n", len(packetInfos), dbPackets)
+		fmt.Printf("Server: Loaded %d packets from %s\n", len(packetInfos), dbPackets)
 	}
 
 	// Clients
@@ -140,15 +140,15 @@ func (s *Server) DbLoad() error {
 	if _, err := os.Stat(dbClients); !os.IsNotExist(err) {
 		clientsBytes, err := ioutil.ReadFile(dbClients)
 		if err != nil {
-			return fmt.Errorf("Read file error: %s", err.Error())
+			return fmt.Errorf("Server: reading file %s error: %s", dbClients, err.Error())
 		}
 		var clients map[string]*ClientInfo
 		err = json.Unmarshal(clientsBytes, &clients)
 		if err != nil {
-			return fmt.Errorf("Read file decode error: %s", err.Error())
+			return fmt.Errorf("Server: reading file %s decode error: %s", dbClients, err.Error())
 		}
 		s.Middleware.clientInfoDb.Set(clients)
-		fmt.Printf("Loaded %d clients from %s\n", len(clients), dbClients)
+		fmt.Printf("Server: Loaded %d clients from %s\n", len(clients), dbClients)
 	}
 
 	return nil
@@ -159,13 +159,13 @@ func (s *Server) DumpDbPackets() error {
 	packets := s.Middleware.packetDb.getAll()
 	packetBytes, err := json.Marshal(packets)
 	if err != nil {
-		log.Errorf("could not marshal config json: %v", err)
+		log.Errorf("Server: DumpDbPackets(): could not marshal: %s", err.Error())
 		return err
 	}
 
 	err = ioutil.WriteFile("db.packets.json", packetBytes, 0644)
 	if err != nil {
-		log.Errorf("could not marshal config json: %v", err)
+		log.Errorf("Server: Could not write db.packets.json file: %s", err.Error())
 		return err
 	}
 
@@ -177,12 +177,12 @@ func (s *Server) DumpDbClients() error {
 	clients := s.Middleware.clientInfoDb.getAll()
 	clientsBytes, err := json.Marshal(clients)
 	if err != nil {
-		log.Errorf("could not marshal config json: %v", err)
+		log.Errorf("Server: DumpDbClients(): could not marshal: %s", err.Error())
 		return err
 	}
 	err = ioutil.WriteFile("db.clients.json", clientsBytes, 0644)
 	if err != nil {
-		log.Errorf("could not marshal config json: %v", err)
+		log.Errorf("Server: Could not write db.clients.json file: %s", err.Error())
 		return err
 	}
 
@@ -196,11 +196,14 @@ func (s *Server) PeriodicDbDump() {
 	lastPacketsSize := 0 // Can't take len, as packets could be updated
 	lastClientsLen := 0  // len of array. at least we get all clients
 	for {
+		time.Sleep(dbDumpInterval)
+
 		// Packets
 		packets := s.Middleware.packetDb.getAll()
 		packetBytes, err := json.Marshal(packets)
 		if err != nil {
-			log.Errorf("could not marshal config json: %v", err)
+			log.Errorf("Server: PeriodicDbDump(): could not marshal config json: %v", err)
+			continue
 		}
 		if len(packetBytes) != lastPacketsSize {
 			s.DumpDbPackets() // ignore err
@@ -213,7 +216,5 @@ func (s *Server) PeriodicDbDump() {
 			s.DumpDbClients() // ignore err
 			lastClientsLen = len(clients)
 		}
-
-		time.Sleep(dbDumpInterval)
 	}
 }

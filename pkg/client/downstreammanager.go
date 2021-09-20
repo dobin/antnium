@@ -30,12 +30,14 @@ type DownstreamManager struct {
 
 func MakeDownstreamManager(config *ClientConfig, channelOutgoing chan model.Packet) DownstreamManager {
 	// Get our name (for channel identification)
+	downstreamClientInfo := "<unknown>"
 	ex, err := os.Executable()
 	if err != nil {
-		log.Error("Error: " + err.Error())
+		log.Error("Could not make os executable to get our name and pid: " + err.Error())
+	} else {
+		pid := strconv.Itoa(os.Getpid())
+		downstreamClientInfo = ex + ":" + pid + "\n"
 	}
-	pid := strconv.Itoa(os.Getpid())
-	downstreamClientInfo := ex + ":" + pid + "\n"
 
 	downstreamClient := MakeDownstreamClient()
 	downstreamLocaltcp := MakeDownstreamLocaltcp("")
@@ -60,14 +62,14 @@ func (dm *DownstreamManager) DoIncomingPacket(packet model.Packet) (model.Packet
 	} else if strings.HasPrefix(packet.DownstreamId, "net") { // e.g. "net#1"
 		return dm.downstreamLocaltcp.Do(packet)
 	} else {
-		return packet, fmt.Errorf("Unknown downstreamid: %s", packet.DownstreamId)
+		return packet, fmt.Errorf("downstreamid %s unknown", packet.DownstreamId)
 	}
 }
 
 // doManager handles downstream server related packets (special downstream "manager")
 func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error) {
 	if packet.DownstreamId != "manager" {
-		return packet, fmt.Errorf("Wrong args")
+		return packet, fmt.Errorf("manager cant handle packet with downstreamId %s", packet.DownstreamId)
 	}
 	switch packet.PacketType {
 	case "downstreamServerStart":
@@ -98,7 +100,7 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 
 	default:
 		packet.Response["error"] = "packettype not known: " + packet.PacketType
-		return packet, fmt.Errorf("PacketType not known: " + packet.PacketType)
+		return packet, fmt.Errorf("packetType %s is not known", packet.PacketType)
 	}
 
 	return packet, nil
@@ -135,7 +137,7 @@ func (dm *DownstreamManager) StartListeners() (string, error) {
 
 func (dm *DownstreamManager) StartListenerLocaltcp() (string, error) {
 	if dm.downstreamLocaltcp.Started() {
-		return "", fmt.Errorf("LocalTcp already started")
+		return "", fmt.Errorf("LocalTcp is already started")
 	}
 	err := dm.downstreamLocaltcp.StartServer(dm.downstreamChangeNotifyChan)
 	if err != nil {
@@ -181,9 +183,6 @@ func (dm *DownstreamManager) SendDownstreamDataToServer() {
 	packet := dm.config.MakeClientPacket("downstreams", arguments, response)
 
 	dm.channelOutgoing <- *packet
-	//if err != nil {
-	//	log.Errorf("Senddownstreams send error: %s", err.Error())
-	//}
 }
 
 // DownstreamServers returns the list of active downstream servers (e.g. Localtcp, if started)

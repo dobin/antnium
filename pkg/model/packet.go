@@ -60,7 +60,7 @@ func MakePacketArgumentFrom(packetArgument PacketArgument) (string, []string, er
 
 	executable, ok := packetArgument["executable"]
 	if !ok {
-		return "", nil, fmt.Errorf("No executable given")
+		return "", nil, fmt.Errorf("missing argument 'executable'")
 	}
 
 	n := 0

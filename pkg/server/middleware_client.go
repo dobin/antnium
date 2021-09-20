@@ -38,7 +38,7 @@ func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 }
 
 func (s *Middleware) ClientGetPacket(computerId string, remoteAddr string, connectorType string) (model.Packet, bool) {
-	log.Debugf("Server:ClientGetPacket(): %s", computerId)
+	log.Debugf("Middleware: ClientGetPacket(): %s", computerId)
 
 	// Update last seen for this host
 	s.clientInfoDb.updateFor(computerId, remoteAddr, connectorType)
@@ -50,7 +50,10 @@ func (s *Middleware) ClientGetPacket(computerId string, remoteAddr string, conne
 	}
 
 	// Update packet infos
-	s.packetDb.sentToClient(packetInfo.Packet.PacketId, remoteAddr)
+	packetInfo, err = s.packetDb.sentToClient(packetInfo.Packet.PacketId, remoteAddr)
+	if err != nil {
+		log.Error("Middleware: error updating packetinfo of")
+	}
 
 	// notify UI about it
 	s.channelFrontendSend <- *packetInfo
@@ -62,12 +65,12 @@ func (s *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
 	// Check if request for this file really exists
 	packetInfo, ok := s.packetDb.ByPacketId(packetId)
 	if !ok {
-		log.Warnf("Client attempted to upload a file with an expired packet with packetid: %s",
+		log.Errorf("Middleware: Client attempted to upload a file with an expired packet with packetid: %s",
 			packetId)
 		return
 	}
 	if packetInfo.State != STATE_SENT {
-		log.Warnf("Client attempted to upload a file with an weird packet state %d",
+		log.Errorf("Middleware: Client attempted to upload a file with an weird packet state %d",
 			packetInfo.State)
 		return
 	}
@@ -81,16 +84,16 @@ func (s *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
 
 	out, err := os.Create(filename)
 	if err != nil {
-		log.Error("Could not open file: " + filename)
+		log.Error("Middleware: Could not open file: " + filename)
 		return
 	}
 	defer out.Close()
 
 	written, err := io.Copy(out, httpFile)
 	if err != nil {
-		log.Error("Error copying: " + err.Error())
+		log.Error("Middleware: Error copying: " + err.Error())
 		return
 	}
 
-	log.Infof("Written %d bytes to file %s", written, packetId)
+	log.Infof("Middleware: Written %d bytes to file %s", written, packetId)
 }

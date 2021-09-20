@@ -60,14 +60,14 @@ func TestInteractiveShellCmdexeExit(t *testing.T) {
 		return
 	}
 
-	// execute dir with closed process, should generate "shell down" error
+	// execute dir with closed process
 	stdout, _, err = interactiveShell.Issue("dir")
 	if err == nil {
 		t.Errorf("Packet 1 no error")
 		return
 	}
-	if !strings.Contains(err.Error(), "Shell down") {
-		t.Errorf("Packet 1 error")
+	if !strings.Contains(err.Error(), "shutdown") {
+		t.Errorf("Packet 1 error: %s", err.Error())
 		return
 	}
 
@@ -77,8 +77,8 @@ func TestInteractiveShellCmdexeExit(t *testing.T) {
 		t.Errorf("Packet 1 no error")
 		return
 	}
-	if !strings.Contains(err.Error(), "Shell not open") {
-		t.Errorf("Packet 1 error")
+	if !strings.Contains(err.Error(), "is not open") {
+		t.Errorf("Packet 1 error: %s", err.Error())
 		return
 	}
 
@@ -102,7 +102,7 @@ func TestInteractiveShellCmdexeExit(t *testing.T) {
 		t.Errorf("Packet 1 no error")
 		return
 	}
-	if !strings.Contains(err.Error(), "Shell not open") {
+	if !strings.Contains(err.Error(), "is not open") {
 		t.Errorf("Packet 1 error")
 		return
 	}

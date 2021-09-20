@@ -47,12 +47,12 @@ func (d *DownstreamLocaltcp) Do(packet model.Packet) (model.Packet, error) {
 	downstreamInfo, ok := d.downstreams[packet.DownstreamId]
 	d.downstreamsMutex.Unlock()
 	if !ok {
-		return model.Packet{}, fmt.Errorf("Did not find: %s", packet.DownstreamId)
+		return model.Packet{}, fmt.Errorf("did not find downstreamId %s", packet.DownstreamId)
 	}
 
 	packet, err := d.doConn(downstreamInfo.conn, packet)
 	if err != nil {
-		log.Error("Error doing localtcp packet: ", err.Error())
+		log.Warnf("DownstreamLocaltcp: Could not send incoming packet to downstream %s: %s", packet.DownstreamId, err.Error())
 		packet.Response["error"] = err.Error()
 	}
 	return packet, err
@@ -97,7 +97,7 @@ func (d *DownstreamLocaltcp) StartServer(downstreamChangeNotifyChan chan struct{
 	log.Info("Start Downstream: LocalTcp on " + d.listenAddr)
 	ln, err := net.Listen("tcp", d.listenAddr)
 	if err != nil {
-		log.Errorf("Error: %s", err.Error())
+		log.Errorf("DownstreamLocaltcp: Could not listen on address %s: %s", d.listenAddr, err.Error())
 		return err
 	}
 	d.listener = ln
@@ -109,7 +109,7 @@ func (d *DownstreamLocaltcp) StartServer(downstreamChangeNotifyChan chan struct{
 // NewConnectionReceiver is a Thread which waits for new tcp downstream client connections, adds it to the local db and integrates them via DownstreamManager
 func (d *DownstreamLocaltcp) NewConnectionReceiver(downstreamChangeNotifyChan chan struct{}) error {
 	if d.listener == nil {
-		return fmt.Errorf("Can't loop without connection")
+		return fmt.Errorf("DownstreamLocaltcp: Can't loop without active listener")
 	}
 
 	n := 0
@@ -117,18 +117,19 @@ func (d *DownstreamLocaltcp) NewConnectionReceiver(downstreamChangeNotifyChan ch
 	for {
 		if d.listener == nil {
 			log.Info("Listener nil, shutdown thread")
-			break
+			break // Shutdown thread
 		}
 		var conn net.Conn
 		conn, err = d.listener.Accept()
 		if err != nil {
+			log.Errorf("DownstreamLocaltcp: could not accept listener (shutting down): %s", err.Error())
 			break
 		}
 
 		// receive info line first or fail
 		infoStr, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil {
-			log.Error("Could not read: " + err.Error())
+			log.Errorf("DownstreamLocaltcp: with new connection could not read from wingman (ignore): %s", err.Error())
 			continue
 		}
 
@@ -151,11 +152,6 @@ func (d *DownstreamLocaltcp) NewConnectionReceiver(downstreamChangeNotifyChan ch
 		n += 1
 	}
 
-	if err != nil {
-		log.Errorf("LocalTcp thread exited, because of: %s", err.Error())
-	}
-
-	// Never reached
 	return err
 }
 

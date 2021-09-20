@@ -86,7 +86,7 @@ func GetClientMiddleware(key string) func(http.Handler) http.Handler {
 				// Pass down the request to the next middleware (or final handler)
 				next.ServeHTTP(w, r)
 			} else {
-				log.Info("Wrong key given: " + token)
+				log.Info("FrontendClient: Wrong key given: " + token)
 				// Write an error and stop the handler chain
 				http.NotFound(w, r)
 			}
@@ -103,7 +103,7 @@ func GetAdminMiddleware(key string) func(http.Handler) http.Handler {
 				// Pass down the request to the next middleware (or final handler)
 				next.ServeHTTP(w, r)
 			} else {
-				log.Infof("Wrong key given: %s for %s and %s", token, r.Method, r.URL)
+				log.Infof("FrontendAdmin: Wrong key given: %s for %s and %s", token, r.Method, r.URL)
 				// Write an error and stop the handler chain
 				http.NotFound(w, r)
 			}

@@ -60,7 +60,7 @@ func (db *PacketDb) getPacketForClient(computerId string) (*PacketInfo, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Nothing found")
+	return nil, fmt.Errorf("no packets in state STATE_RECORDED for host %s found", computerId)
 }
 
 func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {
@@ -76,7 +76,7 @@ func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {
 	}
 
 	if packetInfo.State != STATE_SENT {
-		log.Errorf("Wrong packet source state for packetDb.Update(), expect STATE_SENT, got %d", packetInfo.State)
+		log.Warnf("PacketDb: wrong packet source state for packetDb.Update(), expect STATE_SENT, got %d", packetInfo.State)
 	}
 	packetInfo.State = STATE_ANSWERED
 	packetInfo.TimeAnswered = time.Now()
@@ -102,12 +102,11 @@ func (db *PacketDb) addFromFrontend(packet *model.Packet) (*PacketInfo, error) {
 func (db *PacketDb) sentToClient(packetId string, remoteAddr string) (*PacketInfo, error) {
 	packetInfo, ok := db.ByPacketId(packetId)
 	if !ok {
-		return nil, fmt.Errorf("sentToClient: Packet %s does not exist ", packetId)
+		return nil, fmt.Errorf("PacketDb: Packet with PacketId %s does not exist", packetId)
 	}
 
 	if packetInfo.State != STATE_RECORDED {
-		log.Warnf("sentToClient: source packet not STATE_RECORDED: %d", packetInfo.State)
-		return nil, fmt.Errorf("sentToClient: source packet not STATE_RECORDED: %d", packetInfo.State)
+		return nil, fmt.Errorf("source packet not STATE_RECORDED but %d", packetInfo.State)
 	}
 
 	packetInfo.ClientIp = remoteAddr

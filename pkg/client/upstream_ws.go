@@ -50,7 +50,7 @@ func (d *UpstreamWs) Connect() error {
 	if ok {
 		parsedUrl, err := url.Parse(proxyUrl)
 		if err != nil {
-			return fmt.Errorf("Could not parse %s: %s", proxyUrl, err.Error())
+			return fmt.Errorf("could not parse ProxyUrl %s: %s", proxyUrl, err.Error())
 		}
 
 		dialer := websocket.Dialer{
@@ -59,12 +59,12 @@ func (d *UpstreamWs) Connect() error {
 
 		ws, _, err = dialer.Dial(myUrl, nil)
 		if err != nil {
-			return fmt.Errorf("Websocket with proxy %s to %s resulted in %s", proxyUrl, myUrl, err.Error())
+			return fmt.Errorf("could not connect websocket with proxy %s to %s: %s", proxyUrl, myUrl, err.Error())
 		}
 	} else {
 		ws, _, err = websocket.DefaultDialer.Dial(myUrl, nil)
 		if err != nil {
-			return fmt.Errorf("Websocket to %s resulted in %s", myUrl, err.Error())
+			return fmt.Errorf("could not connect websocket %s: %s", myUrl, err.Error())
 		}
 	}
 
@@ -109,10 +109,10 @@ func (d *UpstreamWs) Start() {
 
 			packet, err := d.coder.DecodeData(message)
 			if err != nil {
-				log.Error("Could not decode")
+				log.Errorf("UpstreamWs: Could not decode incoming message (ignore): %s", err.Error())
 				continue
 			}
-			log.Debugf("Received from server via WS")
+			log.Debugf("UpstreamWs: Received from server via websocket")
 
 			d.ChanIncoming() <- packet
 		}
@@ -128,19 +128,19 @@ func (d *UpstreamWs) Start() {
 
 			packetData, err := d.coder.EncodeData(packet)
 			if err != nil {
-				log.Error("Could not decode")
+				log.Error("UpstreamWs: Could not encode outgoing packet")
 				return
 			}
 			common.LogPacketDebug("UpstreamWs:OutgoingThread", packet)
 
 			if d.wsConn == nil {
-				log.Infof("WS Outgoing reader: wsConn nil")
+				log.Debugf("UpstreamWs: wsConn is nil, shutdown thread")
 				break
 			}
 
 			err = d.wsConn.WriteMessage(websocket.TextMessage, packetData)
 			if err != nil {
-				log.Errorf("WS write error: %s", err.Error())
+				log.Errorf("UpstreamWs: could not write packet: %s", err.Error())
 				//d.Shutdown()
 				break
 			}

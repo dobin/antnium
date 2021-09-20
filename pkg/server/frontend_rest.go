@@ -30,7 +30,7 @@ func (s *FrontendRest) adminListPackets(rw http.ResponseWriter, r *http.Request)
 	packetInfos := s.middleware.FrontendGetAllPacket()
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
-		log.Error("Could not JSON marshal")
+		log.Error("FrontendRest: Could not JSON marshal")
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -46,7 +46,7 @@ func (s *FrontendRest) adminListPacketsComputerId(rw http.ResponseWriter, r *htt
 	packetInfos := s.middleware.FrontendGetPacketById(computerId)
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
-		log.Error("Could not JSON marshal")
+		log.Error("FrontendRest: Could not JSON marshal")
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -56,7 +56,7 @@ func (s *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request)
 	hostList := s.middleware.FrontendGetAllClients()
 	json, err := json.Marshal(hostList)
 	if err != nil {
-		log.Error("Could not JSON marshal")
+		log.Error("FrontendRest: Could not JSON marshal")
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -65,17 +65,14 @@ func (s *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request)
 func (s *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Error("Could not read body")
+		log.Error("FrontendRest: Could not read body")
 		return
 	}
 
 	var packet model.Packet
 	err = json.Unmarshal(reqBody, &packet)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"body":  reqBody,
-			"error": err,
-		}).Info("Error add packet")
+		log.Errorf("FrontendRest: Could not unmarshall: %s", err.Error())
 		return
 	}
 
@@ -96,7 +93,7 @@ func (s *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 func (s *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
 	json, err := json.Marshal(s.campaign)
 	if err != nil {
-		log.Error("Could not JSON marshal")
+		log.Error("FrontendRest: Could not JSON marshal")
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -105,12 +102,12 @@ func (s *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request)
 func (s *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := common.ListDirectory("./upload")
 	if err != nil {
-		log.Error("Could not: ", err)
+		log.Error("FrontendRest: Could not list directory ./upload: ", err)
 		return
 	}
 	json, err := json.Marshal(dirList)
 	if err != nil {
-		log.Error("Could not JSON marshal", err)
+		log.Error("FrontendRest: Could not JSON marshal", err)
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -119,12 +116,12 @@ func (s *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) 
 func (s *FrontendRest) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := common.ListDirectory("./static")
 	if err != nil {
-		log.Error("Could not: ", err)
+		log.Errorf("FrontendRest: Could not list directory: ./static: %s", err)
 		return
 	}
 	json, err := json.Marshal(dirList)
 	if err != nil {
-		log.Error("Could not JSON marshal", err)
+		log.Error("FrontendRest: Could not JSON marshal", err)
 		return
 	}
 	fmt.Fprint(rw, string(json))

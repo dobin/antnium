@@ -24,7 +24,7 @@ func MakeClientConfig() ClientConfig {
 	// Hostname
 	hostname, err := os.Hostname()
 	if err != nil {
-		log.Error("Hostname failed")
+		log.Error("ClientConfig: hostname from OS failed")
 		hostname = "unknown"
 	}
 
@@ -32,25 +32,26 @@ func MakeClientConfig() ClientConfig {
 	localIps := make([]string, 0)
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		log.Error("Local interfaces: Could not get interfaces")
-	}
-	for _, i := range ifaces {
-		addrs, err := i.Addrs()
-		if err != nil {
-			log.Error("Local interfaces: Could not handle IP address")
-		}
-		// handle err
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
+		log.Error("ClientConfig: interfaces from OS failed")
+	} else {
+		for _, i := range ifaces {
+			addrs, err := i.Addrs()
+			if err != nil {
+				log.Error("ClientConfig: local interfaces from OS parsing failed")
+				continue
 			}
+			for _, addr := range addrs {
+				var ip net.IP
+				switch v := addr.(type) {
+				case *net.IPNet:
+					ip = v.IP
+				case *net.IPAddr:
+					ip = v.IP
+				}
 
-			// process IP address
-			localIps = append(localIps, ip.String())
+				// process IP address
+				localIps = append(localIps, ip.String())
+			}
 		}
 	}
 

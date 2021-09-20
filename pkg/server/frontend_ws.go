@@ -45,7 +45,7 @@ func MakeFrontendWs(campaign *campaign.Campaign) FrontendWs {
 func (a *FrontendWs) NewConnectionHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Errorf("FrontendWs: %s", err.Error())
+		log.Errorf("FrontendWs: could not upgrade HTTP to websocket: %s", err.Error())
 		return
 	}
 
@@ -54,19 +54,20 @@ func (a *FrontendWs) NewConnectionHandler(w http.ResponseWriter, r *http.Request
 	var authToken AuthToken
 	_, message, err := ws.ReadMessage()
 	if err != nil {
-		log.Error("FrontendWs read error")
+		log.Error("FrontendWs: read initial authentication error")
 		return
 	}
 	err = json.Unmarshal(message, &authToken)
 	if err != nil {
-		log.Warnf("FrontendWs: could not decode auth: %v", message)
+		log.Warnf("FrontendWs: could not decode authentication: %v", message)
 		return
 	}
-	if string(authToken) == a.campaign.AdminApiKey {
-		a.registerWs(ws)
-	} else {
-		log.Warn("FrontendWs: incorrect key: " + authToken)
+	if string(authToken) != a.campaign.AdminApiKey {
+		log.Warn("FrontendWs: incorrect key for authentication: " + authToken)
+		return
 	}
+
+	a.registerWs(ws)
 }
 
 // wsHandler is the entry point for new websocket connections
@@ -87,7 +88,7 @@ func (a *FrontendWs) Distributor() {
 
 		data, err := json.Marshal(websocketData)
 		if err != nil {
-			log.Error("Could not JSON marshal")
+			log.Error("FrontendWs: Could not JSON marshal")
 			continue
 		}
 
@@ -95,7 +96,7 @@ func (a *FrontendWs) Distributor() {
 		for client := range a.clients {
 			err := client.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
-				log.Debugf("FrontendWs::Distributor() error%s", err)
+				log.Debugf("FrontendWs::Distributor() error: %s", err)
 				log.Debugf("FrontendWs::Distributor() closing WS socket: %s", client.RemoteAddr())
 				client.Close()
 				delete(a.clients, client)

