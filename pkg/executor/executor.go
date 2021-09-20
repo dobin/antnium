@@ -56,8 +56,7 @@ func (p *Executor) Execute(packet model.Packet) (model.Packet, error) {
 	case "dir":
 		packet.Response, err = p.actionDir(packet.Arguments)
 	default:
-		packet.Response = make(model.PacketResponse)
-		packet.Response["error"] = "packet type not known: " + packet.PacketType
+		return packet, fmt.Errorf("packet type not known: %s", packet.PacketType)
 	}
 
 	// Add any errors to the packet response

@@ -47,10 +47,10 @@ func (d *DownstreamLocaltcp) Do(packet model.Packet) (model.Packet, error) {
 	downstreamInfo, ok := d.downstreams[packet.DownstreamId]
 	d.downstreamsMutex.Unlock()
 	if !ok {
-		return model.Packet{}, fmt.Errorf("did not find downstreamId %s", packet.DownstreamId)
+		return packet, fmt.Errorf("did not find downstreamId %s", packet.DownstreamId)
 	}
 	if downstreamInfo.conn == nil {
-		return model.Packet{}, fmt.Errorf("Downstream connection does not exist")
+		return packet, fmt.Errorf("Downstream connection does not exist")
 	}
 	packet, err := d.doConn(downstreamInfo.conn, packet)
 	if err != nil {

@@ -61,6 +61,7 @@ func (dm *DownstreamManager) DoIncomingPacket(packet model.Packet) (model.Packet
 		//log.Errorf("DownstreamManager: got packet with response already set: %v", packet.Response)
 		return packet, fmt.Errorf("DownstreamManager: got packet with response already set: %v", packet.Response)
 	}
+
 	packet.Response = make(model.PacketResponse)
 
 	if packet.DownstreamId == "manager" {
@@ -73,10 +74,6 @@ func (dm *DownstreamManager) DoIncomingPacket(packet model.Packet) (model.Packet
 		err = fmt.Errorf("downstreamid %s unknown", packet.DownstreamId)
 	}
 
-	if packet.Response == nil {
-		// FIXME why can this be? (on PacketType "exec")
-		packet.Response = make(model.PacketResponse)
-	}
 	if err != nil {
 		packet.Response["error"] = err.Error()
 	}
