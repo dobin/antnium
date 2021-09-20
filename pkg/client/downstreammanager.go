@@ -55,6 +55,8 @@ func MakeDownstreamManager(config *ClientConfig, channelOutgoing chan model.Pack
 
 // DoIncomingPacket will handle an incoming packet by send it to the appropriate downstream
 func (dm *DownstreamManager) DoIncomingPacket(packet model.Packet) (model.Packet, error) {
+	// Do* will return serious/unrecoverable errors only
+	// errors related to downstream execution are returned in the packet (packet.Response["error"])
 	if packet.DownstreamId == "manager" {
 		return dm.doManager(packet)
 	} else if packet.DownstreamId == "client" {
@@ -71,6 +73,7 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 	if packet.DownstreamId != "manager" {
 		return packet, fmt.Errorf("manager cant handle packet with downstreamId %s", packet.DownstreamId)
 	}
+
 	switch packet.PacketType {
 	case "downstreamServerStart":
 		ret, err := dm.StartListeners()

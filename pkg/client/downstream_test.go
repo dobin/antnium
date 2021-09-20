@@ -13,7 +13,7 @@ import (
 
 // TestDownstreamClient tests default Downstream: "Client"
 func TestDownstreamClient(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	client := NewClient()
 	packet := makeExecTestPacket()
@@ -42,7 +42,7 @@ func TestDownstreamClient(t *testing.T) {
 
 // TestDownstreamLocaltcp tests if localtcp downstream works
 func TestDownstreamLocaltcp(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	port, _ := common.GetFreePort()
 	portDownstream, _ := common.GetFreePort()
@@ -123,8 +123,9 @@ func TestDownstreamLocaltcp(t *testing.T) {
 	packet = makeExecTestPacket()
 	packet.DownstreamId = "net#0"
 	packet, err = client.DownstreamManager.DoIncomingPacket(packet)
-	if err == nil {
-		t.Errorf("Could do packet")
+	val, ok := packet.Response["error"]
+	if !ok || val == "" {
+		t.Errorf("Could do packet after Wingman.Shutdown(): %v", packet)
 		return
 	}
 }
@@ -135,7 +136,7 @@ func TestDownstreamDoManager(t *testing.T) {
 
 // TestDownstreamLocaltcpRestart tests if the downstream servers survives a restart
 func TestDownstreamLocaltcpRestart(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	var err error
 	port, _ := common.GetFreePort()
@@ -206,7 +207,7 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 	n := 0
 	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 2 {
 		if n == 10 {
-			t.Error("Waiting 1s for tcp downstream to connect, which didnt happen")
+			t.Errorf("Waiting 1s for tcp downstream to connect, which didnt happen. We at: %d", len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()))
 			return
 		}
 		time.Sleep(100 * time.Millisecond)

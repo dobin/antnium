@@ -29,7 +29,7 @@ func makeSimpleCmdPacket(computerId string, packetId string, commandline string)
 
 // TestClientExecWs tests if the client executes a packet from the perspective of a server
 func TestClientExecWs(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	port, _ := common.GetFreePort()
 	computerId := "computerid-23"
@@ -78,7 +78,7 @@ func TestClientExecWs(t *testing.T) {
 
 // TestClientParalellExecWs starts two execs in a client and checks that the quick one returns first
 func TestClientParalellExecWs(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	// Add two commands, one sleep, one echo
 	port, _ := common.GetFreePort()

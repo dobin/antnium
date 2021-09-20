@@ -28,11 +28,11 @@ func makeSimpleTestPacketInfo(computerId string, packetId string) *server.Packet
 
 // Test Upstream REST connection with running server
 func TestUpstreamServerRest(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	port, _ := common.GetFreePort()
 	packetId := "packetid-421"
-	computerId := "computerid-23"
+	computerId := "TestUpstreamServerRest"
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
@@ -59,10 +59,10 @@ func TestUpstreamServerRest(t *testing.T) {
 
 // Test Upstream websocket connection with running server
 func TestUpstreamServerWs(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	port, _ := common.GetFreePort()
-	computerId := "computerid-23"
+	computerId := "TestUpstreamServerWs"
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
@@ -102,11 +102,11 @@ func TestUpstreamServerWs(t *testing.T) {
 
 // Test Upstream REST connection with server first down and started later
 func TestUpstreamServerWsConnectLate(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	port, _ := common.GetFreePort()
 	packetId := "packetid-423"
-	computerId := "computerid-23"
+	computerId := "TestUpstreamServerWsConnectLate"
 
 	// make client
 	client := NewClient()
@@ -140,7 +140,7 @@ func TestUpstreamServerWsConnectLate(t *testing.T) {
 
 // Test Upstream websocket connection by killing the server once
 func TestUpstreamServerWsReconnect(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	port, _ := common.GetFreePort()
 	packetId1 := "packetid-42a"
@@ -211,11 +211,11 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 
 // Test Upstream REST with server first down and started later
 func TestUpstreamServerRestConnectLate(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 
 	port, _ := common.GetFreePort()
 	packetId := "packetid-42"
-	computerId := "computerid-23"
+	computerId := "TestUpstreamServerRestConnectLate"
 
 	// make client
 	client := NewClient()
