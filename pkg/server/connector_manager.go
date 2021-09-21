@@ -6,8 +6,8 @@ type ConnectorManager struct {
 	campaign   *campaign.Campaign
 	middleware *Middleware
 
-	ConnectorRest *ConnectorRest
-	ConnectorWs   *ConnectorWs
+	Rest      *ConnectorRest
+	Websocket *ConnectorWs
 }
 
 func MakeConnectorManager(campaign *campaign.Campaign, middleware *Middleware) ConnectorManager {
@@ -15,10 +15,10 @@ func MakeConnectorManager(campaign *campaign.Campaign, middleware *Middleware) C
 	connectorWs := MakeConnectorWs(campaign, middleware)
 
 	f := ConnectorManager{
-		campaign:      campaign,
-		middleware:    middleware,
-		ConnectorRest: &connectorRest,
-		ConnectorWs:   &connectorWs,
+		campaign:   campaign,
+		middleware: middleware,
+		Rest:       &connectorRest,
+		Websocket:  &connectorWs,
 	}
 	return f
 }

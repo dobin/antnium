@@ -6,8 +6,8 @@ type Middleware struct {
 	packetDb     PacketDb
 	clientInfoDb ClientInfoDb
 
-	channelConnectorSend chan model.Packet
-	channelFrontendSend  chan PacketInfo
+	connectorSend chan model.Packet
+	frontendSend  chan PacketInfo
 }
 
 func MakeMiddleware(channelConnectorSend chan model.Packet, channelFrontendSend chan PacketInfo) Middleware {

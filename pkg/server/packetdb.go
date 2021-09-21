@@ -10,8 +10,8 @@ import (
 )
 
 type PacketDb struct {
-	packetInfo []*PacketInfo
-	mutex      *sync.Mutex
+	packets []*PacketInfo
+	mutex   *sync.Mutex
 }
 
 func MakePacketDb() PacketDb {
@@ -26,22 +26,22 @@ func (db *PacketDb) add(packetInfo *PacketInfo) {
 	packetInfo.TimeRecorded = time.Now()
 
 	db.mutex.Lock()
-	db.packetInfo = append(db.packetInfo, packetInfo)
+	db.packets = append(db.packets, packetInfo)
 	db.mutex.Unlock()
 }
 
 func (db *PacketDb) All() []*PacketInfo {
-	return db.packetInfo
+	return db.packets
 }
 
 func (db *PacketDb) Set(packetInfos []*PacketInfo) {
 	db.mutex.Lock()
-	db.packetInfo = packetInfos
+	db.packets = packetInfos
 	db.mutex.Unlock()
 }
 
 func (db *PacketDb) ByPacketId(packetId string) (*PacketInfo, bool) {
-	for _, packetInfo := range db.packetInfo {
+	for _, packetInfo := range db.packets {
 		if packetInfo.Packet.PacketId == packetId {
 			return packetInfo, true
 		}
@@ -51,7 +51,7 @@ func (db *PacketDb) ByPacketId(packetId string) (*PacketInfo, bool) {
 }
 
 func (db *PacketDb) getPacketForClient(computerId string) (*PacketInfo, error) {
-	for _, packetInfo := range db.packetInfo {
+	for _, packetInfo := range db.packets {
 		if packetInfo.State != STATE_RECORDED {
 			continue
 		}

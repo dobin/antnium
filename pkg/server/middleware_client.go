@@ -32,7 +32,7 @@ func (m *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 	packetInfo := m.packetDb.updateFromClient(packet)
 
 	// Notify UI
-	m.channelFrontendSend <- *packetInfo
+	m.frontendSend <- *packetInfo
 
 	return nil
 }
@@ -56,7 +56,7 @@ func (m *Middleware) ClientGetPacket(computerId string, remoteAddr string, conne
 	}
 
 	// notify UI about it
-	m.channelFrontendSend <- *packetInfo
+	m.frontendSend <- *packetInfo
 
 	return packetInfo.Packet, true
 }

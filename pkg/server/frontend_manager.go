@@ -3,9 +3,9 @@ package server
 import "github.com/dobin/antnium/pkg/campaign"
 
 type FrontendManager struct {
-	campaign     *campaign.Campaign
-	FrontendRest FrontendRest
-	FrontendWs   FrontendWs
+	campaign  *campaign.Campaign
+	Rest      FrontendRest
+	Websocket FrontendWs
 }
 
 func MakeFrontendManager(campaign *campaign.Campaign, middleware *Middleware) FrontendManager {
@@ -13,9 +13,9 @@ func MakeFrontendManager(campaign *campaign.Campaign, middleware *Middleware) Fr
 	frontendWs := MakeFrontendWs(campaign)
 
 	f := FrontendManager{
-		campaign:     campaign,
-		FrontendRest: frontendRest,
-		FrontendWs:   frontendWs,
+		campaign:  campaign,
+		Rest:      frontendRest,
+		Websocket: frontendWs,
 	}
 	return f
 }

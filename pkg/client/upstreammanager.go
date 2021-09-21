@@ -19,8 +19,8 @@ type UpstreamManager struct {
 	config   *ClientConfig
 	campaign *campaign.Campaign
 
-	UpstreamRest Upstream
-	UpstreamWs   Upstream
+	Rest      Upstream
+	Websocket Upstream
 
 	reconnectTimer *SleepTimer
 }
@@ -35,8 +35,8 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 		ChannelOutgoing: make(chan model.Packet),
 		config:          config,
 		campaign:        campaign,
-		UpstreamRest:    &upstreamRest,
-		UpstreamWs:      &upstreamWs,
+		Rest:            &upstreamRest,
+		Websocket:       &upstreamWs,
 		reconnectTimer:  &reconnectTimer,
 	}
 	return u
@@ -51,12 +51,12 @@ func (u *UpstreamManager) Connect() {
 		for {
 			// We dont care which upstream we are connected to
 			select {
-			case packet, connected = <-u.UpstreamWs.ChanIncoming():
+			case packet, connected = <-u.Websocket.ChanIncoming():
 				if !connected {
 					u.ReconnectWebsocket() // Blocks until we can reach server again
 					continue               // We are connected again, do as before
 				}
-			case packet, connected = <-u.UpstreamRest.ChanIncoming():
+			case packet, connected = <-u.Rest.ChanIncoming():
 				// No reconnect handling atm
 			}
 
@@ -73,11 +73,11 @@ func (u *UpstreamManager) Connect() {
 				break
 			}
 
-			if u.UpstreamWs.Connected() {
-				u.UpstreamWs.ChanOutgoing() <- packet
+			if u.Websocket.Connected() {
+				u.Websocket.ChanOutgoing() <- packet
 				//break
-			} else if u.UpstreamRest.Connected() {
-				u.UpstreamRest.ChanOutgoing() <- packet
+			} else if u.Rest.Connected() {
+				u.Rest.ChanOutgoing() <- packet
 				//break
 			} else {
 				log.Errorf("UpstreamManager: No active upstreams, drop packet and sleep")
@@ -95,22 +95,22 @@ func (u *UpstreamManager) ConnectRetryForever() error {
 	for {
 		if u.campaign.ClientUseWebsocket {
 			// Try: Websocket
-			err := u.UpstreamWs.Connect()
+			err := u.Websocket.Connect()
 			if err != nil {
 				log.Debugf("UpstreamManager: Trying to connect to upstraem websocket resulted in: %s", err.Error())
 			} else {
 				log.Infof("UpstreamManager: Connected to websocket")
-				u.UpstreamWs.Start()
+				u.Websocket.Start()
 				u.sendClientinfo()
 				break
 			}
 		} else {
-			err := u.UpstreamRest.Connect()
+			err := u.Rest.Connect()
 			if err != nil {
 				log.Debugf("UpstreamManager: Trying to connect to upstream REST resulted in: %s", err.Error())
 			} else {
 				log.Infof("UpstreamManager: Connected to REST")
-				u.UpstreamRest.Start()
+				u.Rest.Start()
 				u.sendClientinfo()
 				break
 			}
@@ -127,7 +127,7 @@ func (u *UpstreamManager) ConnectRetryForever() error {
 func (u *UpstreamManager) ReconnectWebsocket() {
 	// Throw away old UpstreamWs, and try to connect again
 	upstreamWs := MakeUpstreamWs(u.config, u.campaign)
-	u.UpstreamWs = &upstreamWs
+	u.Websocket = &upstreamWs
 	log.Infof("UpstreamManager: Upstream websocket disconnect. Retrying...")
 	u.ConnectRetryForever()
 }

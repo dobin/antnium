@@ -55,8 +55,8 @@ func TestDownstreamLocaltcp(t *testing.T) {
 
 	// We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
 	fakeUpstream := makeFakeUpstream()
-	client.UpstreamManager.UpstreamRest = fakeUpstream
-	client.UpstreamManager.UpstreamWs = fakeUpstream
+	client.UpstreamManager.Rest = fakeUpstream
+	client.UpstreamManager.Websocket = fakeUpstream
 
 	// Start client, and downstream listeners
 	client.Start()
@@ -150,8 +150,8 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 
 	// We dont have an upstream, so fake one so we dont do HTTP requests to nowhere
 	fakeUpstream := makeFakeUpstream()
-	client.UpstreamManager.UpstreamRest = fakeUpstream
-	client.UpstreamManager.UpstreamWs = fakeUpstream
+	client.UpstreamManager.Rest = fakeUpstream
+	client.UpstreamManager.Websocket = fakeUpstream
 	client.Start()
 
 	// Test: 1 connected

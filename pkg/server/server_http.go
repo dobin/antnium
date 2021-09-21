@@ -16,30 +16,30 @@ func (s *Server) Serve() {
 	// Admin Authenticated
 	adminRouter := myRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(GetAdminMiddleware(s.Campaign.AdminApiKey))
-	adminRouter.HandleFunc("/packets", s.frontendManager.FrontendRest.adminListPackets)
-	adminRouter.HandleFunc("/packets/{computerId}", s.frontendManager.FrontendRest.adminListPacketsComputerId)
-	adminRouter.HandleFunc("/clients", s.frontendManager.FrontendRest.adminListClients)
+	adminRouter.HandleFunc("/packets", s.frontendManager.Rest.adminListPackets)
+	adminRouter.HandleFunc("/packets/{computerId}", s.frontendManager.Rest.adminListPacketsComputerId)
+	adminRouter.HandleFunc("/clients", s.frontendManager.Rest.adminListClients)
 	//adminRouter.HandleFunc("/addTestPacket", s.adminAddTestPacket)
-	adminRouter.HandleFunc("/addPacket", s.frontendManager.FrontendRest.adminAddPacket)
-	adminRouter.HandleFunc("/campaign", s.frontendManager.FrontendRest.adminGetCampaign)
-	adminRouter.HandleFunc("/uploads", s.frontendManager.FrontendRest.adminGetUploads)
-	adminRouter.HandleFunc("/statics", s.frontendManager.FrontendRest.adminGetStatics)
+	adminRouter.HandleFunc("/addPacket", s.frontendManager.Rest.adminAddPacket)
+	adminRouter.HandleFunc("/campaign", s.frontendManager.Rest.adminGetCampaign)
+	adminRouter.HandleFunc("/uploads", s.frontendManager.Rest.adminGetUploads)
+	adminRouter.HandleFunc("/statics", s.frontendManager.Rest.adminGetStatics)
 	adminRouter.PathPrefix("/upload").Handler(http.StripPrefix("/admin/upload/",
 		http.FileServer(http.Dir("./upload/"))))
 
 	// While technically part of admin, the adminWebsocket cannot be authenticated
 	// via HTTP headers. Make it public. Authenticate in the handler.
-	myRouter.HandleFunc("/adminws", s.frontendManager.FrontendWs.NewConnectionHandler)
+	myRouter.HandleFunc("/adminws", s.frontendManager.Websocket.NewConnectionHandler)
 
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
 	clientRouter.Use(GetClientMiddleware(s.Campaign.ApiKey))
-	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{computerId}", s.connectorManager.ConnectorRest.getPacket) // /getPacket/{computerId}
-	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.connectorManager.ConnectorRest.sendPacket)              // /sendPacket
-	myRouter.HandleFunc("/ws", s.connectorManager.ConnectorWs.wsHandlerClient)
+	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{computerId}", s.connectorManager.Rest.getPacket) // /getPacket/{computerId}
+	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.connectorManager.Rest.sendPacket)              // /sendPacket
+	myRouter.HandleFunc("/ws", s.connectorManager.Websocket.wsHandlerClient)
 
 	// Authentication only via packetId parameter
-	myRouter.HandleFunc(s.Campaign.FileUploadPath+"{packetId}", s.connectorManager.ConnectorRest.uploadFile) // /upload/{packetId}
+	myRouter.HandleFunc(s.Campaign.FileUploadPath+"{packetId}", s.connectorManager.Rest.uploadFile) // /upload/{packetId}
 	// Authentication based on known filenames
 	myRouter.PathPrefix(s.Campaign.FileDownloadPath).Handler(
 		http.StripPrefix(s.Campaign.FileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static

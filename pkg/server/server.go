@@ -42,7 +42,7 @@ func NewServer(srvAddr string) Server {
 			if !ok {
 				break
 			}
-			ok = connectorManager.ConnectorWs.TryViaWebsocket(&packet)
+			ok = connectorManager.Websocket.TryViaWebsocket(&packet)
 			if ok {
 				packetInfo, err := middleware.packetDb.sentToClient(packet.PacketId, "")
 				if err != nil {
@@ -62,7 +62,7 @@ func NewServer(srvAddr string) Server {
 			if !ok {
 				break
 			}
-			frontendManager.FrontendWs.channelDistributor <- packet
+			frontendManager.Websocket.channelDistributor <- packet
 		}
 	}()
 
@@ -75,7 +75,7 @@ func NewServer(srvAddr string) Server {
 		for {
 			time.Sleep(10 * time.Second)
 
-			c := connectorManager.ConnectorWs.clients
+			c := connectorManager.Websocket.clients
 			for computerId, conn := range c {
 				if conn == nil {
 					continue
@@ -111,11 +111,11 @@ func (s *Server) Shutdown() {
 	}
 
 	// And our websockets..
-	s.connectorManager.ConnectorWs.Shutdown()
-	s.frontendManager.FrontendWs.Shutdown()
+	s.connectorManager.Websocket.Shutdown()
+	s.frontendManager.Websocket.Shutdown()
 
-	close(s.Middleware.channelConnectorSend)
-	close(s.Middleware.channelFrontendSend)
+	close(s.Middleware.connectorSend)
+	close(s.Middleware.frontendSend)
 }
 
 func (s *Server) DbLoad() error {

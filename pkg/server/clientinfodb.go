@@ -7,23 +7,25 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type ClientInfoMap map[string]*ClientInfo
+
 type ClientInfoDb struct {
 	// Needs to be a pointer to ClientInfo so we can change its values
-	clientInfoDb map[string]*ClientInfo
+	clients ClientInfoMap
 }
 
 func MakeClientInfoDb() ClientInfoDb {
 	db := ClientInfoDb{
-		make(map[string]*ClientInfo),
+		make(ClientInfoMap),
 	}
 	return db
 }
 
 func (db *ClientInfoDb) updateFor(computerId string, ip string, connectorType string) {
-	if _, ok := db.clientInfoDb[computerId]; !ok {
+	if _, ok := db.clients[computerId]; !ok {
 		log.Infof("New client %s: %s via %s", ip, computerId, connectorType)
 		// Init, without ping (misses a lot of data)
-		db.clientInfoDb[computerId] = &ClientInfo{
+		db.clients[computerId] = &ClientInfo{
 			ComputerId: computerId,
 			FirstSeen:  time.Now(),
 			LastSeen:   time.Now(),
@@ -39,16 +41,16 @@ func (db *ClientInfoDb) updateFor(computerId string, ip string, connectorType st
 		}
 	} else {
 		// Update
-		db.clientInfoDb[computerId].LastSeen = time.Now()
-		db.clientInfoDb[computerId].LastIp = ip
-		db.clientInfoDb[computerId].ConnectorType = connectorType
+		db.clients[computerId].LastSeen = time.Now()
+		db.clients[computerId].LastIp = ip
+		db.clients[computerId].ConnectorType = connectorType
 	}
 }
 
 func (db *ClientInfoDb) updateFromClientinfo(computerId, ip string, connectorType string, response model.PacketResponse) {
-	if _, ok := db.clientInfoDb[computerId]; !ok {
+	if _, ok := db.clients[computerId]; !ok {
 		// Init
-		db.clientInfoDb[computerId] = &ClientInfo{
+		db.clients[computerId] = &ClientInfo{
 			ComputerId: computerId,
 			FirstSeen:  time.Now(),
 			LastSeen:   time.Now(),
@@ -77,26 +79,26 @@ func (db *ClientInfoDb) updateFromClientinfo(computerId, ip string, connectorTyp
 		return
 	}
 
-	db.clientInfoDb[computerId].Hostname = hostname
-	db.clientInfoDb[computerId].LocalIps = localIps
-	db.clientInfoDb[computerId].Arch = arch
-	db.clientInfoDb[computerId].Processes = processes
-	db.clientInfoDb[computerId].IsAdmin = isAdmin
-	db.clientInfoDb[computerId].IsElevated = isElevated
+	db.clients[computerId].Hostname = hostname
+	db.clients[computerId].LocalIps = localIps
+	db.clients[computerId].Arch = arch
+	db.clients[computerId].Processes = processes
+	db.clients[computerId].IsAdmin = isAdmin
+	db.clients[computerId].IsElevated = isElevated
 }
 
 func (db *ClientInfoDb) AllAsList() []ClientInfo {
-	v := make([]ClientInfo, 0, len(db.clientInfoDb))
-	for _, value := range db.clientInfoDb {
+	v := make([]ClientInfo, 0, len(db.clients))
+	for _, value := range db.clients {
 		v = append(v, *value)
 	}
 	return v
 }
 
-func (db *ClientInfoDb) All() map[string]*ClientInfo {
-	return db.clientInfoDb
+func (db *ClientInfoDb) All() ClientInfoMap {
+	return db.clients
 }
 
-func (db *ClientInfoDb) Set(clients map[string]*ClientInfo) {
-	db.clientInfoDb = clients
+func (db *ClientInfoDb) Set(clients ClientInfoMap) {
+	db.clients = clients
 }

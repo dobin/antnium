@@ -117,7 +117,7 @@ func TestUpstreamServerWsConnectLate(t *testing.T) {
 
 	// Test: should have no server connection
 	time.Sleep(10 * time.Millisecond)
-	if client.UpstreamManager.UpstreamWs.Connected() {
+	if client.UpstreamManager.Websocket.Connected() {
 		t.Error("Client connected?")
 		return
 	}
@@ -169,7 +169,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	}
 
 	// Should be true anyway, as we waited for a packet above
-	if !client.UpstreamManager.UpstreamWs.Connected() {
+	if !client.UpstreamManager.Websocket.Connected() {
 		t.Error("Client not connected?")
 		return
 	}
@@ -180,7 +180,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	time.Sleep(time.Millisecond * 10) // give time to really shutdown
 
 	// Check if we lost connection
-	if client.UpstreamManager.UpstreamWs.Connected() {
+	if client.UpstreamManager.Websocket.Connected() {
 		t.Error("Client connected?")
 		return
 	}
@@ -201,7 +201,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	}
 
 	// Should be true, but test it anyway
-	if !client.UpstreamManager.UpstreamWs.Connected() {
+	if !client.UpstreamManager.Websocket.Connected() {
 		t.Error("Client not connected?")
 		return
 	}
@@ -226,7 +226,7 @@ func TestUpstreamServerRestConnectLate(t *testing.T) {
 
 	// Test: should have no server connection
 	time.Sleep(10 * time.Millisecond)
-	if client.UpstreamManager.UpstreamWs.Connected() {
+	if client.UpstreamManager.Websocket.Connected() {
 		t.Error("Client connected?")
 		return
 	}
