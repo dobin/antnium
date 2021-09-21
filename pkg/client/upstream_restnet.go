@@ -5,21 +5,21 @@ import (
 	"net/http"
 )
 
-func (d UpstreamRest) PacketGetUrl() string {
-	return d.campaign.ServerUrl + d.campaign.PacketGetPath + d.config.ComputerId
+func (u *UpstreamRest) PacketGetUrl() string {
+	return u.campaign.ServerUrl + u.campaign.PacketGetPath + u.config.ComputerId
 }
 
-func (d UpstreamRest) PacketSendUrl() string {
-	return d.campaign.ServerUrl + d.campaign.PacketSendPath
+func (u *UpstreamRest) PacketSendUrl() string {
+	return u.campaign.ServerUrl + u.campaign.PacketSendPath
 }
 
-func (d UpstreamRest) HttpGet(url string) (*http.Response, error) {
+func (u *UpstreamRest) HttpGet(url string) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Session-Token", d.campaign.ApiKey)
+	req.Header.Set("X-Session-Token", u.campaign.ApiKey)
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -27,13 +27,13 @@ func (d UpstreamRest) HttpGet(url string) (*http.Response, error) {
 	return res, nil
 }
 
-func (d UpstreamRest) HttpPost(url string, data *bytes.Reader) (*http.Response, error) {
+func (u *UpstreamRest) HttpPost(url string, data *bytes.Reader) (*http.Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, data)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Session-Token", d.campaign.ApiKey)
+	req.Header.Set("X-Session-Token", u.campaign.ApiKey)
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err

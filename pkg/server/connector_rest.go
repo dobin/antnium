@@ -28,7 +28,7 @@ func MakeConnectorRest(campaign *campaign.Campaign, middleware *Middleware) Conn
 }
 
 // getPacket provides a client with new packets, if any
-func (s *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
+func (co *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
 
@@ -36,14 +36,14 @@ func (s *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	packet, ok := s.middleware.ClientGetPacket(computerId, r.RemoteAddr, "rest")
+	packet, ok := co.middleware.ClientGetPacket(computerId, r.RemoteAddr, "rest")
 	if !ok {
 		// No packet, just return
 		return
 	}
 
 	// Encode the packet and send it
-	jsonData, err := s.coder.EncodeData(packet)
+	jsonData, err := co.coder.EncodeData(packet)
 	if err != nil {
 		return
 	}
@@ -53,28 +53,28 @@ func (s *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
 }
 
 // sendPacket receives packet answers from client
-func (s *ConnectorRest) sendPacket(rw http.ResponseWriter, r *http.Request) {
+func (co *ConnectorRest) sendPacket(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error("ConnectorRest: Could not read body")
 		return
 	}
-	packet, err := s.coder.DecodeData(reqBody)
+	packet, err := co.coder.DecodeData(reqBody)
 	if err != nil {
 		log.Error("ConnectorRest: Could not decode")
 		return
 	}
 
 	common.LogPacket("ConnectorRest:FromClient", packet)
-	s.middleware.ClientSendPacket(packet, r.RemoteAddr, "rest")
+	co.middleware.ClientSendPacket(packet, r.RemoteAddr, "rest")
 	fmt.Fprint(rw, "asdf")
 }
 
-func (s *ConnectorRest) uploadFile(w http.ResponseWriter, r *http.Request) {
+func (co *ConnectorRest) uploadFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	packetId := vars["packetId"]
 
-	s.middleware.ClientUploadFile(packetId, r.Body)
+	co.middleware.ClientUploadFile(packetId, r.Body)
 
 	fmt.Fprintf(w, "ok\n")
 }

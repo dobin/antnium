@@ -22,7 +22,7 @@ func MakeCoder(campaign *campaign.Campaign) Coder {
 	return w
 }
 
-func (s *Coder) EncodeData(packet Packet) ([]byte, error) {
+func (k *Coder) EncodeData(packet Packet) ([]byte, error) {
 	// Go to JSON
 	data, err := json.Marshal(packet)
 	if err != nil {
@@ -30,7 +30,7 @@ func (s *Coder) EncodeData(packet Packet) ([]byte, error) {
 	}
 
 	// JSON to ZIP
-	if s.campaign.WithZip {
+	if k.campaign.WithZip {
 		var b bytes.Buffer
 		w := zlib.NewWriter(&b)
 		w.Write(data)
@@ -39,8 +39,8 @@ func (s *Coder) EncodeData(packet Packet) ([]byte, error) {
 	}
 
 	// encrypt ZIP
-	if s.campaign.WithEnc {
-		data, err = s.encryptData(data)
+	if k.campaign.WithEnc {
+		data, err = k.encryptData(data)
 		if err != nil {
 			return nil, err
 		}
@@ -49,19 +49,19 @@ func (s *Coder) EncodeData(packet Packet) ([]byte, error) {
 	return data, nil
 }
 
-func (s *Coder) DecodeData(data []byte) (Packet, error) {
+func (k *Coder) DecodeData(data []byte) (Packet, error) {
 	var err error
 
 	// Cypertext to ZIP
-	if s.campaign.WithEnc {
-		data, err = s.decryptData(data)
+	if k.campaign.WithEnc {
+		data, err = k.decryptData(data)
 		if err != nil {
 			return Packet{}, err
 		}
 	}
 
 	// ZIP to JSON
-	if s.campaign.WithZip {
+	if k.campaign.WithZip {
 		var out bytes.Buffer
 		r, err := zlib.NewReader(bytes.NewReader(data))
 		if err != nil {
@@ -85,8 +85,8 @@ func (s *Coder) DecodeData(data []byte) (Packet, error) {
 	return packet, nil
 }
 
-func (s *Coder) encryptData(plaintext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(s.campaign.EncKey)
+func (k *Coder) encryptData(plaintext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(k.campaign.EncKey)
 	if err != nil {
 		return nil, err
 	}
@@ -105,8 +105,8 @@ func (s *Coder) encryptData(plaintext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func (s *Coder) decryptData(ciphertext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(s.campaign.EncKey)
+func (k *Coder) decryptData(ciphertext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(k.campaign.EncKey)
 	if err != nil {
 		return nil, err
 	}

@@ -41,12 +41,12 @@ func MakeUpstreamWs(config *ClientConfig, campaign *campaign.Campaign) UpstreamW
 }
 
 // Connect creates a WS connection to the server, or returns an error
-func (d *UpstreamWs) Connect() error {
+func (u *UpstreamWs) Connect() error {
 	//u := url.URL{Scheme: "ws", Host: *addr, Path: "/echo"}
-	myUrl := strings.Replace(d.campaign.ServerUrl, "http", "ws", 1) + d.campaign.ClientWebsocketPath
+	myUrl := strings.Replace(u.campaign.ServerUrl, "http", "ws", 1) + u.campaign.ClientWebsocketPath
 	var ws *websocket.Conn
 	var err error
-	proxyUrl, ok := d.campaign.GetProxy()
+	proxyUrl, ok := u.campaign.GetProxy()
 	if ok {
 		parsedUrl, err := url.Parse(proxyUrl)
 		if err != nil {
@@ -70,8 +70,8 @@ func (d *UpstreamWs) Connect() error {
 
 	// Authentication
 	authToken := model.ClientWebSocketAuth{
-		Key:        "antnium", // d.campaign.ApiKey,
-		ComputerId: d.config.ComputerId,
+		Key:        "antnium", // u.campaign.ApiKey,
+		ComputerId: u.config.ComputerId,
 	}
 	data, err := json.Marshal(authToken)
 	if err != nil {
@@ -82,63 +82,63 @@ func (d *UpstreamWs) Connect() error {
 		return err
 	}
 
-	d.wsConn = ws
+	u.wsConn = ws
 
 	return nil
 }
 
 // Start starts threads responsible to receveive/send packets from the server via WS. lifetime:websocket connection
-func (d *UpstreamWs) Start() {
+func (u *UpstreamWs) Start() {
 	// Thread: Incoming websocket message reader
 	go func() {
-		defer d.wsConn.Close()
+		defer u.wsConn.Close()
 		for {
 			// Get packets (blocking)
-			_, message, err := d.wsConn.ReadMessage()
+			_, message, err := u.wsConn.ReadMessage()
 			if err != nil {
 				// e.g.: Server quit
 				//log.Errorf("WS read error: %s", err.Error())
 
 				// Notify that we are disconnected
 				log.Debug("UpstreamWs: Start(): Close!")
-				close(d.ChanIncoming()) // Notify UpstreamManager
-				close(d.ChanOutgoing()) // Notify ChanOutgoing() thread
-				d.Shutdown()
+				close(u.ChanIncoming()) // Notify UpstreamManager
+				close(u.ChanOutgoing()) // Notify ChanOutgoing() thread
+				u.Shutdown()
 				break // And exit thread
 			}
 
-			packet, err := d.coder.DecodeData(message)
+			packet, err := u.coder.DecodeData(message)
 			if err != nil {
 				log.Errorf("UpstreamWs: Could not decode incoming message (ignore): %s", err.Error())
 				continue
 			}
 			log.Debugf("UpstreamWs: Received from server via websocket")
 
-			d.ChanIncoming() <- packet
+			u.ChanIncoming() <- packet
 		}
 	}()
 
 	// Thread: Outgoing websocket message writer
 	go func() {
 		for {
-			packet, ok := <-d.ChanOutgoing()
+			packet, ok := <-u.ChanOutgoing()
 			if !ok {
 				break
 			}
 
-			packetData, err := d.coder.EncodeData(packet)
+			packetData, err := u.coder.EncodeData(packet)
 			if err != nil {
 				log.Error("UpstreamWs: Could not encode outgoing packet")
 				return
 			}
 			common.LogPacketDebug("UpstreamWs:OutgoingThread", packet)
 
-			if d.wsConn == nil {
+			if u.wsConn == nil {
 				log.Debugf("UpstreamWs: wsConn is nil, shutdown thread")
 				break
 			}
 
-			err = d.wsConn.WriteMessage(websocket.TextMessage, packetData)
+			err = u.wsConn.WriteMessage(websocket.TextMessage, packetData)
 			if err != nil {
 				log.Errorf("UpstreamWs: could not write packet: %s", err.Error())
 				//d.Shutdown()
@@ -149,8 +149,8 @@ func (d *UpstreamWs) Start() {
 }
 
 // Connected returns false if we know that that websocket connection is dead
-func (d *UpstreamWs) Connected() bool {
-	if d.wsConn == nil {
+func (u *UpstreamWs) Connected() bool {
+	if u.wsConn == nil {
 		return false
 	} else {
 		return true
@@ -158,15 +158,15 @@ func (d *UpstreamWs) Connected() bool {
 }
 
 // Shutdown closes the underlying websocket
-func (d *UpstreamWs) Shutdown() {
-	d.wsConn.Close()
-	d.wsConn = nil
+func (u *UpstreamWs) Shutdown() {
+	u.wsConn.Close()
+	u.wsConn = nil
 }
 
-func (d *UpstreamWs) ChanIncoming() chan model.Packet {
-	return d.chanIncoming
+func (u *UpstreamWs) ChanIncoming() chan model.Packet {
+	return u.chanIncoming
 }
 
-func (d *UpstreamWs) ChanOutgoing() chan model.Packet {
-	return d.chanOutgoing
+func (u *UpstreamWs) ChanOutgoing() chan model.Packet {
+	return u.chanOutgoing
 }

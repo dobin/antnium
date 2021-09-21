@@ -29,21 +29,21 @@ type FrontendWs struct {
 }
 
 func MakeFrontendWs(campaign *campaign.Campaign) FrontendWs {
-	a := FrontendWs{
+	f := FrontendWs{
 		campaign,
 		make(map[*websocket.Conn]bool),
 		make(chan PacketInfo),
 		websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
 	}
 
-	go a.Distributor() // FIXME good here?
+	go f.Distributor() // FIXME good here?
 
-	return a
+	return f
 }
 
 // NewConnectionHandler is the entry point for new Frontend/UI websocket connections
-func (a *FrontendWs) NewConnectionHandler(w http.ResponseWriter, r *http.Request) {
-	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
+func (f *FrontendWs) NewConnectionHandler(w http.ResponseWriter, r *http.Request) {
+	ws, err := f.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Errorf("FrontendWs: could not upgrade HTTP to websocket: %s", err.Error())
 		return
@@ -62,23 +62,23 @@ func (a *FrontendWs) NewConnectionHandler(w http.ResponseWriter, r *http.Request
 		log.Warnf("FrontendWs: could not decode authentication: %v", message)
 		return
 	}
-	if string(authToken) != a.campaign.AdminApiKey {
+	if string(authToken) != f.campaign.AdminApiKey {
 		log.Warn("FrontendWs: incorrect key for authentication: " + authToken)
 		return
 	}
 
-	a.registerWs(ws)
+	f.registerWs(ws)
 }
 
 // wsHandler is the entry point for new websocket connections
-func (a *FrontendWs) registerWs(wsConn *websocket.Conn) {
-	a.clients[wsConn] = true
+func (f *FrontendWs) registerWs(wsConn *websocket.Conn) {
+	f.clients[wsConn] = true
 }
 
 // Distributor is a Thread which distributes data to all connected websocket clients. Lifetime: app
-func (a *FrontendWs) Distributor() {
+func (f *FrontendWs) Distributor() {
 	for {
-		packetInfo, ok := <-a.channelDistributor
+		packetInfo, ok := <-f.channelDistributor
 		if !ok {
 			break
 		}
@@ -93,18 +93,18 @@ func (a *FrontendWs) Distributor() {
 		}
 
 		// send to every client that is currently connected
-		for client := range a.clients {
+		for client := range f.clients {
 			err := client.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
 				log.Debugf("FrontendWs::Distributor() error: %s", err)
 				log.Debugf("FrontendWs::Distributor() closing WS socket: %s", client.RemoteAddr())
 				client.Close()
-				delete(a.clients, client)
+				delete(f.clients, client)
 			}
 		}
 	}
 }
 
-func (a *FrontendWs) Shutdown() {
-	close(a.channelDistributor)
+func (f *FrontendWs) Shutdown() {
+	close(f.channelDistributor)
 }

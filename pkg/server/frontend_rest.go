@@ -26,8 +26,8 @@ func MakeFrontendRest(campaign *campaign.Campaign, middleware *Middleware) Front
 	return f
 }
 
-func (s *FrontendRest) adminListPackets(rw http.ResponseWriter, r *http.Request) {
-	packetInfos := s.middleware.FrontendGetAllPacket()
+func (f *FrontendRest) adminListPackets(rw http.ResponseWriter, r *http.Request) {
+	packetInfos := f.middleware.FrontendGetAllPacket()
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("FrontendRest: Could not JSON marshal")
@@ -36,14 +36,14 @@ func (s *FrontendRest) adminListPackets(rw http.ResponseWriter, r *http.Request)
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *FrontendRest) adminListPacketsComputerId(rw http.ResponseWriter, r *http.Request) {
+func (f *FrontendRest) adminListPacketsComputerId(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	computerId := vars["computerId"]
 
 	if computerId == "" {
 		return
 	}
-	packetInfos := s.middleware.FrontendGetPacketById(computerId)
+	packetInfos := f.middleware.FrontendGetPacketById(computerId)
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("FrontendRest: Could not JSON marshal")
@@ -52,8 +52,8 @@ func (s *FrontendRest) adminListPacketsComputerId(rw http.ResponseWriter, r *htt
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request) {
-	hostList := s.middleware.FrontendGetAllClients()
+func (f *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request) {
+	hostList := f.middleware.FrontendGetAllClients()
 	json, err := json.Marshal(hostList)
 	if err != nil {
 		log.Error("FrontendRest: Could not JSON marshal")
@@ -62,7 +62,7 @@ func (s *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request)
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
+func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error("FrontendRest: Could not read body")
@@ -83,15 +83,15 @@ func (s *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.middleware.FrontendAddNewPacket(&packet)
+	err = f.middleware.FrontendAddNewPacket(&packet)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 }
 
-func (s *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
-	json, err := json.Marshal(s.campaign)
+func (f *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
+	json, err := json.Marshal(f.campaign)
 	if err != nil {
 		log.Error("FrontendRest: Could not JSON marshal")
 		return
@@ -99,7 +99,7 @@ func (s *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request)
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
+func (f *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := common.ListDirectory("./upload")
 	if err != nil {
 		log.Error("FrontendRest: Could not list directory ./upload: ", err)
@@ -113,7 +113,7 @@ func (s *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) 
 	fmt.Fprint(rw, string(json))
 }
 
-func (s *FrontendRest) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
+func (f *FrontendRest) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := common.ListDirectory("./static")
 	if err != nil {
 		log.Errorf("FrontendRest: Could not list directory: ./static: %s", err)

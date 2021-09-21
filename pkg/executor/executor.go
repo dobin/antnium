@@ -29,32 +29,32 @@ func MakeExecutor() Executor {
 // Execute will execute the packet according to its PacketType
 // and return the packet with packet.Response set containing the details of the execution
 // and error when something went wrong
-func (p *Executor) Execute(packet model.Packet) (model.Packet, error) {
+func (e *Executor) Execute(packet model.Packet) (model.Packet, error) {
 	var err error
 
 	common.LogPacket("Exec", packet)
 
 	switch packet.PacketType {
 	case "ping":
-		packet.Response, err = p.actionPing(packet.Arguments)
+		packet.Response, err = e.actionPing(packet.Arguments)
 	case "test":
-		packet.Response, err = p.actionTest(packet.Arguments)
+		packet.Response, err = e.actionTest(packet.Arguments)
 	case "shutdown":
-		packet.Response, err = p.actionShutdown(packet.Arguments)
+		packet.Response, err = e.actionShutdown(packet.Arguments)
 	case "exec":
-		packet.Response, err = p.actionExec(packet.Arguments)
+		packet.Response, err = e.actionExec(packet.Arguments)
 	case "fileupload":
-		packet.Response, err = p.actionFileupload(packet.Arguments)
+		packet.Response, err = e.actionFileupload(packet.Arguments)
 	case "filedownload":
-		packet.Response, err = p.actionFiledownload(packet.Arguments)
+		packet.Response, err = e.actionFiledownload(packet.Arguments)
 	case "iOpen":
-		packet.Response, err = p.actionInteractiveShellOpen(packet.Arguments)
+		packet.Response, err = e.actionInteractiveShellOpen(packet.Arguments)
 	case "iIssue":
-		packet.Response, err = p.actionInteractiveShellIssue(packet.Arguments)
+		packet.Response, err = e.actionInteractiveShellIssue(packet.Arguments)
 	case "iClose":
-		packet.Response, err = p.actionInteractiveShellClose(packet.Arguments)
+		packet.Response, err = e.actionInteractiveShellClose(packet.Arguments)
 	case "dir":
-		packet.Response, err = p.actionDir(packet.Arguments)
+		packet.Response, err = e.actionDir(packet.Arguments)
 	default:
 		return packet, fmt.Errorf("packet type not known: %s", packet.PacketType)
 	}
@@ -68,7 +68,7 @@ func (p *Executor) Execute(packet model.Packet) (model.Packet, error) {
 	return packet, nil
 }
 
-func (p *Executor) actionInteractiveShellOpen(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionInteractiveShellOpen(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 	_, force := packetArgument["force"]
 
@@ -77,13 +77,13 @@ func (p *Executor) actionInteractiveShellOpen(packetArgument model.PacketArgumen
 		return ret, err
 	}
 
-	if p.interactiveShell.AlreadyOpen() && !force {
+	if e.interactiveShell.AlreadyOpen() && !force {
 		return ret, fmt.Errorf("already_open")
 	} else {
-		if p.interactiveShell.AlreadyOpen() {
-			p.interactiveShell.execCmd.Process.Kill()
+		if e.interactiveShell.AlreadyOpen() {
+			e.interactiveShell.execCmd.Process.Kill()
 		}
-		stdout, stderr, err := p.interactiveShell.Open(executable, args)
+		stdout, stderr, err := e.interactiveShell.Open(executable, args)
 		if err != nil {
 			return ret, err
 		}
@@ -94,7 +94,7 @@ func (p *Executor) actionInteractiveShellOpen(packetArgument model.PacketArgumen
 	}
 }
 
-func (p *Executor) actionInteractiveShellIssue(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionInteractiveShellIssue(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 	// Check and transform input
 	commandline, ok := packetArgument["commandline"]
@@ -102,7 +102,7 @@ func (p *Executor) actionInteractiveShellIssue(packetArgument model.PacketArgume
 		return ret, fmt.Errorf("missing argument 'commandline'")
 	}
 
-	stdout, stderr, err := p.interactiveShell.Issue(commandline)
+	stdout, stderr, err := e.interactiveShell.Issue(commandline)
 	if err != nil {
 		return ret, err
 	}
@@ -112,15 +112,15 @@ func (p *Executor) actionInteractiveShellIssue(packetArgument model.PacketArgume
 	return ret, nil
 }
 
-func (p *Executor) actionShutdown(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionShutdown(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	os.Exit(0)
 	return nil, nil // Never reached
 }
 
-func (p *Executor) actionInteractiveShellClose(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionInteractiveShellClose(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 
-	err := p.interactiveShell.Close()
+	err := e.interactiveShell.Close()
 	if err != nil {
 		ret["error"] = err.Error()
 		ret["stdout"] = "closed"
@@ -132,19 +132,19 @@ func (p *Executor) actionInteractiveShellClose(packetArgument model.PacketArgume
 	return ret, nil
 }
 
-func (p *Executor) actionPing(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionPing(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 	ret["response"] = "ping answer"
 	return ret, nil
 }
 
-func (p *Executor) actionTest(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionTest(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 	ret["response"] = "response"
 	return ret, nil
 }
 
-func (p *Executor) actionExec(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionExec(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 
 	// Check and transform input done in there sadly
@@ -158,7 +158,7 @@ func (p *Executor) actionExec(packetArgument model.PacketArgument) (model.Packet
 	return ret, err
 }
 
-func (p *Executor) actionFiledownload(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionFiledownload(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 
 	// Check and transform input
@@ -196,7 +196,7 @@ func (p *Executor) actionFiledownload(packetArgument model.PacketArgument) (mode
 	return ret, nil
 }
 
-func (p *Executor) actionFileupload(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionFileupload(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 
 	// Check and transform input
@@ -235,7 +235,7 @@ func (p *Executor) actionFileupload(packetArgument model.PacketArgument) (model.
 	return ret, nil
 }
 
-func (p *Executor) actionDir(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionDir(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
 
 	// Check and transform input

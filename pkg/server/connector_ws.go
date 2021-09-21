@@ -29,8 +29,8 @@ func MakeConnectorWs(campaign *campaign.Campaign, middleware *Middleware) Connec
 	return a
 }
 
-func (cw ConnectorWs) Shutdown() {
-	for _, conn := range cw.clients {
+func (co *ConnectorWs) Shutdown() {
+	for _, conn := range co.clients {
 		if conn != nil {
 			conn.Close()
 		}
@@ -38,8 +38,8 @@ func (cw ConnectorWs) Shutdown() {
 }
 
 // wsHandlerClient is the entry point for new client initiated websocket connections
-func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
-	ws, err := a.wsUpgrader.Upgrade(w, r, nil)
+func (co *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
+	ws, err := co.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Errorf("ClientWebsocket: Could not upgrade http socket: %s", err.Error())
 		return
@@ -62,12 +62,12 @@ func (a *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// register client as auth succeeded
-	a.clients[authToken.ComputerId] = ws
+	co.clients[authToken.ComputerId] = ws
 
-	a.handleWs(authToken.ComputerId, ws)
+	co.handleWs(authToken.ComputerId, ws)
 }
 
-func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
+func (co *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 	if ws == nil {
 		log.Error("ClientWebsocket: handleWs(): invalid websocket connection")
 		return
@@ -81,15 +81,15 @@ func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 			if err != nil {
 				// Websocket closed, clean it up
 				ws.Close()
-				a.clients[computerId] = nil
+				co.clients[computerId] = nil
 				break
 			}
-			packet, err := a.coder.DecodeData(packetData)
+			packet, err := co.coder.DecodeData(packetData)
 			if err != nil {
 				log.Infof("ClientWebsocket: could not handle incoming websocket data (ignore): %s", err.Error())
 				continue
 			}
-			a.middleware.ClientSendPacket(packet, ws.RemoteAddr().String(), "ws")
+			co.middleware.ClientSendPacket(packet, ws.RemoteAddr().String(), "ws")
 		}
 	}()
 
@@ -101,14 +101,14 @@ func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 	//go func() {
 	packets := make([]model.Packet, 0)
 	for {
-		packet, ok := a.middleware.ClientGetPacket(computerId, ws.RemoteAddr().String(), "ws")
+		packet, ok := co.middleware.ClientGetPacket(computerId, ws.RemoteAddr().String(), "ws")
 		if !ok {
 			break
 		}
 		packets = append(packets, packet)
 	}
 	for _, packet := range packets {
-		ok := a.TryViaWebsocket(&packet)
+		ok := co.TryViaWebsocket(&packet)
 		if !ok {
 			log.Errorf("ClientWebsocket: Sending of initial packets via websocket failed")
 		}
@@ -117,8 +117,8 @@ func (a *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 
 }
 
-func (a *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
-	clientConn, ok := a.clients[packet.ComputerId]
+func (co *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
+	clientConn, ok := co.clients[packet.ComputerId]
 	if !ok {
 		// All ok, not connected to ws
 		return false
@@ -129,7 +129,7 @@ func (a *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
 	}
 
 	// Encode the packet and send it
-	jsonData, err := a.coder.EncodeData(*packet)
+	jsonData, err := co.coder.EncodeData(*packet)
 	if err != nil {
 		return false
 	}

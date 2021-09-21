@@ -91,10 +91,10 @@ func MakeClientConfig() ClientConfig {
 	return db
 }
 
-func (c *ClientConfig) MakeClientPacket(packetType string, arguments model.PacketArgument, response model.PacketResponse) *model.Packet {
+func (cc *ClientConfig) MakeClientPacket(packetType string, arguments model.PacketArgument, response model.PacketResponse) *model.Packet {
 	packet := model.NewPacket(
 		packetType,
-		c.ComputerId,
+		cc.ComputerId,
 		common.GetRandomPacketId(),
 		arguments,
 		response,

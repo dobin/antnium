@@ -12,11 +12,11 @@ import (
 )
 
 // ClientSendPacket handles packets sent by client (either answers, or client-initiated)
-func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, connectorType string) error {
+func (m *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, connectorType string) error {
 	common.LogPacketDebug("Server:ClientSendPacket()", packet)
 
 	// Update Client DB
-	s.clientInfoDb.updateFor(packet.ComputerId, remoteAddr, connectorType)
+	m.clientInfoDb.updateFor(packet.ComputerId, remoteAddr, connectorType)
 
 	// Special care packets
 	if packet.PacketType == "ping" {
@@ -25,45 +25,45 @@ func (s *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 	} else if packet.PacketType == "clientinfo" {
 		// Update our DB with client info data.
 		// But still store it, and broadcast it (used in the frontend to detect newly connected clients)
-		s.clientInfoDb.updateFromClientinfo(packet.ComputerId, remoteAddr, connectorType, packet.Response)
+		m.clientInfoDb.updateFromClientinfo(packet.ComputerId, remoteAddr, connectorType, packet.Response)
 	}
 
 	// Update Package DB
-	packetInfo := s.packetDb.updateFromClient(packet)
+	packetInfo := m.packetDb.updateFromClient(packet)
 
 	// Notify UI
-	s.channelFrontendSend <- *packetInfo
+	m.channelFrontendSend <- *packetInfo
 
 	return nil
 }
 
-func (s *Middleware) ClientGetPacket(computerId string, remoteAddr string, connectorType string) (model.Packet, bool) {
+func (m *Middleware) ClientGetPacket(computerId string, remoteAddr string, connectorType string) (model.Packet, bool) {
 	log.Debugf("Middleware: ClientGetPacket(): %s", computerId)
 
 	// Update last seen for this host
-	s.clientInfoDb.updateFor(computerId, remoteAddr, connectorType)
+	m.clientInfoDb.updateFor(computerId, remoteAddr, connectorType)
 
 	// Check if we have any packets available
-	packetInfo, err := s.packetDb.getPacketForClient(computerId)
+	packetInfo, err := m.packetDb.getPacketForClient(computerId)
 	if err != nil {
 		return model.Packet{}, false
 	}
 
 	// Update packet infos
-	packetInfo, err = s.packetDb.sentToClient(packetInfo.Packet.PacketId, remoteAddr)
+	packetInfo, err = m.packetDb.sentToClient(packetInfo.Packet.PacketId, remoteAddr)
 	if err != nil {
 		log.Error("Middleware: error updating packetinfo of")
 	}
 
 	// notify UI about it
-	s.channelFrontendSend <- *packetInfo
+	m.channelFrontendSend <- *packetInfo
 
 	return packetInfo.Packet, true
 }
 
-func (s *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
+func (m *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
 	// Check if request for this file really exists
-	packetInfo, ok := s.packetDb.ByPacketId(packetId)
+	packetInfo, ok := m.packetDb.ByPacketId(packetId)
 	if !ok {
 		log.Errorf("Middleware: Client attempted to upload a file with an expired packet with packetid: %s",
 			packetId)
