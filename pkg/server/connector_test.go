@@ -10,7 +10,7 @@ import (
 func TestConnectorHttp(t *testing.T) {
 	//defer goleak.VerifyNone(t)
 
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
@@ -51,7 +51,7 @@ func TestConnectorHttp(t *testing.T) {
 func TestConnectorWs(t *testing.T) {
 	//defer goleak.VerifyNone(t)
 
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	computerId := "computerid-23"
 
 	// Server in background, checking via client

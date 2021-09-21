@@ -31,7 +31,7 @@ func makeSimpleCmdPacket(computerId string, packetId string, commandline string)
 func TestClientExecWs(t *testing.T) {
 	//t.Parallel()
 
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
@@ -56,14 +56,14 @@ func TestClientExecWs(t *testing.T) {
 
 	// Wait for packet answer
 	for {
-		if s.Middleware.FrontendGetAllPacket()[0].State == server.STATE_ANSWERED {
+		if s.Middleware.FrontendAllPacket()[0].State == server.STATE_ANSWERED {
 			break
 		}
 		time.Sleep(time.Millisecond * 50)
 	}
 
 	// Check them
-	packetInfos := s.Middleware.FrontendGetAllPacket()
+	packetInfos := s.Middleware.FrontendAllPacket()
 	if packetInfos[0].Packet.Arguments["commandline"] != "echo test" {
 		t.Error("wrong packet")
 	}
@@ -81,7 +81,7 @@ func TestClientParalellExecWs(t *testing.T) {
 	//t.Parallel()
 
 	// Add two commands, one sleep, one echo
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	computerId := "computerid-23"
 
 	// Server in background, checking via client
@@ -106,17 +106,17 @@ func TestClientParalellExecWs(t *testing.T) {
 	n := 0
 	for {
 		n += 1
-		if s.Middleware.FrontendGetAllPacket()[1].State == server.STATE_ANSWERED {
+		if s.Middleware.FrontendAllPacket()[1].State == server.STATE_ANSWERED {
 			break
 		}
 		if n == 10 {
-			t.Errorf("Packet not answerd in time: %v", s.Middleware.FrontendGetAllPacket())
+			t.Errorf("Packet not answerd in time: %v", s.Middleware.FrontendAllPacket())
 			return
 		}
 		time.Sleep(time.Millisecond * 50)
 	}
 
-	packetInfos := s.Middleware.FrontendGetAllPacket()
+	packetInfos := s.Middleware.FrontendAllPacket()
 	if len(packetInfos) != 3 { // two packets and a clientinfo
 		t.Error("Not 3")
 		return

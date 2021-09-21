@@ -85,7 +85,7 @@ func (db *ClientInfoDb) updateFromClientinfo(computerId, ip string, connectorTyp
 	db.clientInfoDb[computerId].IsElevated = isElevated
 }
 
-func (db *ClientInfoDb) getAsList() []ClientInfo {
+func (db *ClientInfoDb) AllAsList() []ClientInfo {
 	v := make([]ClientInfo, 0, len(db.clientInfoDb))
 	for _, value := range db.clientInfoDb {
 		v = append(v, *value)
@@ -93,7 +93,7 @@ func (db *ClientInfoDb) getAsList() []ClientInfo {
 	return v
 }
 
-func (db *ClientInfoDb) getAll() map[string]*ClientInfo {
+func (db *ClientInfoDb) All() map[string]*ClientInfo {
 	return db.clientInfoDb
 }
 

@@ -74,8 +74,8 @@ func LogPacketDebug(s string, packet model.Packet) {
 	}).Debug(s)
 }
 
-// GetFreePort asks the kernel for a free open port that is ready to use.
-func GetFreePort() (string, error) {
+// FreePort asks the kernel for a free open port that is ready to use.
+func FreePort() (string, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
 	if err != nil {
 		log.Error("ResolveTCPAddr")

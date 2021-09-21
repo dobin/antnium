@@ -27,7 +27,7 @@ func MakeFrontendRest(campaign *campaign.Campaign, middleware *Middleware) Front
 }
 
 func (f *FrontendRest) adminListPackets(rw http.ResponseWriter, r *http.Request) {
-	packetInfos := f.middleware.FrontendGetAllPacket()
+	packetInfos := f.middleware.FrontendAllPacket()
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("FrontendRest: Could not JSON marshal")
@@ -53,7 +53,7 @@ func (f *FrontendRest) adminListPacketsComputerId(rw http.ResponseWriter, r *htt
 }
 
 func (f *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request) {
-	hostList := f.middleware.FrontendGetAllClients()
+	hostList := f.middleware.FrontendAllClients()
 	json, err := json.Marshal(hostList)
 	if err != nil {
 		log.Error("FrontendRest: Could not JSON marshal")

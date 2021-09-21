@@ -30,7 +30,7 @@ func (db *PacketDb) add(packetInfo *PacketInfo) {
 	db.mutex.Unlock()
 }
 
-func (db *PacketDb) getAll() []*PacketInfo {
+func (db *PacketDb) All() []*PacketInfo {
 	return db.packetInfo
 }
 

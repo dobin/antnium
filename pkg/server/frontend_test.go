@@ -8,7 +8,7 @@ import (
 
 // TestServerPacketIdDuplicate checks if server throws an error when adding two packets with same PacketId
 func TestServerPacketIdDuplicate(t *testing.T) {
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	computerId := "computerid-23"
 	packetId := "packetid-43"
 

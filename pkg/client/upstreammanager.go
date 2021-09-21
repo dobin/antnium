@@ -144,7 +144,7 @@ func (u *UpstreamManager) sendClientinfo() {
 	model.AddArrayToResponse("localIp", u.config.LocalIps, response)
 	response["arch"] = u.config.Arch
 	model.AddArrayToResponse("processes", u.config.Processes, response)
-	isElevated, isAdmin, err := arch.GetPermissions()
+	isElevated, isAdmin, err := arch.Permissions()
 	if err == nil {
 		response["isElevated"] = strconv.FormatBool(isElevated)
 		response["isAdmin"] = strconv.FormatBool(isAdmin)

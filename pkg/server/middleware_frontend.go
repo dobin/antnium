@@ -20,13 +20,13 @@ func (m *Middleware) FrontendAddNewPacket(packet *model.Packet) error {
 	return nil
 }
 
-func (m *Middleware) FrontendGetAllPacket() []*PacketInfo {
-	return m.packetDb.getAll()
+func (m *Middleware) FrontendAllPacket() []*PacketInfo {
+	return m.packetDb.All()
 }
 
 func (m *Middleware) FrontendGetPacketById(computerId string) []PacketInfo {
 	var filteredPackets []PacketInfo = make([]PacketInfo, 0)
-	packetInfos := m.packetDb.getAll()
+	packetInfos := m.packetDb.All()
 	for _, packetInfo := range packetInfos {
 		if packetInfo.Packet.ComputerId == computerId {
 			filteredPackets = append(filteredPackets, *packetInfo)
@@ -35,8 +35,8 @@ func (m *Middleware) FrontendGetPacketById(computerId string) []PacketInfo {
 	return filteredPackets
 }
 
-func (m *Middleware) FrontendGetAllClients() []ClientInfo {
-	return m.clientInfoDb.getAsList()
+func (m *Middleware) FrontendAllClients() []ClientInfo {
+	return m.clientInfoDb.AllAsList()
 }
 
 /*

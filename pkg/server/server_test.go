@@ -22,7 +22,7 @@ func makeSimpleTestPacket(computerId string, packetId string) *model.Packet {
 
 // TestServerClientIntegrationRest will check if client and server can communicate via HTTP.
 func TestServerClientIntegrationRest(t *testing.T) {
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	computerId := "computerid-23"
 	packetId := "packetid-42"
 
@@ -54,7 +54,7 @@ func TestServerClientIntegrationRest(t *testing.T) {
 
 // TestServerClientIntegrationWebsocket will check if client and server can communicate via websocket
 func TestServerClientIntegrationWebsocket(t *testing.T) {
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	computerId := "computerid-23"
 	packetId := "packetid-42"
 
@@ -116,7 +116,7 @@ func TestServerAuthAdmin(t *testing.T) {
 	var err error
 
 	// Start server in the background
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	s := NewServer("127.0.0.1:" + port)
 	go s.Serve()
 

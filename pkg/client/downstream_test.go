@@ -44,8 +44,8 @@ func TestDownstreamClient(t *testing.T) {
 func TestDownstreamLocaltcp(t *testing.T) {
 	//t.Parallel()
 
-	port, _ := common.GetFreePort()
-	portDownstream, _ := common.GetFreePort()
+	port, _ := common.FreePort()
+	portDownstream, _ := common.FreePort()
 	downstreamTcpAddr := "localhost:" + portDownstream
 
 	// Test Localtcp Downstream
@@ -139,8 +139,8 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 	//t.Parallel()
 
 	var err error
-	port, _ := common.GetFreePort()
-	portDownstream, _ := common.GetFreePort()
+	port, _ := common.FreePort()
+	portDownstream, _ := common.FreePort()
 	downstreamTcpAddr := "localhost:" + portDownstream
 
 	// Test Localtcp Downstream

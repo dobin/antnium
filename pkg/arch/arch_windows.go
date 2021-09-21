@@ -15,7 +15,7 @@ import (
 )
 
 // https://coolaj86.com/articles/golang-and-windows-and-admins-oh-my/
-func GetPermissions() (bool, bool, error) {
+func Permissions() (bool, bool, error) {
 	var sid *windows.SID
 
 	// Although this looks scary, it is directly copied from the

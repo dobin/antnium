@@ -156,7 +156,7 @@ func (s *Server) DbLoad() error {
 
 func (s *Server) DumpDbPackets() error {
 	log.Debug("DB Dump: Packets")
-	packets := s.Middleware.packetDb.getAll()
+	packets := s.Middleware.packetDb.All()
 	packetBytes, err := json.Marshal(packets)
 	if err != nil {
 		log.Errorf("Server: DumpDbPackets(): could not marshal: %s", err.Error())
@@ -174,7 +174,7 @@ func (s *Server) DumpDbPackets() error {
 
 func (s *Server) DumpDbClients() error {
 	log.Debug("DB Dump: Clients")
-	clients := s.Middleware.clientInfoDb.getAll()
+	clients := s.Middleware.clientInfoDb.All()
 	clientsBytes, err := json.Marshal(clients)
 	if err != nil {
 		log.Errorf("Server: DumpDbClients(): could not marshal: %s", err.Error())
@@ -199,7 +199,7 @@ func (s *Server) PeriodicDbDump() {
 		time.Sleep(dbDumpInterval)
 
 		// Packets
-		packets := s.Middleware.packetDb.getAll()
+		packets := s.Middleware.packetDb.All()
 		packetBytes, err := json.Marshal(packets)
 		if err != nil {
 			log.Errorf("Server: PeriodicDbDump(): could not marshal config json: %v", err)
@@ -211,7 +211,7 @@ func (s *Server) PeriodicDbDump() {
 		}
 
 		// Clients
-		clients := s.Middleware.clientInfoDb.getAll()
+		clients := s.Middleware.clientInfoDb.All()
 		if len(clients) != lastClientsLen {
 			s.DumpDbClients() // ignore err
 			lastClientsLen = len(clients)

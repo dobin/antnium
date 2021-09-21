@@ -18,7 +18,7 @@ func TestPacketDb(t *testing.T) {
 	packetDb.add(&packetInfo)
 
 	// Get all packets
-	packetInfoAll := packetDb.getAll()
+	packetInfoAll := packetDb.All()
 	if len(packetInfoAll) != 1 {
 		t.Errorf("Error len packetInfoAll")
 	}
@@ -51,7 +51,7 @@ func TestPacketDb(t *testing.T) {
 	}
 
 	// Backend: Check if exist and right state
-	packetInfoAll = packetDb.getAll()
+	packetInfoAll = packetDb.All()
 	if packetInfoAll[0].State != STATE_SENT {
 		t.Errorf("Error not right state 2")
 	}
@@ -61,7 +61,7 @@ func TestPacketDb(t *testing.T) {
 	packetDb.updateFromClient(c)
 
 	// Server: Should be right state
-	packetInfoAll = packetDb.getAll()
+	packetInfoAll = packetDb.All()
 	if packetInfoAll[0].State != STATE_ANSWERED {
 		t.Errorf("Error not right state 3")
 	}

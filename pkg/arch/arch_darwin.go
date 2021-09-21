@@ -12,7 +12,7 @@ import (
 	//log "github.com/sirupsen/logrus"
 )
 
-func GetPermissions() (bool, bool, error) {
+func Permissions() (bool, bool, error) {
 	isElevated := false
 	isAdmin := false
 	/* GO1.16

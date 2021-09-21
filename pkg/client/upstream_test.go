@@ -30,7 +30,7 @@ func makeSimpleTestPacketInfo(computerId string, packetId string) *server.Packet
 func TestUpstreamServerRest(t *testing.T) {
 	//t.Parallel()
 
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	packetId := "packetid-421"
 	computerId := "TestUpstreamServerRest"
 
@@ -61,7 +61,7 @@ func TestUpstreamServerRest(t *testing.T) {
 func TestUpstreamServerWs(t *testing.T) {
 	//t.Parallel()
 
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	computerId := "TestUpstreamServerWs"
 
 	// Server in background, checking via client
@@ -104,7 +104,7 @@ func TestUpstreamServerWs(t *testing.T) {
 func TestUpstreamServerWsConnectLate(t *testing.T) {
 	//t.Parallel()
 
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	packetId := "packetid-423"
 	computerId := "TestUpstreamServerWsConnectLate"
 
@@ -142,7 +142,7 @@ func TestUpstreamServerWsConnectLate(t *testing.T) {
 func TestUpstreamServerWsReconnect(t *testing.T) {
 	//t.Parallel()
 
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	packetId1 := "packetid-42a"
 	packetId2 := "packetid-42b"
 	computerId := "computerid-23"
@@ -213,7 +213,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 func TestUpstreamServerRestConnectLate(t *testing.T) {
 	//t.Parallel()
 
-	port, _ := common.GetFreePort()
+	port, _ := common.FreePort()
 	packetId := "packetid-42"
 	computerId := "TestUpstreamServerRestConnectLate"
 
