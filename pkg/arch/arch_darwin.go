@@ -28,12 +28,11 @@ func GetPermissions() (bool, bool, error) {
 	return isElevated, isAdmin, nil
 }
 
-func Exec(packetArgument model.PacketArgument) ([]byte, []byte, int, int, error) {
-	stdOut := make([]byte, 0)
-	stdErr := make([]byte, 0)
-	pid := 0
-	exitCode := 0
-	var err error
+func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
+	stdOut = make([]byte, 0)
+	stdErr = make([]byte, 0)
+	pid = 0
+	exitCode = 0
 	err = nil
 
 	processTimeout := 10 * time.Second
