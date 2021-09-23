@@ -126,7 +126,7 @@ func (d *DownstreamLocaltcp) NewConnectionReceiver() error {
 		var conn net.Conn
 		conn, err = d.listener.Accept()
 		if err != nil {
-			log.Errorf("DownstreamLocaltcp: could not accept listener (shutting down): %s", err.Error())
+			log.Debugf("DownstreamLocaltcp: could not accept listener, shutting down (%s)", err.Error())
 			break
 		}
 
