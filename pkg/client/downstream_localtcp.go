@@ -24,6 +24,7 @@ type DownstreamLocaltcp struct {
 	downstreams      DownstreamInfoTcpMap // all ever accepted connections
 	downstreamsMutex *sync.Mutex          // protect downstreams (necessary?)
 	listener         net.Listener         // TCP server, nil = not connected
+	ChangeNotify     chan struct{}        // Notifies DownstreamManager about new connected downstreamclient
 }
 
 func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
@@ -37,6 +38,7 @@ func MakeDownstreamLocaltcp(listenAddr string) DownstreamLocaltcp {
 		downstreams:      make(DownstreamInfoTcpMap, 0),
 		downstreamsMutex: &sync.Mutex{},
 		listener:         nil,
+		ChangeNotify:     make(chan struct{}),
 	}
 	return u
 }
@@ -95,7 +97,7 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 }
 
 // StartServer starts the TCP listener
-func (d *DownstreamLocaltcp) StartServer(downstreamChangeNotifyChan chan struct{}) error {
+func (d *DownstreamLocaltcp) StartServer() error {
 	log.Info("Start Downstream: LocalTcp on " + d.listenAddr)
 	ln, err := net.Listen("tcp", d.listenAddr)
 	if err != nil {
@@ -104,12 +106,12 @@ func (d *DownstreamLocaltcp) StartServer(downstreamChangeNotifyChan chan struct{
 	}
 	d.listener = ln
 
-	go d.NewConnectionReceiver(downstreamChangeNotifyChan)
+	go d.NewConnectionReceiver()
 	return nil
 }
 
 // NewConnectionReceiver is a Thread which waits for new tcp downstream client connections, adds it to the local db and integrates them via DownstreamManager
-func (d *DownstreamLocaltcp) NewConnectionReceiver(downstreamChangeNotifyChan chan struct{}) error {
+func (d *DownstreamLocaltcp) NewConnectionReceiver() error {
 	if d.listener == nil {
 		return fmt.Errorf("DownstreamLocaltcp: Can't loop without active listener")
 	}
@@ -149,7 +151,7 @@ func (d *DownstreamLocaltcp) NewConnectionReceiver(downstreamChangeNotifyChan ch
 		d.downstreamsMutex.Unlock()
 
 		// Notify about new downstream
-		downstreamChangeNotifyChan <- struct{}{}
+		d.ChangeNotify <- struct{}{}
 
 		n += 1
 	}

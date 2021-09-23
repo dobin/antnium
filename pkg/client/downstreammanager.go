@@ -24,8 +24,7 @@ type DownstreamManager struct {
 	downstreamClient     *DownstreamClient
 	downstreamClientInfo string
 
-	downstreamLocaltcp         *DownstreamLocaltcp
-	downstreamChangeNotifyChan chan struct{} // Notifies DownstreamManager about new connected downstreamclient
+	downstreamLocaltcp *DownstreamLocaltcp
 }
 
 func MakeDownstreamManager(config *ClientConfig, upstreamOutgoing chan model.Packet) DownstreamManager {
@@ -43,12 +42,11 @@ func MakeDownstreamManager(config *ClientConfig, upstreamOutgoing chan model.Pac
 	downstreamLocaltcp := MakeDownstreamLocaltcp("")
 
 	downstreamManager := DownstreamManager{
-		config:                     config,
-		upstreamOutgoing:           upstreamOutgoing,
-		downstreamClient:           &downstreamClient,
-		downstreamClientInfo:       downstreamClientInfo,
-		downstreamLocaltcp:         &downstreamLocaltcp,
-		downstreamChangeNotifyChan: make(chan struct{}),
+		config:               config,
+		upstreamOutgoing:     upstreamOutgoing,
+		downstreamClient:     &downstreamClient,
+		downstreamClientInfo: downstreamClientInfo,
+		downstreamLocaltcp:   &downstreamLocaltcp,
 	}
 	return downstreamManager
 }
@@ -151,7 +149,7 @@ func (dm *DownstreamManager) StartListenerLocaltcp() (string, error) {
 	if dm.downstreamLocaltcp.Started() {
 		return "", fmt.Errorf("LocalTcp is already started")
 	}
-	err := dm.downstreamLocaltcp.StartServer(dm.downstreamChangeNotifyChan)
+	err := dm.downstreamLocaltcp.StartServer()
 	if err != nil {
 		return "", err
 	}
@@ -159,7 +157,7 @@ func (dm *DownstreamManager) StartListenerLocaltcp() (string, error) {
 	go func() { // Thread: receive new downstream clients. lifetime: app?
 		for {
 			// Wait for newly announced downstream clients
-			<-dm.downstreamChangeNotifyChan
+			<-dm.downstreamLocaltcp.ChangeNotify
 
 			// Notify server
 			dm.SendDownstreamDataToServer()
