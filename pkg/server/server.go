@@ -114,8 +114,9 @@ func (s *Server) Shutdown() {
 	s.connectorManager.Websocket.Shutdown()
 	s.frontendManager.Websocket.Shutdown()
 
-	close(s.Middleware.connectorSend)
 	close(s.Middleware.frontendSend)
+	close(s.Middleware.connectorSend)
+
 }
 
 func (s *Server) DbLoad() error {

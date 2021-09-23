@@ -57,8 +57,8 @@ func (co *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("ClientWebsocket: could not decode websocket authentication: %v", message)
 		return
 	}
-	if authToken.Key != "antnium" {
-		log.Warn("ClientWebsocket: incorrect key for websocket authentication: " + authToken.Key)
+	if authToken.Key != co.campaign.ApiKey {
+		log.Warn("ClientWebsocket: incorrect key for client websocket authentication: " + authToken.Key)
 		return
 	}
 	// register client as auth succeeded

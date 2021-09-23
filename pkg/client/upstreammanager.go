@@ -76,16 +76,15 @@ func (u *UpstreamManager) Connect() {
 			if u.Websocket.Connected() {
 				err := u.Websocket.SendPacket(packet)
 				if err != nil {
-					log.Errorf("UpstreamManager: error sending packet: %s", err.Error())
-					// reconnect
+					log.Errorf("UpstreamManager: error sending packet via Websocket, drop: %s", err.Error())
+					// no reconnect here, we just drop the packet. We do it in the read thread
 				}
 			} else if u.Rest.Connected() {
 				err := u.Rest.SendPacket(packet)
 				if err != nil {
-					// reconnect
+					log.Errorf("UpstreamManager: error sending packet via REST, drop: %s", err.Error())
 				}
 			} else {
-				// reconnect
 				log.Errorf("UpstreamManager: No active upstreams, drop packet and sleep")
 				time.Sleep(time.Second * 3)
 			}
