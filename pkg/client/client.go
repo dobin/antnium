@@ -67,7 +67,6 @@ func (c *Client) Loop() {
 			if err != nil {
 				log.Errorf("Client::Loop(): Downstream was not able to handle incoming packet %s: ", err.Error())
 				common.LogPacket("Client::Loop():", p)
-				return
 			}
 
 			// Send answer back to server
