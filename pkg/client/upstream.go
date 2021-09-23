@@ -9,5 +9,5 @@ type Upstream interface {
 	Connected() bool
 	Start()
 	ChanIncoming() chan model.Packet
-	ChanOutgoing() chan model.Packet
+	SendPacket(packet model.Packet) error
 }

@@ -78,7 +78,6 @@ func (c *Client) Loop() {
 
 func (c *Client) Shutdown() {
 	close(c.UpstreamManager.Rest.ChanIncoming())
-	close(c.UpstreamManager.Rest.ChanOutgoing())
 	//close(c.UpstreamManager.UpstreamWs.ChanIncoming())
 	//close(c.UpstreamManager.UpstreamWs.ChanOutgoing())
 	//close(c.UpstreamManager.ChannelIncoming)

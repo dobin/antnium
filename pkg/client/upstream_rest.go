@@ -17,7 +17,6 @@ import (
 // UpstreamWs is a connection to the server via REST
 type UpstreamRest struct {
 	chanIncoming chan model.Packet // Provides packets from server to client
-	chanOutgoing chan model.Packet // Consumes packets from client to server
 
 	packetGetTimer *SleepTimer
 	coder          model.Coder
@@ -33,7 +32,6 @@ func MakeUpstreamRest(config *ClientConfig, campaign *campaign.Campaign) Upstrea
 
 	u := UpstreamRest{
 		chanIncoming:   make(chan model.Packet),
-		chanOutgoing:   make(chan model.Packet),
 		packetGetTimer: &packetGetTimer,
 		coder:          coder,
 		config:         config,
@@ -59,7 +57,7 @@ func (u *UpstreamRest) Connect() error {
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
 	packet := u.config.MakeClientPacket("ping", arguments, response)
-	err := u.sendPacket(*packet)
+	err := u.SendPacket(*packet)
 	if err != nil {
 		return err
 	}
@@ -95,21 +93,6 @@ func (u *UpstreamRest) Start() {
 		}
 
 	}()
-
-	go func() {
-		for {
-			packet, ok := <-u.ChanOutgoing()
-			if !ok {
-				break
-			}
-
-			// Send answer to server
-			err := u.sendPacket(packet)
-			if err != nil {
-				log.Errorf("UpstreamRest: Could not send packet from ChanOutgoing to server via REST: %s", err.Error())
-			}
-		}
-	}()
 }
 
 func (u *UpstreamRest) GetPacket() (model.Packet, error) {
@@ -137,7 +120,7 @@ func (u *UpstreamRest) GetPacket() (model.Packet, error) {
 	return packet, nil
 }
 
-func (u *UpstreamRest) sendPacket(packet model.Packet) error {
+func (u *UpstreamRest) SendPacket(packet model.Packet) error {
 	url := u.PacketSendUrl()
 
 	// Setup response
@@ -169,7 +152,4 @@ func (u *UpstreamRest) Connected() bool {
 
 func (u *UpstreamRest) ChanIncoming() chan model.Packet {
 	return u.chanIncoming
-}
-func (u *UpstreamRest) ChanOutgoing() chan model.Packet {
-	return u.chanOutgoing
 }

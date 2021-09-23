@@ -74,12 +74,18 @@ func (u *UpstreamManager) Connect() {
 			}
 
 			if u.Websocket.Connected() {
-				u.Websocket.ChanOutgoing() <- packet
-				//break
+				err := u.Websocket.SendPacket(packet)
+				if err != nil {
+					log.Errorf("UpstreamManager: error sending packet: %s", err.Error())
+					// reconnect
+				}
 			} else if u.Rest.Connected() {
-				u.Rest.ChanOutgoing() <- packet
-				//break
+				err := u.Rest.SendPacket(packet)
+				if err != nil {
+					// reconnect
+				}
 			} else {
+				// reconnect
 				log.Errorf("UpstreamManager: No active upstreams, drop packet and sleep")
 				time.Sleep(time.Second * 3)
 			}

@@ -18,8 +18,8 @@ type DownstreamInfo struct {
 }
 
 type DownstreamManager struct {
-	config          *ClientConfig
-	channelOutgoing chan model.Packet // used to send data
+	config           *ClientConfig
+	upstreamOutgoing chan model.Packet // used to send data
 
 	downstreamClient     *DownstreamClient
 	downstreamClientInfo string
@@ -28,7 +28,7 @@ type DownstreamManager struct {
 	downstreamChangeNotifyChan chan struct{} // Notifies DownstreamManager about new connected downstreamclient
 }
 
-func MakeDownstreamManager(config *ClientConfig, channelOutgoing chan model.Packet) DownstreamManager {
+func MakeDownstreamManager(config *ClientConfig, upstreamOutgoing chan model.Packet) DownstreamManager {
 	// Get our name (for channel identification)
 	downstreamClientInfo := "<unknown>"
 	ex, err := os.Executable()
@@ -44,7 +44,7 @@ func MakeDownstreamManager(config *ClientConfig, channelOutgoing chan model.Pack
 
 	downstreamManager := DownstreamManager{
 		config:                     config,
-		channelOutgoing:            channelOutgoing,
+		upstreamOutgoing:           upstreamOutgoing,
 		downstreamClient:           &downstreamClient,
 		downstreamClientInfo:       downstreamClientInfo,
 		downstreamLocaltcp:         &downstreamLocaltcp,
@@ -194,7 +194,7 @@ func (dm *DownstreamManager) SendDownstreamDataToServer() {
 	}
 	packet := dm.config.MakeClientPacket("downstreams", arguments, response)
 
-	dm.channelOutgoing <- *packet
+	dm.upstreamOutgoing <- *packet
 }
 
 // DownstreamServers returns the list of active downstream servers (e.g. Localtcp, if started)

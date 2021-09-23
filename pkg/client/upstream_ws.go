@@ -17,7 +17,6 @@ import (
 // UpstreamWs is a connection to the server via websocket
 type UpstreamWs struct {
 	chanIncoming chan model.Packet // Provides packets from server to client
-	chanOutgoing chan model.Packet // Consumes packets from client to server
 
 	coder    model.Coder
 	config   *ClientConfig
@@ -30,7 +29,6 @@ func MakeUpstreamWs(config *ClientConfig, campaign *campaign.Campaign) UpstreamW
 	coder := model.MakeCoder(campaign)
 
 	u := UpstreamWs{
-		make(chan model.Packet),
 		make(chan model.Packet),
 		coder,
 		config,
@@ -102,7 +100,6 @@ func (u *UpstreamWs) Start() {
 				// Notify that we are disconnected
 				log.Debug("UpstreamWs: Start(): Close!")
 				close(u.ChanIncoming()) // Notify UpstreamManager
-				close(u.ChanOutgoing()) // Notify ChanOutgoing() thread
 				u.Shutdown()
 				break // And exit thread
 			}
@@ -117,35 +114,25 @@ func (u *UpstreamWs) Start() {
 			u.ChanIncoming() <- packet
 		}
 	}()
+}
 
-	// Thread: Outgoing websocket message writer
-	go func() {
-		for {
-			packet, ok := <-u.ChanOutgoing()
-			if !ok {
-				break
-			}
+func (u *UpstreamWs) SendPacket(packet model.Packet) error {
+	packetData, err := u.coder.EncodeData(packet)
+	if err != nil {
+		return fmt.Errorf("UpstreamWs: Could not encode outgoing packet")
+	}
+	common.LogPacketDebug("UpstreamWs:OutgoingThread", packet)
 
-			packetData, err := u.coder.EncodeData(packet)
-			if err != nil {
-				log.Error("UpstreamWs: Could not encode outgoing packet")
-				return
-			}
-			common.LogPacketDebug("UpstreamWs:OutgoingThread", packet)
+	if u.wsConn == nil {
+		return fmt.Errorf("UpstreamWs: wsConn is nil, could not send packet %s", packet.PacketId)
+	}
 
-			if u.wsConn == nil {
-				log.Debugf("UpstreamWs: wsConn is nil, shutdown thread")
-				break
-			}
+	err = u.wsConn.WriteMessage(websocket.TextMessage, packetData)
+	if err != nil {
+		return fmt.Errorf("UpstreamWs: could not write packet: %s", err.Error())
+	}
 
-			err = u.wsConn.WriteMessage(websocket.TextMessage, packetData)
-			if err != nil {
-				log.Errorf("UpstreamWs: could not write packet: %s", err.Error())
-				//d.Shutdown()
-				break
-			}
-		}
-	}()
+	return nil
 }
 
 // Connected returns false if we know that that websocket connection is dead
@@ -165,8 +152,4 @@ func (u *UpstreamWs) Shutdown() {
 
 func (u *UpstreamWs) ChanIncoming() chan model.Packet {
 	return u.chanIncoming
-}
-
-func (u *UpstreamWs) ChanOutgoing() chan model.Packet {
-	return u.chanOutgoing
 }
