@@ -38,8 +38,6 @@ func (m *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 }
 
 func (m *Middleware) ClientGetPacket(computerId string, remoteAddr string, connectorType string) (model.Packet, bool) {
-	log.Debugf("Middleware: ClientGetPacket(): %s", computerId)
-
 	// Update last seen for this host
 	m.clientInfoDb.updateFor(computerId, remoteAddr, connectorType)
 

@@ -85,7 +85,8 @@ func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 
 	err = f.middleware.FrontendAddNewPacket(&packet)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		log.Errorf("FrontendRest: FrontendAddPacket error: %s", err.Error())
+		http.Error(rw, "", http.StatusBadRequest)
 		return
 	}
 }

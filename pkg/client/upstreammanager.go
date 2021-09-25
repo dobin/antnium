@@ -94,12 +94,21 @@ func (u *UpstreamManager) Connect() {
 	u.ConnectRetryForever()
 }
 
+// Reconnect will destroy the currect WS upstream, and block until connected again
+func (u *UpstreamManager) ReconnectWebsocket() {
+	// Throw away old UpstreamWs, and try to connect again
+	upstreamWs := MakeUpstreamWs(u.config, u.campaign)
+	u.Websocket = &upstreamWs
+	log.Infof("UpstreamManager: Upstream websocket disconnect. Retrying...")
+	u.ConnectRetryForever()
+}
+
 // ConnectRetryForever will try to connect to the server, forever. Then starts upstreams
 func (u *UpstreamManager) ConnectRetryForever() error {
 	u.reconnectTimer.tick()
 	for {
+		// Try: Websocket
 		if u.campaign.ClientUseWebsocket {
-			// Try: Websocket
 			err := u.Websocket.Connect()
 			if err != nil {
 				log.Debugf("UpstreamManager: Trying to connect to upstraem websocket resulted in: %s", err.Error())
@@ -109,32 +118,25 @@ func (u *UpstreamManager) ConnectRetryForever() error {
 				u.sendClientinfo()
 				break
 			}
-		} else {
-			err := u.Rest.Connect()
-			if err != nil {
-				log.Debugf("UpstreamManager: Trying to connect to upstream REST resulted in: %s", err.Error())
-			} else {
-				log.Infof("UpstreamManager: Connected to REST")
-				u.Rest.Start()
-				u.sendClientinfo()
-				break
-			}
 		}
 
-		log.Debug("UpstreamManager: Could not connect, sleeping...")
-		time.Sleep(u.reconnectTimer.getSleepDuration())
+		// Always try REST
+		err := u.Rest.Connect()
+		if err != nil {
+			log.Debugf("UpstreamManager: Trying to connect to upstream REST resulted in: %s", err.Error())
+		} else {
+			log.Infof("UpstreamManager: Connected to REST")
+			u.Rest.Start()
+			u.sendClientinfo()
+			break
+		}
+
+		sleepTime := u.reconnectTimer.getSleepDuration()
+		log.Debugf("UpstreamManager: Could not connect, sleeping for %s", sleepTime)
+		time.Sleep(sleepTime)
 	}
 
 	return nil
-}
-
-// Reconnect will destroy the currect WS upstream, and block until connected again
-func (u *UpstreamManager) ReconnectWebsocket() {
-	// Throw away old UpstreamWs, and try to connect again
-	upstreamWs := MakeUpstreamWs(u.config, u.campaign)
-	u.Websocket = &upstreamWs
-	log.Infof("UpstreamManager: Upstream websocket disconnect. Retrying...")
-	u.ConnectRetryForever()
 }
 
 // sendClientinfo will send client information (like process list) to the server

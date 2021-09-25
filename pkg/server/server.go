@@ -42,6 +42,8 @@ func NewServer(srvAddr string) Server {
 			if !ok {
 				break
 			}
+			// Try to send it via websocket.
+			// If this fails, the packet will still be available in the packetdb to send later
 			ok = connectorManager.Websocket.TryViaWebsocket(&packet)
 			if ok {
 				packetInfo, err := middleware.packetDb.sentToClient(packet.PacketId, "")
