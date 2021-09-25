@@ -1,6 +1,7 @@
 package common
 
 import (
+	crypto_rand "crypto/rand"
 	"encoding/binary"
 	"io/ioutil"
 	"math/rand"
@@ -14,7 +15,7 @@ import (
 
 func GetRandomPacketId() string {
 	buf := make([]byte, 8)
-	_, err := rand.Read(buf)
+	_, err := crypto_rand.Read(buf)
 	if err != nil {
 		panic(err) // out of randomness, should never happen
 	}
