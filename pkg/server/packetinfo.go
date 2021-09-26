@@ -16,10 +16,9 @@ const (
 )
 
 type PacketInfo struct {
-	Packet   model.Packet
-	State    BaseState
-	ClientIp string
-	User     string
+	Packet model.Packet
+	State  BaseState
+	User   string
 
 	TimeRecorded time.Time
 	TimeSent     time.Time
@@ -30,7 +29,6 @@ func NewPacketInfo(packet model.Packet, state BaseState) PacketInfo {
 	packetInfo := PacketInfo{
 		packet,
 		state,
-		"",
 		"",
 		time.Time{},
 		time.Time{},

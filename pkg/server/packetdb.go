@@ -115,7 +115,6 @@ func (db *PacketDb) sentToClient(packetId string, remoteAddr string) (*PacketInf
 		return nil, fmt.Errorf("source packet not STATE_RECORDED but %d", packetInfo.State)
 	}
 
-	packetInfo.ClientIp = remoteAddr
 	packetInfo.State = STATE_SENT
 	packetInfo.TimeSent = time.Now()
 
