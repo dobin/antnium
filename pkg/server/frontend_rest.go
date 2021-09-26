@@ -63,6 +63,9 @@ func (f *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request)
 }
 
 func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	user := vars["user"]
+
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Error("FrontendRest: Could not read body")
@@ -83,7 +86,7 @@ func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = f.middleware.FrontendAddNewPacket(&packet)
+	err = f.middleware.FrontendAddNewPacket(&packet, user)
 	if err != nil {
 		log.Errorf("FrontendRest: FrontendAddPacket error: %s", err.Error())
 		http.Error(rw, "", http.StatusBadRequest)

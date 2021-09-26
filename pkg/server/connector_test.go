@@ -18,7 +18,7 @@ func TestConnectorHttp(t *testing.T) {
 	defer s.Shutdown()
 	s.Campaign.ClientUseWebsocket = false // Test: REST
 	packetA := makeSimpleTestPacket(computerId, "001")
-	s.Middleware.FrontendAddNewPacket(packetA)
+	s.Middleware.FrontendAddNewPacket(packetA, "")
 	go s.Serve()
 
 	// make client
@@ -38,7 +38,7 @@ func TestConnectorHttp(t *testing.T) {
 
 	// Add a test packet via Frontend REST
 	packetC := makeSimpleTestPacket(computerId, "002")
-	s.Middleware.FrontendAddNewPacket(packetC)
+	s.Middleware.FrontendAddNewPacket(packetC, "")
 
 	// Expect it
 	packetD := <-client.UpstreamManager.ChannelIncoming
@@ -58,7 +58,7 @@ func TestConnectorWs(t *testing.T) {
 	s := NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true
 	packetA := makeSimpleTestPacket(computerId, "001")
-	s.Middleware.FrontendAddNewPacket(packetA)
+	s.Middleware.FrontendAddNewPacket(packetA, "")
 	defer s.Shutdown()
 	go s.Serve()
 
@@ -78,7 +78,7 @@ func TestConnectorWs(t *testing.T) {
 
 	// Add a test packet via Frontend REST
 	packetC := makeSimpleTestPacket(computerId, "002")
-	s.Middleware.FrontendAddNewPacket(packetC)
+	s.Middleware.FrontendAddNewPacket(packetC, "")
 
 	// Expect it
 	packetD := <-client.UpstreamManager.ChannelIncoming

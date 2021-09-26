@@ -90,7 +90,7 @@ func TestUpstreamServerWs(t *testing.T) {
 
 	// Add a test packet via Frontend REST
 	packetB := makeSimpleTestPacket(computerId, "002")
-	s.Middleware.FrontendAddNewPacket(packetB)
+	s.Middleware.FrontendAddNewPacket(packetB, "")
 
 	// Test: Expect it
 	packet = <-client.UpstreamManager.ChannelIncoming

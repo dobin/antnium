@@ -13,8 +13,9 @@ func TestToJson(t *testing.T) {
 	response := make(model.PacketResponse)
 	packet := model.NewPacket("test", "23", "42", arguments, response)
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
+	packetInfo.User = "user"
 
-	reference := `{"Packet":{"computerid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"},"State":0,"ClientIp":"","TimeRecorded":"0001-01-01T00:00:00Z","TimeSent":"0001-01-01T00:00:00Z","TimeAnswered":"0001-01-01T00:00:00Z"}`
+	reference := `{"Packet":{"computerid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"},"State":0,"ClientIp":"","User":"user","TimeRecorded":"0001-01-01T00:00:00Z","TimeSent":"0001-01-01T00:00:00Z","TimeAnswered":"0001-01-01T00:00:00Z"}`
 	u, err := json.Marshal(packetInfo)
 	if err != nil {
 		t.Errorf("Error: %s", err.Error())

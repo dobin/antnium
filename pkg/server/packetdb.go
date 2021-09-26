@@ -90,7 +90,7 @@ func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {
 	return packetInfo
 }
 
-func (db *PacketDb) addFromFrontend(packet *model.Packet) (*PacketInfo, error) {
+func (db *PacketDb) addFromFrontend(packet *model.Packet, user string) (*PacketInfo, error) {
 	_, ok := db.ByPacketId(packet.PacketId)
 	if ok {
 		return nil, fmt.Errorf("PacketId %s already exists in DB. Wont handle it.", packet.PacketId)
@@ -99,6 +99,7 @@ func (db *PacketDb) addFromFrontend(packet *model.Packet) (*PacketInfo, error) {
 	// Add new (always client initiated for now)
 	packetInfo := NewPacketInfo(*packet, STATE_RECORDED)
 	packetInfo.TimeRecorded = time.Now()
+	packetInfo.User = user
 
 	db.add(&packetInfo)
 	return &packetInfo, nil

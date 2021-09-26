@@ -29,7 +29,7 @@ func TestServerClientIntegrationRest(t *testing.T) {
 	s := NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = false // Test: REST
 	packet := makeSimpleTestPacket(computerId, packetId)
-	s.Middleware.FrontendAddNewPacket(packet)
+	s.Middleware.FrontendAddNewPacket(packet, "")
 	go s.Serve()
 
 	// create client, receive the packet we added above
@@ -78,7 +78,7 @@ func TestServerClientIntegrationWebsocket(t *testing.T) {
 		t.Errorf("Error when receiving packet: " + err.Error())
 		return
 	}
-	url := c.Campaign.ServerUrl + "/admin/addPacket"
+	url := c.Campaign.ServerUrl + "/admin/addPacket/username"
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(json_data))
 	if err != nil {

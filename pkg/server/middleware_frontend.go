@@ -4,9 +4,9 @@ import (
 	"github.com/dobin/antnium/pkg/model"
 )
 
-func (m *Middleware) FrontendAddNewPacket(packet *model.Packet) error {
+func (m *Middleware) FrontendAddNewPacket(packet *model.Packet, user string) error {
 	// Add to packet DB and get packetInfo
-	packetInfo, err := m.packetDb.addFromFrontend(packet)
+	packetInfo, err := m.packetDb.addFromFrontend(packet, user)
 	if err != nil {
 		return err
 	}

@@ -40,7 +40,7 @@ func TestClientExecWs(t *testing.T) {
 
 	// Make a example packet the client should receive
 	packet := makeSimpleCmdPacket(computerId, "p42", "echo test")
-	s.Middleware.FrontendAddNewPacket(&packet)
+	s.Middleware.FrontendAddNewPacket(&packet, "")
 
 	// make server go
 	go s.Serve()
@@ -88,9 +88,9 @@ func TestClientParalellExecWs(t *testing.T) {
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true
 	packetA := makeSimpleCmdPacket(computerId, "p42", "ping localhost")
-	s.Middleware.FrontendAddNewPacket(&packetA)
+	s.Middleware.FrontendAddNewPacket(&packetA, "")
 	packetB := makeSimpleCmdPacket(computerId, "p43", "echo test")
-	s.Middleware.FrontendAddNewPacket(&packetB)
+	s.Middleware.FrontendAddNewPacket(&packetB, "")
 	defer s.Shutdown()
 	go s.Serve()
 

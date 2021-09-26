@@ -20,7 +20,7 @@ func (s *Server) Serve() {
 	adminRouter.HandleFunc("/packets/{computerId}", s.frontendManager.Rest.adminListPacketsComputerId)
 	adminRouter.HandleFunc("/clients", s.frontendManager.Rest.adminListClients)
 	//adminRouter.HandleFunc("/addTestPacket", s.adminAddTestPacket)
-	adminRouter.HandleFunc("/addPacket", s.frontendManager.Rest.adminAddPacket)
+	adminRouter.HandleFunc("/addPacket/{user}", s.frontendManager.Rest.adminAddPacket)
 	adminRouter.HandleFunc("/campaign", s.frontendManager.Rest.adminGetCampaign)
 	adminRouter.HandleFunc("/uploads", s.frontendManager.Rest.adminGetUploads)
 	adminRouter.HandleFunc("/statics", s.frontendManager.Rest.adminGetStatics)
