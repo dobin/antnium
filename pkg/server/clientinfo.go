@@ -11,7 +11,7 @@ type ClientInfo struct {
 	LastSeen   time.Time `json:"LastSeen"`
 	LastIp     string    `json:"LastIp"`
 
-	// From ping
+	// From ClientInfo
 	Hostname      string   `json:"Hostname"`
 	LocalIps      []string `json:"LocalIps"`
 	Arch          string   `json:"Arch"`
@@ -19,4 +19,5 @@ type ClientInfo struct {
 	IsAdmin       string   `json:"isAdmin"`
 	IsElevated    string   `json:"isElevated"`
 	ConnectorType string   `json:"ConnectorType"`
+	WorkingDir    string   `json:"WorkingDir"`
 }

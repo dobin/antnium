@@ -1,6 +1,7 @@
 package client
 
 import (
+	"os"
 	"strconv"
 	"time"
 
@@ -156,6 +157,7 @@ func (u *UpstreamManager) sendClientinfo() {
 		response["isElevated"] = strconv.FormatBool(isElevated)
 		response["isAdmin"] = strconv.FormatBool(isAdmin)
 	}
+	response["WorkingDir"], _ = os.Getwd()
 
 	packet := u.config.MakeClientPacket("clientinfo", arguments, response)
 	u.ChannelOutgoing <- *packet

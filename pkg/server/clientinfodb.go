@@ -55,29 +55,21 @@ func (db *ClientInfoDb) updateFromClientinfo(computerId, ip string, connectorTyp
 			FirstSeen:  time.Now(),
 			LastSeen:   time.Now(),
 			LastIp:     ip,
-
-			Hostname:      "",
-			LocalIps:      nil,
-			Arch:          "",
-			Processes:     nil,
-			IsAdmin:       "",
-			IsElevated:    "",
-			ConnectorType: "",
 		}
 	}
 
 	// Add all relevant data from packet
 	hostname, _ := response["hostname"]
+	if hostname == "" {
+		log.Warn("ClientInfoDb: Empty ping")
+		return
+	}
 	localIps := model.ResponseToArray("localIp", response)
 	arch := response["arch"]
 	isAdmin := response["isAdmin"]
 	isElevated := response["isElevated"]
 	processes := model.ResponseToArray("processes", response)
-
-	if hostname == "" {
-		log.Warn("ClientInfoDb: Empty ping")
-		return
-	}
+	WorkingDir := response["WorkingDir"]
 
 	db.clients[computerId].Hostname = hostname
 	db.clients[computerId].LocalIps = localIps
@@ -85,6 +77,7 @@ func (db *ClientInfoDb) updateFromClientinfo(computerId, ip string, connectorTyp
 	db.clients[computerId].Processes = processes
 	db.clients[computerId].IsAdmin = isAdmin
 	db.clients[computerId].IsElevated = isElevated
+	db.clients[computerId].WorkingDir = WorkingDir
 }
 
 func (db *ClientInfoDb) AllAsList() []ClientInfo {
