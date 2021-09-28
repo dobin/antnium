@@ -6,15 +6,23 @@ import (
 	"os"
 
 	"github.com/dobin/antnium/pkg/client"
+	"github.com/dobin/antnium/pkg/wingman"
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 	flagServerUrl := flag.String("addr", "", "ENV: PROXY")
 	flagProxyUrl := flag.String("proxy", "", "ENV: ADDR")
+	doWingman := flag.Bool("wingman", false, "")
 	flag.Parse()
 
 	fmt.Println("Antnium 0.1")
+	if *doWingman {
+		wingman := wingman.MakeWingman()
+		wingman.StartWingman("")
+		return
+	}
+
 	lvl := "debug"
 	ll, err := log.ParseLevel(lvl)
 	if err != nil {
