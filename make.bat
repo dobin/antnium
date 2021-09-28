@@ -12,11 +12,13 @@ IF "%1"=="runserver" (
     go build -o server.elf cmd\server\server.go 
 ) ELSE IF "%1"=="client" (
     REM -H windowsgui will disable the go window
-    go build -o client.exe -ldflags "-H windowsgui" cmd\client\client.go
+    REM go build -o client.exe -ldflags "-H windowsgui" cmd\client\client.go
+    go build -o client.exe cmd\client\client.go
     SET GOOS=linux
     go build -o client.elf cmd\client\client.go
 ) ELSE IF "%1"=="wingman" (
-    go build -o wingman.exe -ldflags "-H windowsgui" cmd\wingman\wingman.go 
+    REM go build -o wingman.exe -ldflags "-H windowsgui" cmd\wingman\wingman.go 
+    go build -o wingman.exe cmd\wingman\wingman.go 
     SET GOOS=linux
     go build -o wingman.elf cmd\wingman\wingman.go 
 ) ELSE IF "%1"=="wingmandll" (
