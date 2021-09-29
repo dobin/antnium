@@ -100,6 +100,19 @@ Note that `ServerUrl` is the URL used by the client for all interaction with the
 It is the public server URL, e.g. `http://totallynotmalware.ch`. The actual server.exe may
 be behind a reverse proxy, and started with `server.exe --listenaddr 127.0.0.1:8080` (so `ServerUrl` is not necessarily equal `listenaddr`). 
 
+## Notes on server access
+
+When first connecting to the server, you need to access and configure the UI first. 
+
+The Angular UI files are publicly accessible. Lets assume `ServerUrl="http://localhost:8080"` and `listenaddr=0.0.0.0:8080`. You can either: 
+* use the integrated antniumui, available as `http://localhost:8080/webui` on your browser
+* or `ng serve` from antniumui directory, and then open `http://localhost:4200` on your browser
+
+When connecting to the UI in the browser, you need first to configure the server IP and its password:
+* AdminApiKey (default: "Secret-AdminApi-Key", like in Campagin default)
+* ServerIP (default: "http://localhost:8080")
+* User (optional)
+
 ## Client
 
 Tested on: 
@@ -124,25 +137,56 @@ Tested on:
 On Linux:
 ```
 $ make server
+$ mkdir -p static upload
 $ ./server --listenaddr 0.0.0.0:8080
 ```
-
-It will start a REST server on that port, providing: 
-* `/`: REST for the clients
-* `/admin`: REST for admin interface
-* `/webui`: HTML files for admin interface 
-
-Put a reverse proxy before it (make sure it supports websockets!)
 
 Result is `server.exe`. Make sure to run it in the directory where you have or expect: 
 * upload/
 * static/
 * db.*.json
-
 as working directory.
+
+It will start a REST server on that port, providing: 
+* `/`: REST for the clients
+* `/ws`: Websocket for the clients
+* `/admin`: REST for admin interface (add packet, get clients)
+* `/adminws`: Websocket for admin interface (push packets)
+* `/webui`: HTML files for admin interface (Angular source and html, accesses REST and websocket)
+
+Put a reverse proxy before it (make sure it supports websockets!) or forward ports.
+
+
+## Options
+
+For proxy, use full HTTP url:
+```
+client.exe -proxy http://proxy:8080
+```
+
+or via environment variables:
+```
+export PROXY http://localhost:8080
+./client
+```
 
 
 ## Wingman
+
+Wingman is basically the Client, but without direct connection to the C2. 
+It can connect to an existing client on localhost:50000 (more sure its started, if Campaign.AutoStartDownstreams is false)
+
+Connects to localhost port 50000:
+```
+wingman.exe
+```
+
+Or use rundll32.exe to load the dll (the 64 bit rundll32 version in system32, not the 32 bit version in C:\Windows\SysWOW64\rundll32.exe):
+```
+C:\Windows\System32\rundll32.exe .\wingman.dll,Start
+```
+
+It will appear as downstream `net#0`.
 
 
 ## Testing
@@ -150,3 +194,5 @@ as working directory.
 ```
 go test ./...
 ```
+
+There may still be race conditions. If it fails once, just execute it again. 

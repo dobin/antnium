@@ -34,13 +34,21 @@ func main() {
 	log.SetLevel(ll)
 
 	// Check prerequisites
-	if _, err := os.Stat("./static/"); os.IsNotExist(err) {
-		log.Errorf("Server: Could not find required directory: %s", "./static/")
-		return
+	staticDir := "./static"
+	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
+		err := os.Mkdir(staticDir, 0755)
+		if err != nil {
+			log.Errorf("Server: Could not find required directory: %s, error when creating it: %s", staticDir, err.Error())
+			return
+		}
 	}
-	if _, err := os.Stat("./upload/"); os.IsNotExist(err) {
-		log.Errorf("Server: Could not find required directory: %s", "./upload/")
-		return
+	uploadDir := "./upload/"
+	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+		err := os.Mkdir(uploadDir, 0755)
+		if err != nil {
+			log.Errorf("Server: Could not find required directory: %s, error when creating it: %s", uploadDir, err.Error())
+			return
+		}
 	}
 
 	if !*flagDbWriteOnly {
