@@ -10,7 +10,7 @@ type FrontendManager struct {
 
 func MakeFrontendManager(campaign *campaign.Campaign, middleware *Middleware) FrontendManager {
 	frontendRest := MakeFrontendRest(campaign, middleware)
-	frontendWs := MakeFrontendWs(campaign)
+	frontendWs := MakeFrontendWs(campaign, middleware)
 
 	f := FrontendManager{
 		campaign:  campaign,

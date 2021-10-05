@@ -22,15 +22,17 @@ type AuthToken string
 
 type FrontendWs struct {
 	campaign           *campaign.Campaign
+	middleware         *Middleware
 	clients            map[*websocket.Conn]bool
 	channelDistributor chan PacketInfo
 
 	wsUpgrader websocket.Upgrader
 }
 
-func MakeFrontendWs(campaign *campaign.Campaign) FrontendWs {
+func MakeFrontendWs(campaign *campaign.Campaign, middleware *Middleware) FrontendWs {
 	f := FrontendWs{
 		campaign,
+		middleware,
 		make(map[*websocket.Conn]bool),
 		make(chan PacketInfo),
 		websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
@@ -68,11 +70,33 @@ func (f *FrontendWs) NewConnectionHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	f.registerWs(ws)
+	f.sendAllPackets(ws)
 }
 
 // wsHandler is the entry point for new websocket connections
 func (f *FrontendWs) registerWs(wsConn *websocket.Conn) {
 	f.clients[wsConn] = true
+}
+
+func (f *FrontendWs) sendAllPackets(wsConn *websocket.Conn) {
+	for _, packetInfo := range f.middleware.packetDb.packets {
+		websocketData := WebsocketData{
+			*packetInfo,
+		}
+
+		data, err := json.Marshal(websocketData)
+		if err != nil {
+			log.Error("FrontendWs: Could not JSON marshal")
+			continue
+		}
+		//log.Infof("A: %v", packetInfo)
+
+		err = wsConn.WriteMessage(websocket.TextMessage, data)
+		if err != nil {
+			log.Debugf("FrontendWs::sendAllPackets() error: %s", err)
+			wsConn.Close()
+		}
+	}
 }
 
 // Distributor is a Thread which distributes data to all connected websocket clients. Lifetime: app
