@@ -14,7 +14,7 @@ func (u *UpstreamRest) PacketSendUrl() string {
 }
 
 func (u *UpstreamRest) HttpGet(url string) (*http.Response, error) {
-	client := &http.Client{}
+	client := u.httpClient
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (u *UpstreamRest) HttpGet(url string) (*http.Response, error) {
 }
 
 func (u *UpstreamRest) HttpPost(url string, data *bytes.Reader) (*http.Response, error) {
-	client := &http.Client{}
+	client := u.httpClient
 	req, err := http.NewRequest("POST", url, data)
 	if err != nil {
 		return nil, err

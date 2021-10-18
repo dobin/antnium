@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/dobin/antnium/pkg/campaign"
@@ -23,6 +22,8 @@ type UpstreamRest struct {
 
 	config   *ClientConfig
 	campaign *campaign.Campaign
+
+	httpClient *http.Client // Set in Connect()
 }
 
 func MakeUpstreamRest(config *ClientConfig, campaign *campaign.Campaign) UpstreamRest {
@@ -36,28 +37,29 @@ func MakeUpstreamRest(config *ClientConfig, campaign *campaign.Campaign) Upstrea
 		coder:          coder,
 		config:         config,
 		campaign:       campaign,
+		httpClient:     nil,
 	}
 	return u
 }
 
 // Connect creates a REST connection to the server, or returns an error
 func (u *UpstreamRest) Connect() error {
-	proxyUrl, ok := u.campaign.GetProxy()
-	if ok {
-		if proxyUrl, err := url.Parse(proxyUrl); err == nil && proxyUrl.Scheme != "" && proxyUrl.Host != "" {
-			proxyUrlFunc := http.ProxyURL(proxyUrl)
-			http.DefaultTransport.(*http.Transport).Proxy = proxyUrlFunc
-			log.Infof("UpstreamRest: Using proxy: %s", proxyUrl)
-		} else {
-			log.Warnf("UpstreamRest: Could not parse proxy %s (ignore): %s", proxyUrl, err.Error())
-		}
+	// Handle all proxy related settings in NewDialContext
+	dialContext, err := NewDialContext(u.campaign)
+	if err != nil {
+		return err
 	}
+	tr := &http.Transport{
+		DialContext: dialContext,
+	}
+	httpClient := &http.Client{Transport: tr}
+	u.httpClient = httpClient
 
 	// Build a empty ping packet to test
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
 	packet := u.config.MakeClientPacket("ping", arguments, response)
-	err := u.SendPacket(*packet)
+	err = u.SendPacket(*packet)
 	if err != nil {
 		return err
 	}

@@ -3,8 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/dobin/antnium/pkg/campaign"
@@ -44,26 +42,18 @@ func (u *UpstreamWs) Connect() error {
 	myUrl := strings.Replace(u.campaign.ServerUrl, "http", "ws", 1) + u.campaign.ClientWebsocketPath
 	var ws *websocket.Conn
 	var err error
-	proxyUrl, ok := u.campaign.GetProxy()
-	if ok {
-		parsedUrl, err := url.Parse(proxyUrl)
-		if err != nil {
-			return fmt.Errorf("could not parse ProxyUrl %s: %s", proxyUrl, err.Error())
-		}
 
-		dialer := websocket.Dialer{
-			Proxy: http.ProxyURL(parsedUrl),
-		}
-
-		ws, _, err = dialer.Dial(myUrl, nil)
-		if err != nil {
-			return fmt.Errorf("could not connect websocket with proxy %s to %s: %s", proxyUrl, myUrl, err.Error())
-		}
-	} else {
-		ws, _, err = websocket.DefaultDialer.Dial(myUrl, nil)
-		if err != nil {
-			return fmt.Errorf("could not connect websocket %s: %s", myUrl, err.Error())
-		}
+	// Handle all proxy related settings in NewDialContext
+	dialContext, err := NewDialContext(u.campaign)
+	if err != nil {
+		return err
+	}
+	dialer := websocket.Dialer{
+		NetDialContext: dialContext,
+	}
+	ws, _, err = dialer.Dial(myUrl, nil)
+	if err != nil {
+		return fmt.Errorf("could not connect websocket with proxy to %s: %s", myUrl, err.Error())
 	}
 
 	// Authentication
