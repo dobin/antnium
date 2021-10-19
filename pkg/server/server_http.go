@@ -24,6 +24,7 @@ func (s *Server) Serve() {
 	adminRouter.HandleFunc("/campaign", s.frontendManager.Rest.adminGetCampaign)
 	adminRouter.HandleFunc("/uploads", s.frontendManager.Rest.adminGetUploads)
 	adminRouter.HandleFunc("/statics", s.frontendManager.Rest.adminGetStatics)
+	adminRouter.HandleFunc("/uploadFile", s.frontendManager.Rest.adminUploadFile)
 	adminRouter.PathPrefix("/upload").Handler(http.StripPrefix("/admin/upload/",
 		http.FileServer(http.Dir("./upload/"))))
 

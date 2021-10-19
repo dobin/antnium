@@ -59,6 +59,25 @@ func (m *Middleware) ClientGetPacket(computerId string, remoteAddr string, conne
 	return packetInfo.Packet, true
 }
 
+func (m *Middleware) AdminUploadFile(basename string, httpFile io.ReadCloser) {
+	filename := fmt.Sprintf("static/%s", basename)
+
+	out, err := os.Create(filename)
+	if err != nil {
+		log.Error("Middleware: AdminUploadFile: Could not open file: " + filename)
+		return
+	}
+	defer out.Close()
+
+	written, err := io.Copy(out, httpFile)
+	if err != nil {
+		log.Error("Middleware: AdminUploadFile: Error copying: " + err.Error())
+		return
+	}
+
+	log.Infof("Middleware: AdminUploadFile: Written %d bytes to file %s", written, filename)
+}
+
 func (m *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
 	// Check if request for this file really exists
 	packetInfo, ok := m.packetDb.ByPacketId(packetId)
@@ -68,7 +87,7 @@ func (m *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
 		return
 	}
 	if packetInfo.State != STATE_SENT {
-		log.Errorf("Middleware: Client attempted to upload a file with an weird packet state %d",
+		log.Errorf("Middleware: ClientUploadFile: Client attempted to upload a file with an weird packet state %d",
 			packetInfo.State)
 		return
 	}
@@ -82,16 +101,16 @@ func (m *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
 
 	out, err := os.Create(filename)
 	if err != nil {
-		log.Error("Middleware: Could not open file: " + filename)
+		log.Error("Middleware: ClientUploadFile: Could not open file: " + filename)
 		return
 	}
 	defer out.Close()
 
 	written, err := io.Copy(out, httpFile)
 	if err != nil {
-		log.Error("Middleware: Error copying: " + err.Error())
+		log.Error("Middleware: ClientUploadFile: Error copying: " + err.Error())
 		return
 	}
 
-	log.Infof("Middleware: Written %d bytes to file %s", written, packetId)
+	log.Infof("Middleware: ClientUploadFile: Written %d bytes to file %s", written, filename)
 }

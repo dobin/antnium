@@ -62,6 +62,20 @@ func (f *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request)
 	fmt.Fprint(rw, string(json))
 }
 
+func (f *FrontendRest) adminUploadFile(rw http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(10 << 20)
+	file, header, err := r.FormFile("fileKey")
+	if err != nil {
+		log.Println("Error Getting File", err)
+		return
+	}
+	defer file.Close()
+
+	f.middleware.AdminUploadFile(header.Filename, file)
+
+	fmt.Fprintf(rw, "ok\n")
+}
+
 func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	user := vars["user"]
@@ -71,7 +85,6 @@ func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 		log.Error("FrontendRest: Could not read body")
 		return
 	}
-
 	var packet model.Packet
 	err = json.Unmarshal(reqBody, &packet)
 	if err != nil {
