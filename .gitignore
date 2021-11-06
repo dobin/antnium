@@ -3,7 +3,6 @@ experimental
 *.exe
 db.*
 upload/*
-static/*
 build/*
 client.*
 wingman.*

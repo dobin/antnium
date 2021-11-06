@@ -71,9 +71,16 @@ func (f *FrontendRest) adminUploadFile(rw http.ResponseWriter, r *http.Request) 
 	}
 	defer file.Close()
 
-	f.middleware.AdminUploadFile(header.Filename, file)
+	err = f.middleware.AdminUploadFile(header.Filename, file)
+	if err != nil {
+		log.Errorf("Could not upload file: %s", err.Error())
+		rw.WriteHeader(http.StatusBadRequest)
+		rw.Write([]byte(err.Error()))
+		return
+	}
 
-	fmt.Fprintf(rw, "ok\n")
+	rw.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(rw, "{ }\n")
 }
 
 func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {

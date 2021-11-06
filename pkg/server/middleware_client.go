@@ -59,23 +59,28 @@ func (m *Middleware) ClientGetPacket(computerId string, remoteAddr string, conne
 	return packetInfo.Packet, true
 }
 
-func (m *Middleware) AdminUploadFile(basename string, httpFile io.ReadCloser) {
+func (m *Middleware) AdminUploadFile(basename string, httpFile io.ReadCloser) error {
 	filename := fmt.Sprintf("static/%s", basename)
+
+	if _, err := os.Stat(filename); err == nil {
+		return fmt.Errorf("destination file %s already exists", filename)
+	}
 
 	out, err := os.Create(filename)
 	if err != nil {
 		log.Error("Middleware: AdminUploadFile: Could not open file: " + filename)
-		return
+		return err
 	}
 	defer out.Close()
 
 	written, err := io.Copy(out, httpFile)
 	if err != nil {
 		log.Error("Middleware: AdminUploadFile: Error copying: " + err.Error())
-		return
+		return err
 	}
 
 	log.Infof("Middleware: AdminUploadFile: Written %d bytes to file %s", written, filename)
+	return nil
 }
 
 func (m *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
