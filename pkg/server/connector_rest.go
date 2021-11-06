@@ -30,13 +30,13 @@ func MakeConnectorRest(campaign *campaign.Campaign, middleware *Middleware) Conn
 // getPacket provides a client with new packets, if any
 func (co *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	computerId := vars["computerId"]
+	clientId := vars["clientId"]
 
-	if computerId == "" {
+	if clientId == "" {
 		return
 	}
 
-	packet, ok := co.middleware.ClientGetPacket(computerId, r.RemoteAddr, "rest")
+	packet, ok := co.middleware.ClientGetPacket(clientId, r.RemoteAddr, "rest")
 	if !ok {
 		// No packet, just return
 		return

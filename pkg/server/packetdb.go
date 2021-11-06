@@ -43,17 +43,17 @@ func (db *PacketDb) ByPacketId(packetId string) (*PacketInfo, bool) {
 	return nil, false
 }
 
-func (db *PacketDb) getPacketForClient(computerId string) (*PacketInfo, error) {
+func (db *PacketDb) getPacketForClient(clientId string) (*PacketInfo, error) {
 	for _, packetInfo := range db.packets {
 		if packetInfo.State != STATE_RECORDED {
 			continue
 		}
-		if packetInfo.Packet.ComputerId == computerId {
+		if packetInfo.Packet.ClientId == clientId {
 			return packetInfo, nil
 		}
 	}
 
-	return nil, fmt.Errorf("no packets in state STATE_RECORDED for host %s found", computerId)
+	return nil, fmt.Errorf("no packets in state STATE_RECORDED for host %s found", clientId)
 }
 
 func (db *PacketDb) updateFromClient(packet model.Packet) *PacketInfo {

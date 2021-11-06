@@ -12,7 +12,7 @@ import (
 
 type ConnectorWs struct {
 	middleware *Middleware
-	clients    map[string]*websocket.Conn // ComputerId:WebsocketConnection
+	clients    map[string]*websocket.Conn // ClientId:WebsocketConnection
 	wsUpgrader websocket.Upgrader
 	coder      model.Coder
 	campaign   *campaign.Campaign
@@ -62,12 +62,12 @@ func (co *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// register client as auth succeeded
-	co.clients[authToken.ComputerId] = ws
+	co.clients[authToken.ClientId] = ws
 
-	co.handleWs(authToken.ComputerId, ws)
+	co.handleWs(authToken.ClientId, ws)
 }
 
-func (co *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
+func (co *ConnectorWs) handleWs(clientId string, ws *websocket.Conn) {
 	if ws == nil {
 		log.Error("ClientWebsocket: handleWs(): invalid websocket connection")
 		return
@@ -81,7 +81,7 @@ func (co *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 			if err != nil {
 				// Websocket closed, clean it up
 				ws.Close()
-				co.clients[computerId] = nil
+				co.clients[clientId] = nil
 				break
 			}
 			packet, err := co.coder.DecodeData(packetData)
@@ -101,7 +101,7 @@ func (co *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 	//go func() {
 	packets := make([]model.Packet, 0)
 	for {
-		packet, ok := co.middleware.ClientGetPacket(computerId, ws.RemoteAddr().String(), "ws")
+		packet, ok := co.middleware.ClientGetPacket(clientId, ws.RemoteAddr().String(), "ws")
 		if !ok {
 			break
 		}
@@ -118,7 +118,7 @@ func (co *ConnectorWs) handleWs(computerId string, ws *websocket.Conn) {
 }
 
 func (co *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
-	clientConn, ok := co.clients[packet.ComputerId]
+	clientConn, ok := co.clients[packet.ClientId]
 	if !ok {
 		// All ok, not connected to ws
 		return false
@@ -136,11 +136,11 @@ func (co *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {
 
 	err = clientConn.WriteMessage(websocket.TextMessage, jsonData)
 	if err != nil {
-		log.Infof("ClientWebsocket: Websocket for host %s closed when trying to write: %s", packet.ComputerId, err.Error())
+		log.Infof("ClientWebsocket: Websocket for host %s closed when trying to write: %s", packet.ClientId, err.Error())
 		return false
 	}
 
-	log.Debugf("ClientWebsocket: Sent packet %s to client %s via WS", packet.PacketId, packet.ComputerId)
+	log.Debugf("ClientWebsocket: Sent packet %s to client %s via WS", packet.PacketId, packet.ClientId)
 
 	return true
 }

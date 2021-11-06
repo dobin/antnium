@@ -126,7 +126,7 @@ func (u *UpstreamRest) SendPacket(packet model.Packet) error {
 	url := u.PacketSendUrl()
 
 	// Setup response
-	packet.ComputerId = u.config.ComputerId
+	packet.ClientId = u.config.ClientId
 
 	common.LogPacket("UpstreamRest:send()", packet)
 

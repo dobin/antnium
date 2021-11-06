@@ -36,14 +36,14 @@ func (f *FrontendRest) adminListPackets(rw http.ResponseWriter, r *http.Request)
 	fmt.Fprint(rw, string(json))
 }
 
-func (f *FrontendRest) adminListPacketsComputerId(rw http.ResponseWriter, r *http.Request) {
+func (f *FrontendRest) adminListPacketsClientId(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	computerId := vars["computerId"]
+	clientId := vars["clientId"]
 
-	if computerId == "" {
+	if clientId == "" {
 		return
 	}
-	packetInfos := f.middleware.FrontendGetPacketById(computerId)
+	packetInfos := f.middleware.FrontendGetPacketById(clientId)
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
 		log.Error("FrontendRest: Could not JSON marshal")
@@ -101,7 +101,7 @@ func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 
 	common.LogPacket("FrontendRest: Add Packet", packet)
 
-	if packet.ComputerId == "" || packet.PacketId == "" || packet.PacketType == "" {
+	if packet.ClientId == "" || packet.PacketId == "" || packet.PacketType == "" {
 		log.Errorf("FrontendRest: Missing data in packet: %v", packet)
 		return
 	}

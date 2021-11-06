@@ -78,11 +78,11 @@ func NewServer(srvAddr string) Server {
 			time.Sleep(10 * time.Second)
 
 			c := connectorManager.Websocket.clients
-			for computerId, conn := range c {
+			for clientId, conn := range c {
 				if conn == nil {
 					continue
 				}
-				clientInfoDb2.updateFor(computerId, conn.RemoteAddr().String(), "ws")
+				clientInfoDb2.updateFor(clientId, conn.RemoteAddr().String(), "ws")
 			}
 
 			// FIXME it does never exit, refactor

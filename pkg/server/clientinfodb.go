@@ -21,15 +21,15 @@ func MakeClientInfoDb() ClientInfoDb {
 	return db
 }
 
-func (db *ClientInfoDb) updateFor(computerId string, ip string, connectorType string) {
-	if _, ok := db.clients[computerId]; !ok {
-		log.Infof("New client %s: %s via %s", ip, computerId, connectorType)
+func (db *ClientInfoDb) updateFor(clientId string, ip string, connectorType string) {
+	if _, ok := db.clients[clientId]; !ok {
+		log.Infof("New client %s: %s via %s", ip, clientId, connectorType)
 		// Init, without ping (misses a lot of data)
-		db.clients[computerId] = &ClientInfo{
-			ComputerId: computerId,
-			FirstSeen:  time.Now(),
-			LastSeen:   time.Now(),
-			LastIp:     ip,
+		db.clients[clientId] = &ClientInfo{
+			ClientId:  clientId,
+			FirstSeen: time.Now(),
+			LastSeen:  time.Now(),
+			LastIp:    ip,
 
 			Hostname:      "",
 			LocalIps:      nil,
@@ -41,20 +41,20 @@ func (db *ClientInfoDb) updateFor(computerId string, ip string, connectorType st
 		}
 	} else {
 		// Update
-		db.clients[computerId].LastSeen = time.Now()
-		db.clients[computerId].LastIp = ip
-		db.clients[computerId].ConnectorType = connectorType
+		db.clients[clientId].LastSeen = time.Now()
+		db.clients[clientId].LastIp = ip
+		db.clients[clientId].ConnectorType = connectorType
 	}
 }
 
-func (db *ClientInfoDb) updateFromClientinfo(computerId, ip string, connectorType string, response model.PacketResponse) {
-	if _, ok := db.clients[computerId]; !ok {
+func (db *ClientInfoDb) updateFromClientinfo(clientId, ip string, connectorType string, response model.PacketResponse) {
+	if _, ok := db.clients[clientId]; !ok {
 		// Init
-		db.clients[computerId] = &ClientInfo{
-			ComputerId: computerId,
-			FirstSeen:  time.Now(),
-			LastSeen:   time.Now(),
-			LastIp:     ip,
+		db.clients[clientId] = &ClientInfo{
+			ClientId:  clientId,
+			FirstSeen: time.Now(),
+			LastSeen:  time.Now(),
+			LastIp:    ip,
 		}
 	}
 
@@ -71,13 +71,13 @@ func (db *ClientInfoDb) updateFromClientinfo(computerId, ip string, connectorTyp
 	processes := model.ResponseToArray("processes", response)
 	WorkingDir := response["WorkingDir"]
 
-	db.clients[computerId].Hostname = hostname
-	db.clients[computerId].LocalIps = localIps
-	db.clients[computerId].Arch = arch
-	db.clients[computerId].Processes = processes
-	db.clients[computerId].IsAdmin = isAdmin
-	db.clients[computerId].IsElevated = isElevated
-	db.clients[computerId].WorkingDir = WorkingDir
+	db.clients[clientId].Hostname = hostname
+	db.clients[clientId].LocalIps = localIps
+	db.clients[clientId].Arch = arch
+	db.clients[clientId].Processes = processes
+	db.clients[clientId].IsAdmin = isAdmin
+	db.clients[clientId].IsElevated = isElevated
+	db.clients[clientId].WorkingDir = WorkingDir
 }
 
 func (db *ClientInfoDb) AllAsList() []ClientInfo {

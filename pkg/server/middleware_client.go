@@ -16,7 +16,7 @@ func (m *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 	common.LogPacketDebug("Server:ClientSendPacket()", packet)
 
 	// Update Client DB
-	m.clientInfoDb.updateFor(packet.ComputerId, remoteAddr, connectorType)
+	m.clientInfoDb.updateFor(packet.ClientId, remoteAddr, connectorType)
 
 	// Special care packets
 	if packet.PacketType == "ping" {
@@ -25,7 +25,7 @@ func (m *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 	} else if packet.PacketType == "clientinfo" {
 		// Update our DB with client info data.
 		// But still store it, and broadcast it (used in the frontend to detect newly connected clients)
-		m.clientInfoDb.updateFromClientinfo(packet.ComputerId, remoteAddr, connectorType, packet.Response)
+		m.clientInfoDb.updateFromClientinfo(packet.ClientId, remoteAddr, connectorType, packet.Response)
 	}
 
 	// Update Package DB
@@ -37,12 +37,12 @@ func (m *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 	return nil
 }
 
-func (m *Middleware) ClientGetPacket(computerId string, remoteAddr string, connectorType string) (model.Packet, bool) {
+func (m *Middleware) ClientGetPacket(clientId string, remoteAddr string, connectorType string) (model.Packet, bool) {
 	// Update last seen for this host
-	m.clientInfoDb.updateFor(computerId, remoteAddr, connectorType)
+	m.clientInfoDb.updateFor(clientId, remoteAddr, connectorType)
 
 	// Check if we have any packets available
-	packetInfo, err := m.packetDb.getPacketForClient(computerId)
+	packetInfo, err := m.packetDb.getPacketForClient(clientId)
 	if err != nil {
 		return model.Packet{}, false
 	}
@@ -99,7 +99,7 @@ func (m *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {
 
 	basename := filepath.Base(packetInfo.Packet.Arguments["source"])
 	filename := fmt.Sprintf("upload/%s.%s.%s",
-		packetInfo.Packet.ComputerId,
+		packetInfo.Packet.ClientId,
 		packetInfo.Packet.PacketId,
 		basename,
 	)

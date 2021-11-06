@@ -6,10 +6,10 @@ import (
 
 type ClientInfo struct {
 	// From every packet
-	ComputerId string    `json:"ComputerId"`
-	FirstSeen  time.Time `json:"FirstSeen"`
-	LastSeen   time.Time `json:"LastSeen"`
-	LastIp     string    `json:"LastIp"`
+	ClientId  string    `json:"ClientId"`
+	FirstSeen time.Time `json:"FirstSeen"`
+	LastSeen  time.Time `json:"LastSeen"`
+	LastIp    string    `json:"LastIp"`
 
 	// From ClientInfo
 	Hostname      string   `json:"Hostname"`

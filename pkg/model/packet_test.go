@@ -6,7 +6,7 @@ import (
 )
 
 func TestPacketFromJson(t *testing.T) {
-	a := `{"computerid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{"foo":"bar"},"downstreamId":"client"}`
+	a := `{"clientid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{"foo":"bar"},"downstreamId":"client"}`
 	var packet Packet
 	err := json.Unmarshal([]byte(a), &packet)
 	if err != nil {
@@ -23,7 +23,7 @@ func TestPacketToJson(t *testing.T) {
 	response := make(PacketResponse)
 	c := NewPacket("test", "23", "42", arguments, response)
 
-	reference := `{"computerid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"}`
+	reference := `{"clientid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"}`
 	u, err := json.Marshal(c)
 	if err != nil {
 		t.Errorf("Error jsonify: " + err.Error())

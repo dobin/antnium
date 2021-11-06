@@ -9,19 +9,19 @@ import (
 	"github.com/dobin/antnium/pkg/server"
 )
 
-func makeSimpleTestPacket(computerId string, packetId string) *model.Packet {
+func makeSimpleTestPacket(clientId string, packetId string) *model.Packet {
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
-	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	packet := model.NewPacket("test", clientId, packetId, arguments, response)
 	return &packet
 }
 
-func makeSimpleTestPacketInfo(computerId string, packetId string) *server.PacketInfo {
+func makeSimpleTestPacketInfo(clientId string, packetId string) *server.PacketInfo {
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
-	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	packet := model.NewPacket("test", clientId, packetId, arguments, response)
 	packetInfo := server.NewPacketInfo(packet, server.STATE_RECORDED)
 	return &packetInfo
 }
@@ -32,12 +32,12 @@ func TestUpstreamServerRest(t *testing.T) {
 
 	port, _ := common.FreePort()
 	packetId := "packetid-421"
-	computerId := "TestUpstreamServerRest"
+	clientId := "TestUpstreamServerRest"
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = false // Test: REST
-	packetInfo := makeSimpleTestPacketInfo(computerId, packetId)
+	packetInfo := makeSimpleTestPacketInfo(clientId, packetId)
 	s.Middleware.AddPacketInfo(packetInfo)
 	defer s.Shutdown()
 	go s.Serve()
@@ -46,12 +46,12 @@ func TestUpstreamServerRest(t *testing.T) {
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.Campaign.ClientUseWebsocket = false // Test: REST
-	client.Config.ComputerId = computerId
+	client.Config.ClientId = clientId
 	client.Start()
 
 	// Test: Just receive, no execute
 	packet := <-client.UpstreamManager.ChannelIncoming
-	if packet.PacketId != packetId || packet.ComputerId != computerId {
+	if packet.PacketId != packetId || packet.ClientId != clientId {
 		t.Error("Err")
 		return
 	}
@@ -62,12 +62,12 @@ func TestUpstreamServerWs(t *testing.T) {
 	//t.Parallel()
 
 	port, _ := common.FreePort()
-	computerId := "TestUpstreamServerWs"
+	clientId := "TestUpstreamServerWs"
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true // Test: Websocket
-	packetInfo := makeSimpleTestPacketInfo(computerId, "001")
+	packetInfo := makeSimpleTestPacketInfo(clientId, "001")
 	s.Middleware.AddPacketInfo(packetInfo)
 	defer s.Shutdown()
 	go s.Serve()
@@ -76,25 +76,25 @@ func TestUpstreamServerWs(t *testing.T) {
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.Campaign.ClientUseWebsocket = true // Test: Websocket
-	client.Config.ComputerId = computerId
+	client.Config.ClientId = clientId
 	client.Campaign.DoClientInfo = false // Theres some kind of race condition going on
 	defer client.Shutdown()
 	client.Start()
 
 	// Test: expect packet to be received upon connection (its already added)
 	packet := <-client.UpstreamManager.ChannelIncoming
-	if packet.PacketId != "001" || packet.ComputerId != computerId {
+	if packet.PacketId != "001" || packet.ClientId != clientId {
 		t.Error("Err")
 		return
 	}
 
 	// Add a test packet via Frontend REST
-	packetB := makeSimpleTestPacket(computerId, "002")
+	packetB := makeSimpleTestPacket(clientId, "002")
 	s.Middleware.FrontendAddNewPacket(packetB, "")
 
 	// Test: Expect it
 	packet = <-client.UpstreamManager.ChannelIncoming
-	if packet.PacketId != "002" || packet.ComputerId != computerId {
+	if packet.PacketId != "002" || packet.ClientId != clientId {
 		t.Error("Err")
 		return
 	}
@@ -106,13 +106,13 @@ func TestUpstreamServerWsConnectLate(t *testing.T) {
 
 	port, _ := common.FreePort()
 	packetId := "packetid-423"
-	computerId := "TestUpstreamServerWsConnectLate"
+	clientId := "TestUpstreamServerWsConnectLate"
 
 	// make client
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.Campaign.ClientUseWebsocket = true // Test: WS
-	client.Config.ComputerId = computerId
+	client.Config.ClientId = clientId
 	go client.Start() // start in background, as it tries to connect
 
 	// Test: should have no server connection
@@ -126,13 +126,13 @@ func TestUpstreamServerWsConnectLate(t *testing.T) {
 	s := server.NewServer("127.0.0.1:" + port)
 	defer s.Shutdown()
 	s.Campaign.ClientUseWebsocket = true // Test: WS
-	packetInfo := makeSimpleTestPacketInfo(computerId, packetId)
+	packetInfo := makeSimpleTestPacketInfo(clientId, packetId)
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
 
 	// Test: Client connected
 	packet := <-client.UpstreamManager.ChannelIncoming
-	if packet.PacketId != packetId || packet.ComputerId != computerId {
+	if packet.PacketId != packetId || packet.ClientId != clientId {
 		t.Error("Err")
 		return
 	}
@@ -145,12 +145,12 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	port, _ := common.FreePort()
 	packetId1 := "packetid-42a"
 	packetId2 := "packetid-42b"
-	computerId := "computerid-23"
+	clientId := "clientid-23"
 
 	// Start Server
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true // Test: WS
-	packetInfo := makeSimpleTestPacketInfo(computerId, packetId1)
+	packetInfo := makeSimpleTestPacketInfo(clientId, packetId1)
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
 
@@ -158,12 +158,12 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.Campaign.ClientUseWebsocket = true
-	client.Config.ComputerId = computerId
+	client.Config.ClientId = clientId
 	go client.Start() // start in background, as it tries to connect
 
 	// Get packet
 	packet := <-client.UpstreamManager.ChannelIncoming
-	if packet.PacketId != packetId1 || packet.ComputerId != computerId {
+	if packet.PacketId != packetId1 || packet.ClientId != clientId {
 		t.Error("Err")
 		return
 	}
@@ -188,14 +188,14 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 	// Start 2nd server
 	s = server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true
-	packetInfo = makeSimpleTestPacketInfo(computerId, packetId2) // make sure to take another packetId here
+	packetInfo = makeSimpleTestPacketInfo(clientId, packetId2) // make sure to take another packetId here
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
 
 	// Test: Client reconnected
 	// expect packet to be received upon connection (its already added)
 	packet = <-client.UpstreamManager.ChannelIncoming
-	if packet.PacketId != packetId2 || packet.ComputerId != computerId {
+	if packet.PacketId != packetId2 || packet.ClientId != clientId {
 		t.Error("Err")
 		return
 	}
@@ -215,13 +215,13 @@ func TestUpstreamServerRestConnectLate(t *testing.T) {
 
 	port, _ := common.FreePort()
 	packetId := "packetid-42"
-	computerId := "TestUpstreamServerRestConnectLate"
+	clientId := "TestUpstreamServerRestConnectLate"
 
 	// make client
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.Campaign.ClientUseWebsocket = false // Test: REST
-	client.Config.ComputerId = computerId
+	client.Config.ClientId = clientId
 	go client.Start() // start in background, as it tries to connect
 
 	// Test: should have no server connection
@@ -234,7 +234,7 @@ func TestUpstreamServerRestConnectLate(t *testing.T) {
 	// Start Server
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = false // Test: REST
-	packetInfo := makeSimpleTestPacketInfo(computerId, packetId)
+	packetInfo := makeSimpleTestPacketInfo(clientId, packetId)
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
 	defer s.Shutdown()
@@ -242,7 +242,7 @@ func TestUpstreamServerRestConnectLate(t *testing.T) {
 	// Test: Client connected
 	// expect packet to be received upon connection (its already added)
 	packet := <-client.UpstreamManager.ChannelIncoming
-	if packet.PacketId != packetId || packet.ComputerId != computerId {
+	if packet.PacketId != packetId || packet.ClientId != clientId {
 		t.Error("Err")
 		return
 	}

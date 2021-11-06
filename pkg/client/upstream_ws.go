@@ -58,8 +58,8 @@ func (u *UpstreamWs) Connect() error {
 
 	// Authentication
 	authToken := model.ClientWebSocketAuth{
-		Key:        u.campaign.ApiKey,
-		ComputerId: u.config.ComputerId,
+		Key:      u.campaign.ApiKey,
+		ClientId: u.config.ClientId,
 	}
 	data, err := json.Marshal(authToken)
 	if err != nil {

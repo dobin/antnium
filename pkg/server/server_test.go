@@ -12,23 +12,23 @@ import (
 	"github.com/dobin/antnium/pkg/model"
 )
 
-func makeSimpleTestPacket(computerId string, packetId string) *model.Packet {
+func makeSimpleTestPacket(clientId string, packetId string) *model.Packet {
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
-	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	packet := model.NewPacket("test", clientId, packetId, arguments, response)
 	return &packet
 }
 
 // TestServerClientIntegrationRest will check if client and server can communicate via HTTP.
 func TestServerClientIntegrationRest(t *testing.T) {
 	port, _ := common.FreePort()
-	computerId := "computerid-23"
+	clientId := "clientid-23"
 	packetId := "packetid-42"
 
 	s := NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = false // Test: REST
-	packet := makeSimpleTestPacket(computerId, packetId)
+	packet := makeSimpleTestPacket(clientId, packetId)
 	s.Middleware.FrontendAddNewPacket(packet, "")
 	go s.Serve()
 
@@ -37,7 +37,7 @@ func TestServerClientIntegrationRest(t *testing.T) {
 	c := client.NewClient()
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Campaign.ClientUseWebsocket = false // Test: REST
-	c.Config.ComputerId = computerId
+	c.Config.ClientId = clientId
 	c.Start()
 
 	answerPacket := <-c.UpstreamManager.ChannelIncoming
@@ -55,7 +55,7 @@ func TestServerClientIntegrationRest(t *testing.T) {
 // TestServerClientIntegrationWebsocket will check if client and server can communicate via websocket
 func TestServerClientIntegrationWebsocket(t *testing.T) {
 	port, _ := common.FreePort()
-	computerId := "computerid-23"
+	clientId := "clientid-23"
 	packetId := "packetid-42"
 
 	// Server
@@ -68,11 +68,11 @@ func TestServerClientIntegrationWebsocket(t *testing.T) {
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	c.Campaign.ClientUseWebsocket = true // Test: WS
 	c.Campaign.DoClientInfo = false      // Theres some kind of race condition going on
-	c.Config.ComputerId = computerId
+	c.Config.ClientId = clientId
 	c.Start()
 
 	// Send test packet via admin interface
-	packet := makeSimpleTestPacket(computerId, packetId)
+	packet := makeSimpleTestPacket(clientId, packetId)
 	json_data, err := json.Marshal(packet)
 	if err != nil {
 		t.Errorf("Error when receiving packet: " + err.Error())
@@ -145,7 +145,7 @@ func TestServerAuthAdmin(t *testing.T) {
 func TestServerAuthClient(t *testing.T) {
 	var err error
 	packetId := "packetid-42"
-	computerId := "computerid-23"
+	clientId := "clientid-23"
 
 	// Start server in the background
 	port := "55003"
@@ -155,7 +155,7 @@ func TestServerAuthClient(t *testing.T) {
 	arguments := make(model.PacketArgument)
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
-	packet := model.NewPacket("test", computerId, packetId, arguments, response)
+	packet := model.NewPacket("test", clientId, packetId, arguments, response)
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
 	s.middleware.packetDb.add(packetInfo)
 
@@ -164,7 +164,7 @@ func TestServerAuthClient(t *testing.T) {
 	c := client.NewClient()
 	c.Campaign.ProxyUrl = "" // Always disable proxy
 	c.Campaign.ServerUrl = "http://127.0.0.1:" + port
-	c.Config.ComputerId = computerId
+	c.Config.ClientId = clientId
 	c.Start()
 
 	// Try first with invalid key (consumes one packet)
@@ -194,7 +194,7 @@ func TestServerAuthClient(t *testing.T) {
 		t.Errorf("Unittest error: Recv packet err")
 		return
 	}
-	if packet.ComputerId != computerId {
+	if packet.ClientId != clientId {
 		t.Errorf("Unittest error: Recv packet err")
 		return
 	}

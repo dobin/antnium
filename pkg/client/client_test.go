@@ -11,7 +11,7 @@ import (
 	"github.com/dobin/antnium/pkg/server"
 )
 
-func makeSimpleCmdPacket(computerId string, packetId string, commandline string) model.Packet {
+func makeSimpleCmdPacket(clientId string, packetId string, commandline string) model.Packet {
 	arguments := make(model.PacketArgument)
 
 	if runtime.GOOS == "linux" {
@@ -23,7 +23,7 @@ func makeSimpleCmdPacket(computerId string, packetId string, commandline string)
 	}
 	arguments["commandline"] = commandline
 	response := make(model.PacketResponse)
-	packet := model.NewPacket("exec", computerId, packetId, arguments, response)
+	packet := model.NewPacket("exec", clientId, packetId, arguments, response)
 	return packet
 }
 
@@ -32,14 +32,14 @@ func TestClientExecWs(t *testing.T) {
 	//t.Parallel()
 
 	port, _ := common.FreePort()
-	computerId := "computerid-23"
+	clientId := "clientid-23"
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true
 
 	// Make a example packet the client should receive
-	packet := makeSimpleCmdPacket(computerId, "p42", "echo test")
+	packet := makeSimpleCmdPacket(clientId, "p42", "echo test")
 	s.Middleware.FrontendAddNewPacket(&packet, "")
 
 	// make server go
@@ -50,7 +50,7 @@ func TestClientExecWs(t *testing.T) {
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.Campaign.ClientUseWebsocket = true
-	client.Config.ComputerId = computerId
+	client.Config.ClientId = clientId
 	client.Start()
 	go client.Loop()
 
@@ -82,14 +82,14 @@ func TestClientParalellExecWs(t *testing.T) {
 
 	// Add two commands, one sleep, one echo
 	port, _ := common.FreePort()
-	computerId := "computerid-23"
+	clientId := "clientid-23"
 
 	// Server in background, checking via client
 	s := server.NewServer("127.0.0.1:" + port)
 	s.Campaign.ClientUseWebsocket = true
-	packetA := makeSimpleCmdPacket(computerId, "p42", "ping localhost")
+	packetA := makeSimpleCmdPacket(clientId, "p42", "ping localhost")
 	s.Middleware.FrontendAddNewPacket(&packetA, "")
-	packetB := makeSimpleCmdPacket(computerId, "p43", "echo test")
+	packetB := makeSimpleCmdPacket(clientId, "p43", "echo test")
 	s.Middleware.FrontendAddNewPacket(&packetB, "")
 	defer s.Shutdown()
 	go s.Serve()
@@ -98,7 +98,7 @@ func TestClientParalellExecWs(t *testing.T) {
 	client := NewClient()
 	client.Campaign.ServerUrl = "http://127.0.0.1:" + port
 	client.Campaign.ClientUseWebsocket = true
-	client.Config.ComputerId = computerId
+	client.Config.ClientId = clientId
 	client.Start()
 	go client.Loop()
 

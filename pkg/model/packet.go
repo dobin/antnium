@@ -9,7 +9,7 @@ type PacketArgument map[string]string
 type PacketResponse map[string]string
 
 type Packet struct {
-	ComputerId   string         `json:"computerid"`
+	ClientId     string         `json:"clientid"`
 	PacketId     string         `json:"packetid"`
 	PacketType   string         `json:"packetType"`
 	Arguments    PacketArgument `json:"arguments"`
@@ -17,9 +17,9 @@ type Packet struct {
 	DownstreamId string         `json:"downstreamId"`
 }
 
-func NewPacket(packetType string, computerId string, packetId string, arguments PacketArgument, response PacketResponse) Packet {
+func NewPacket(packetType string, clientId string, packetId string, arguments PacketArgument, response PacketResponse) Packet {
 	c := Packet{
-		ComputerId:   computerId,
+		ClientId:     clientId,
 		PacketId:     packetId,
 		PacketType:   packetType,
 		Arguments:    arguments,

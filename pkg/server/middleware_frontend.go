@@ -24,11 +24,11 @@ func (m *Middleware) FrontendAllPacket() []*PacketInfo {
 	return m.packetDb.All()
 }
 
-func (m *Middleware) FrontendGetPacketById(computerId string) []PacketInfo {
+func (m *Middleware) FrontendGetPacketById(clientId string) []PacketInfo {
 	var filteredPackets []PacketInfo = make([]PacketInfo, 0)
 	packetInfos := m.packetDb.All()
 	for _, packetInfo := range packetInfos {
-		if packetInfo.Packet.ComputerId == computerId {
+		if packetInfo.Packet.ClientId == clientId {
 			filteredPackets = append(filteredPackets, *packetInfo)
 		}
 	}

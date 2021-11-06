@@ -55,7 +55,7 @@ func ListDirectory(path string) ([]DirEntry, error) {
 
 func LogPacket(s string, packet model.Packet) {
 	log.WithFields(log.Fields{
-		"1_computerId":   packet.ComputerId,
+		"1_clientId":     packet.ClientId,
 		"2_packetId":     packet.PacketId,
 		"3_downstreamId": packet.DownstreamId,
 		"4_packetType":   packet.PacketType,
@@ -66,7 +66,7 @@ func LogPacket(s string, packet model.Packet) {
 
 func LogPacketDebug(s string, packet model.Packet) {
 	log.WithFields(log.Fields{
-		"1_computerId":   packet.ComputerId,
+		"1_clientId":     packet.ClientId,
 		"2_packetId":     packet.PacketId,
 		"3_downstreamId": packet.DownstreamId,
 		"4_packetType":   packet.PacketType,

@@ -37,7 +37,7 @@ func TestPacketDb(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error packetInfoExisting 1")
 	}
-	if packetInfoExisting.Packet.ComputerId != "23" {
+	if packetInfoExisting.Packet.ClientId != "23" {
 		t.Errorf("Error packetInfoExisting 2")
 	}
 
@@ -74,7 +74,7 @@ func TestPacketDb(t *testing.T) {
 	if !ok {
 		t.Errorf("Error  5")
 	}
-	if pi.Packet.ComputerId != "23" {
+	if pi.Packet.ClientId != "23" {
 		t.Errorf("Error  6")
 	}
 }

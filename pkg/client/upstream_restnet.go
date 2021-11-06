@@ -6,7 +6,7 @@ import (
 )
 
 func (u *UpstreamRest) PacketGetUrl() string {
-	return u.campaign.ServerUrl + u.campaign.PacketGetPath + u.config.ComputerId
+	return u.campaign.ServerUrl + u.campaign.PacketGetPath + u.config.ClientId
 }
 
 func (u *UpstreamRest) PacketSendUrl() string {

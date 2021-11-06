@@ -24,10 +24,10 @@ func TestClientInfoDb(t *testing.T) {
 	// Get order as map is randomized...
 	var a int
 	var b int
-	if hostList[0].ComputerId == "1-1" {
+	if hostList[0].ClientId == "1-1" {
 		a = 0
 		b = 1
-	} else if hostList[0].ComputerId == "1-2" {
+	} else if hostList[0].ClientId == "1-2" {
 		a = 1
 		b = 0
 	} else {
@@ -37,7 +37,7 @@ func TestClientInfoDb(t *testing.T) {
 
 	// The order here should not matter, but we test it somehow
 	// 1
-	if hostList[a].ComputerId != "1-1" {
+	if hostList[a].ClientId != "1-1" {
 		t.Errorf("Error 1")
 		return
 	}
@@ -46,7 +46,7 @@ func TestClientInfoDb(t *testing.T) {
 		return
 	}
 	// 2
-	if hostList[b].ComputerId != "1-2" {
+	if hostList[b].ClientId != "1-2" {
 		t.Errorf("Error 3")
 		return
 	}

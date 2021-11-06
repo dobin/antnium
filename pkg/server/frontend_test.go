@@ -9,7 +9,7 @@ import (
 // TestServerPacketIdDuplicate checks if server throws an error when adding two packets with same PacketId
 func TestServerPacketIdDuplicate(t *testing.T) {
 	port, _ := common.FreePort()
-	computerId := "computerid-23"
+	clientId := "clientid-23"
 	packetId := "packetid-43"
 
 	// Server
@@ -17,7 +17,7 @@ func TestServerPacketIdDuplicate(t *testing.T) {
 	s.Campaign.ClientUseWebsocket = true // Test: WS
 	go s.Serve()
 
-	packet := makeSimpleTestPacket(computerId, packetId)
+	packet := makeSimpleTestPacket(clientId, packetId)
 
 	err := s.Middleware.FrontendAddNewPacket(packet, "")
 	if err != nil {

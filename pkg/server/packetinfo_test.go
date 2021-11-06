@@ -15,7 +15,7 @@ func TestToJson(t *testing.T) {
 	packetInfo := NewPacketInfo(packet, STATE_RECORDED)
 	packetInfo.User = "user"
 
-	reference := `{"Packet":{"computerid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"},"State":0,"User":"user","TimeRecorded":"0001-01-01T00:00:00Z","TimeSent":"0001-01-01T00:00:00Z","TimeAnswered":"0001-01-01T00:00:00Z"}`
+	reference := `{"Packet":{"clientid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"},"State":0,"User":"user","TimeRecorded":"0001-01-01T00:00:00Z","TimeSent":"0001-01-01T00:00:00Z","TimeAnswered":"0001-01-01T00:00:00Z"}`
 	u, err := json.Marshal(packetInfo)
 	if err != nil {
 		t.Errorf("Error: %s", err.Error())
@@ -33,7 +33,7 @@ func TestToJsonPacket(t *testing.T) {
 	arguments["arg0"] = "value0"
 	response := make(model.PacketResponse)
 	c := model.NewPacket("test", "23", "42", arguments, response)
-	reference := `{"computerid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"}`
+	reference := `{"clientid":"23","packetid":"42","packetType":"test","arguments":{"arg0":"value0"},"response":{},"downstreamId":"client"}`
 
 	packetInfo := NewPacketInfo(c, STATE_RECORDED)
 

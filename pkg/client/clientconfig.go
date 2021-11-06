@@ -13,11 +13,11 @@ import (
 )
 
 type ClientConfig struct {
-	ComputerId string //
-	Hostname   string
-	LocalIps   []string
-	Arch       string
-	Processes  []string
+	ClientId  string //
+	Hostname  string
+	LocalIps  []string
+	Arch      string
+	Processes []string
 }
 
 func MakeClientConfig() ClientConfig {
@@ -82,11 +82,11 @@ func MakeClientConfig() ClientConfig {
 	// https://github.com/denisbrodbeck/machineid
 
 	db := ClientConfig{
-		ComputerId: xid.New().String(),
-		Hostname:   hostname,
-		LocalIps:   localIps,
-		Arch:       arch,
-		Processes:  processList,
+		ClientId:  xid.New().String(),
+		Hostname:  hostname,
+		LocalIps:  localIps,
+		Arch:      arch,
+		Processes: processList,
 	}
 	return db
 }
@@ -94,7 +94,7 @@ func MakeClientConfig() ClientConfig {
 func (cc *ClientConfig) MakeClientPacket(packetType string, arguments model.PacketArgument, response model.PacketResponse) *model.Packet {
 	packet := model.NewPacket(
 		packetType,
-		cc.ComputerId,
+		cc.ClientId,
 		common.GetRandomPacketId(),
 		arguments,
 		response,

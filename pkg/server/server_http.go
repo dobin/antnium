@@ -17,7 +17,7 @@ func (s *Server) Serve() {
 	adminRouter := myRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(GetAdminMiddleware(s.Campaign.AdminApiKey))
 	adminRouter.HandleFunc("/packets", s.frontendManager.Rest.adminListPackets)
-	adminRouter.HandleFunc("/packets/{computerId}", s.frontendManager.Rest.adminListPacketsComputerId)
+	adminRouter.HandleFunc("/packets/{clientId}", s.frontendManager.Rest.adminListPacketsClientId)
 	adminRouter.HandleFunc("/clients", s.frontendManager.Rest.adminListClients)
 	//adminRouter.HandleFunc("/addTestPacket", s.adminAddTestPacket)
 	adminRouter.HandleFunc("/addPacket/{user}", s.frontendManager.Rest.adminAddPacket)
@@ -35,8 +35,8 @@ func (s *Server) Serve() {
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
 	clientRouter.Use(GetClientMiddleware(s.Campaign.ApiKey))
-	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{computerId}", s.connectorManager.Rest.getPacket) // /getPacket/{computerId}
-	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.connectorManager.Rest.sendPacket)              // /sendPacket
+	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{clientId}", s.connectorManager.Rest.getPacket) // /getPacket/{clientId}
+	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.connectorManager.Rest.sendPacket)            // /sendPacket
 	myRouter.HandleFunc("/ws", s.connectorManager.Websocket.wsHandlerClient)
 
 	// Authentication only via packetId parameter
