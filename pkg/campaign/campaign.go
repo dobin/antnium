@@ -34,11 +34,7 @@ func MakeCampaign() Campaign {
 	serverUrl := "http://localhost:8080"
 	proxyUrl := ""
 
-	// Generate the actual AES key based on encKey
-	key, err := scrypt.Key([]byte(encKey), []byte("antnium-salt"), 2048, 8, 1, 32)
-	if err != nil {
-		log.Fatal("Could not create key")
-	}
+	key := GetKey(encKey)
 
 	c := Campaign{
 		ApiKey:      apiKey,
@@ -61,6 +57,14 @@ func MakeCampaign() Campaign {
 		DoClientInfo:         true,
 	}
 	return c
+}
+
+func GetKey(encKey string) []byte {
+	key, err := scrypt.Key([]byte(encKey), []byte("antnium-salt"), 32768, 8, 1, 32)
+	if err != nil {
+		log.Fatal("Could not create key")
+	}
+	return key
 }
 
 func (c Campaign) GetProxy() (string, bool) {
