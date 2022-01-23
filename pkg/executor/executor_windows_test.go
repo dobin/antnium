@@ -100,3 +100,35 @@ func TestPowershellInvalidCommand(t *testing.T) {
 		t.Error("ExitCode")
 	}
 }
+
+func TestRawCopy(t *testing.T) {
+	packetArgument := make(model.PacketArgument, 2)
+	packetArgument["shelltype"] = "raw"
+	packetArgument["executable"] = "C:\\windows\\system32\\net.exe"
+	packetArgument["param0"] = "user"
+	packetArgument["param1"] = "dobin"
+	packetArgument["copyFirst"] = "C:\\temp\\server.exe"
+
+	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	if err != nil {
+		t.Error("Error: " + err.Error())
+		return
+	}
+	if len(stdErr) > 0 {
+		t.Error("Stderr: " + string(stdErr))
+		return
+	}
+	if len(stdOut) == 0 {
+		t.Error("Stdout")
+		return
+	}
+	if pid == 0 {
+		t.Error("Pid")
+		return
+	}
+	if exitCode != 0 {
+		t.Error("ExitCode")
+		return
+	}
+
+}

@@ -5,6 +5,8 @@ package arch
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"syscall"
 	"time"
@@ -103,7 +105,17 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given")
 		}
-		cmd = exec.CommandContext(ctx, executable, args...)
+
+		copyFirst, ok := packetArgument["copyFirst"]
+		if ok {
+			err := CopyFile(executable, copyFirst)
+			if err != nil {
+				return stdOut, stdErr, pid, exitCode, err
+			}
+			cmd = exec.CommandContext(ctx, copyFirst, args...)
+		} else {
+			cmd = exec.CommandContext(ctx, executable, args...)
+		}
 
 	default:
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown", shellType)
@@ -131,4 +143,24 @@ func getSysProcAttrs() *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{
 		HideWindow: true,
 	}
+}
+
+func CopyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	return out.Close()
 }
