@@ -24,7 +24,8 @@ type DownstreamManager struct {
 	downstreamClient     *DownstreamClient
 	downstreamClientInfo string
 
-	downstreamLocaltcp *DownstreamLocaltcp
+	downstreamLocaltcp  *DownstreamLocaltcp
+	downstreamDirectory *DownstreamDirectory
 }
 
 func MakeDownstreamManager(config *ClientConfig, upstreamOutgoing chan model.Packet) DownstreamManager {
@@ -40,6 +41,7 @@ func MakeDownstreamManager(config *ClientConfig, upstreamOutgoing chan model.Pac
 
 	downstreamClient := MakeDownstreamClient()
 	downstreamLocaltcp := MakeDownstreamLocaltcp("")
+	downstreamDirectory := MakeDownstreamDirectory("ipc/")
 
 	downstreamManager := DownstreamManager{
 		config:               config,
@@ -47,6 +49,7 @@ func MakeDownstreamManager(config *ClientConfig, upstreamOutgoing chan model.Pac
 		downstreamClient:     &downstreamClient,
 		downstreamClientInfo: downstreamClientInfo,
 		downstreamLocaltcp:   &downstreamLocaltcp,
+		downstreamDirectory:  &downstreamDirectory,
 	}
 	return downstreamManager
 }
@@ -66,8 +69,10 @@ func (dm *DownstreamManager) DoIncomingPacket(packet model.Packet) (model.Packet
 		packet, err = dm.doManager(packet)
 	} else if packet.DownstreamId == "client" {
 		packet, err = dm.downstreamClient.Do(packet)
-	} else if strings.HasPrefix(packet.DownstreamId, "net") { // e.g. "net#1
+	} else if strings.HasPrefix(packet.DownstreamId, "net") { // e.g. "net#1"
 		packet, err = dm.downstreamLocaltcp.Do(packet)
+	} else if strings.HasPrefix(packet.DownstreamId, "dir") { // e.g. "C:\temp"
+		packet, err = dm.downstreamDirectory.Do(packet)
 	} else {
 		err = fmt.Errorf("downstreamid %s unknown", packet.DownstreamId)
 	}

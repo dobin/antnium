@@ -21,5 +21,5 @@ func main() {
 	fmt.Println("Antnium 0.1")
 
 	wingman := wingman.MakeWingman()
-	wingman.StartWingman("")
+	wingman.StartWingman("directory")
 }
