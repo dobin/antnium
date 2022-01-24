@@ -86,7 +86,7 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	case "cmd":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("no argument 'commandline' given")
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
 		cmd = exec.CommandContext(ctx, "cmd.exe")
 		cmd.SysProcAttr = getSysProcAttrs()
@@ -95,7 +95,7 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	case "powershell":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("no argument 'commandline' given")
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
 		cmd = exec.CommandContext(ctx, "powershell.exe", "-ExecutionPolicy", "Bypass", "-C", commandStr)
 		cmd.SysProcAttr = getSysProcAttrs()
@@ -103,19 +103,30 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	case "raw":
 		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
 		if err != nil {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given")
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
+		}
+		cmd = exec.CommandContext(ctx, executable, args...)
+
+	case "rawCopyFirst":
+		destination, ok := packetArgument["destination"]
+		if !ok {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments: destination missing")
 		}
 
-		copyFirst, ok := packetArgument["copyFirst"]
-		if ok {
-			err := CopyFile(executable, copyFirst)
-			if err != nil {
-				return stdOut, stdErr, pid, exitCode, err
-			}
-			cmd = exec.CommandContext(ctx, copyFirst, args...)
-		} else {
-			cmd = exec.CommandContext(ctx, executable, args...)
+		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
+		if err != nil {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
+
+		err = CopyFile(executable, destination)
+		if err != nil {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("error copying file: %s", err.Error())
+		}
+
+		if err != nil {
+			return stdOut, stdErr, pid, exitCode, err
+		}
+		cmd = exec.CommandContext(ctx, destination, args...)
 
 	default:
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown", shellType)
