@@ -17,7 +17,7 @@ type WingDirectory struct {
 }
 
 func MakeWingDirectory() WingDirectory {
-	wing := WingDirectory{"ipc/"}
+	wing := WingDirectory{"C:\\temp\\"}
 	return wing
 }
 

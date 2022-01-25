@@ -41,7 +41,7 @@ func MakeDownstreamManager(config *ClientConfig, upstreamOutgoing chan model.Pac
 
 	downstreamClient := MakeDownstreamClient()
 	downstreamLocaltcp := MakeDownstreamLocaltcp("")
-	downstreamDirectory := MakeDownstreamDirectory("ipc/")
+	downstreamDirectory := MakeDownstreamDirectory("")
 
 	downstreamManager := DownstreamManager{
 		config:               config,
@@ -69,9 +69,9 @@ func (dm *DownstreamManager) DoIncomingPacket(packet model.Packet) (model.Packet
 		packet, err = dm.doManager(packet)
 	} else if packet.DownstreamId == "client" {
 		packet, err = dm.downstreamClient.Do(packet)
-	} else if strings.HasPrefix(packet.DownstreamId, "net") { // e.g. "net#1"
+	} else if strings.HasPrefix(packet.DownstreamId, "net") { // e.g. "net#0"
 		packet, err = dm.downstreamLocaltcp.Do(packet)
-	} else if strings.HasPrefix(packet.DownstreamId, "dir") { // e.g. "C:\temp"
+	} else if strings.HasPrefix(packet.DownstreamId, "dir") {
 		packet, err = dm.downstreamDirectory.Do(packet)
 	} else {
 		err = fmt.Errorf("downstreamid %s unknown", packet.DownstreamId)
@@ -91,7 +91,11 @@ func (dm *DownstreamManager) doManager(packet model.Packet) (model.Packet, error
 
 	switch packet.PacketType {
 	case "downstreamServerStart":
-		ret, err := dm.StartListeners()
+
+		tcpListenAddr, _ := packet.Arguments["tcp"]
+		directory, _ := packet.Arguments["directory"]
+
+		ret, err := dm.StartListeners(tcpListenAddr, directory)
 		if err != nil {
 			return packet, err
 		} else {
@@ -138,23 +142,37 @@ func (dm *DownstreamManager) StopListeners() (string, error) {
 }
 
 // StartListeners will start all downstream servers
-func (dm *DownstreamManager) StartListeners() (string, error) {
+func (dm *DownstreamManager) StartListeners(tcpListenAddr, directory string) (string, error) {
 	out := ""
 
-	o, err := dm.StartListenerLocaltcp()
+	o, err := dm.StartListenerLocaltcp(tcpListenAddr)
+	if err != nil {
+		return out, err
+	}
+	out += o + "\n"
+	o, err = dm.StartListenerDirectory(directory)
 	if err != nil {
 		return out, err
 	}
 	out += o + "\n"
 
+	// Immediately send an update,
+	// e.g. to make client aware there is a directory downstream configured
+	dm.SendDownstreamDataToServer()
+
 	return out, nil
 }
 
-func (dm *DownstreamManager) StartListenerLocaltcp() (string, error) {
+func (dm *DownstreamManager) StartListenerDirectory(directory string) (string, error) {
+	dm.downstreamDirectory.Start(directory)
+	return "", nil
+}
+
+func (dm *DownstreamManager) StartListenerLocaltcp(tcpListenAddr string) (string, error) {
 	if dm.downstreamLocaltcp.Started() {
 		return "", fmt.Errorf("LocalTcp is already started")
 	}
-	err := dm.downstreamLocaltcp.StartServer()
+	err := dm.downstreamLocaltcp.StartServer(tcpListenAddr)
 	if err != nil {
 		return "", err
 	}
@@ -182,11 +200,18 @@ func (dm *DownstreamManager) SendDownstreamDataToServer() {
 		"client",
 		dm.downstreamClientInfo,
 	}
+	downstreamInfoDirectory := DownstreamInfo{
+		"dir",
+		dm.downstreamDirectory.Directory(),
+	}
 	downstreamInfoTcp := dm.downstreamLocaltcp.DownstreamList()
 
 	downstreams := make([]DownstreamInfo, 0)
 	downstreams = append(downstreams, downstreamInfoClient)
 	downstreams = append(downstreams, downstreamInfoTcp...)
+	if dm.downstreamDirectory.Started() {
+		downstreams = append(downstreams, downstreamInfoDirectory)
+	}
 
 	arguments := make(model.PacketArgument)
 	response := make(model.PacketResponse)
@@ -214,6 +239,14 @@ func (dm *DownstreamManager) DownstreamServers() []DownstreamInfo {
 			"" + dm.downstreamLocaltcp.ListenAddr(),
 		}
 		downstreams = append(downstreams, downstreamInfoTcp)
+	}
+
+	if dm.downstreamDirectory.Started() {
+		downstreamDirectory := DownstreamInfo{
+			"directory",
+			"" + dm.downstreamDirectory.Directory(),
+		}
+		downstreams = append(downstreams, downstreamDirectory)
 	}
 
 	return downstreams

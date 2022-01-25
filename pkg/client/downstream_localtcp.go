@@ -97,7 +97,8 @@ func (d *DownstreamLocaltcp) doConn(conn net.Conn, packet model.Packet) (model.P
 }
 
 // StartServer starts the TCP listener
-func (d *DownstreamLocaltcp) StartServer() error {
+func (d *DownstreamLocaltcp) StartServer(listenAddr string) error {
+	d.listenAddr = listenAddr
 	log.Info("Start Downstream: LocalTcp on " + d.listenAddr)
 	ln, err := net.Listen("tcp", d.listenAddr)
 	if err != nil {

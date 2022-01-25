@@ -15,8 +15,13 @@ type DownstreamDirectory struct {
 }
 
 func MakeDownstreamDirectory(directory string) DownstreamDirectory {
+	// Default
+	if directory == "" {
+		directory = "C:\\temp\\"
+	}
+
 	df := DownstreamDirectory{
-		"ipc/",
+		directory,
 	}
 	return df
 }
@@ -66,4 +71,22 @@ func (df *DownstreamDirectory) Do(packet model.Packet) (model.Packet, error) {
 
 	// Not reached
 	return packet, fmt.Errorf("Answer not received in time")
+}
+
+func (d *DownstreamDirectory) Start(directory string) error {
+	d.directory = directory
+	log.Info("Start Downstream: Directory on " + d.directory)
+	return nil
+}
+
+func (d *DownstreamDirectory) Directory() string {
+	return d.directory
+}
+
+func (d *DownstreamDirectory) Started() bool {
+	if d.directory == "" {
+		return false
+	} else {
+		return true
+	}
 }

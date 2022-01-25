@@ -27,7 +27,7 @@ func NewClient() Client {
 	downstreamManager := MakeDownstreamManager(&config, upstreamManager.ChannelOutgoing)
 
 	if campaign.AutoStartDownstreams {
-		_, err := downstreamManager.StartListeners()
+		_, err := downstreamManager.StartListeners("localhost:50000", "ipc/")
 		if err != nil {
 			log.Errorf("Client: Could not start downstream listerner, continuing anyway: %s", err.Error())
 		}
