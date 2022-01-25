@@ -150,6 +150,7 @@ func (dm *DownstreamManager) StartListeners(tcpListenAddr, directory string) (st
 		return out, err
 	}
 	out += o + "\n"
+
 	o, err = dm.StartListenerDirectory(directory)
 	if err != nil {
 		return out, err
@@ -158,6 +159,7 @@ func (dm *DownstreamManager) StartListeners(tcpListenAddr, directory string) (st
 
 	// Immediately send an update,
 	// e.g. to make client aware there is a directory downstream configured
+	// Blocks if no upstream exists
 	dm.SendDownstreamDataToServer()
 
 	return out, nil

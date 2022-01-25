@@ -5,13 +5,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/dobin/antnium/pkg/wingman"
 	log "github.com/sirupsen/logrus"
 )
 
 type DownstreamDirectory struct {
-	directory string
+	wingmanData campaign.WingmanData
+	directory   string
 }
 
 func MakeDownstreamDirectory(directory string) DownstreamDirectory {
@@ -21,6 +23,7 @@ func MakeDownstreamDirectory(directory string) DownstreamDirectory {
 	}
 
 	df := DownstreamDirectory{
+		campaign.MakeWingmanData(),
 		directory,
 	}
 	return df
@@ -30,7 +33,7 @@ func (df *DownstreamDirectory) Do(packet model.Packet) (model.Packet, error) {
 	log.Infof("DownstreamDirectory")
 
 	// Write File
-	path := df.directory + "1.dwn"
+	path := df.directory + df.wingmanData.Req()
 
 	// Send it to the downstream executor
 	packetEncoded, err := wingman.EncodePacket(packet)
@@ -44,7 +47,7 @@ func (df *DownstreamDirectory) Do(packet model.Packet) (model.Packet, error) {
 	}
 
 	// Read answer
-	path = df.directory + "1.pu"
+	path = df.directory + df.wingmanData.Ans()
 	max := 50
 	for {
 		if max <= 0 {

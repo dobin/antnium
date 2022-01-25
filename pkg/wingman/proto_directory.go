@@ -7,28 +7,40 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/executor"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type WingDirectory struct {
-	directory string
+	wingmanData campaign.WingmanData
+	directory   string
 }
 
 func MakeWingDirectory() WingDirectory {
-	wing := WingDirectory{"C:\\temp\\"}
+	wing := WingDirectory{
+		campaign.MakeWingmanData(),
+		"C:\\temp\\",
+	}
 	return wing
 }
 
-func (e WingDirectory) Start(destination string) {
-	e.loop()
+func (wd WingDirectory) Start(destination string) {
+	// Always delete old one on start, or we will be confused
+	os.Remove(wd.directory + wd.wingmanData.Req())
+
+	// Loop forever
+	wd.loop()
 }
 
-func (dl WingDirectory) loop() {
-	r, _ := regexp.Compile(".*\\.dwn")
+func (wd WingDirectory) loop() {
+	r, err := regexp.Compile(".*\\." + wd.wingmanData.FileExtension)
+	if err != nil {
+		log.Fatalf("Regex: %s", err.Error())
+	}
 	for {
-		files, err := ioutil.ReadDir(dl.directory)
+		files, err := ioutil.ReadDir(wd.directory)
 		if err != nil {
 			log.Error(err)
 			return
@@ -36,8 +48,8 @@ func (dl WingDirectory) loop() {
 
 		for _, f := range files {
 			if r.MatchString(f.Name()) {
-				path := dl.directory + f.Name()
-				err := dl.handleFile(path)
+				path := wd.directory + f.Name()
+				err := wd.handleFile(path)
 				if err != nil {
 					log.Errorf("When handling file: %s: %s", path, err.Error())
 				}
@@ -51,7 +63,7 @@ func (dl WingDirectory) loop() {
 	}
 }
 
-func (dl WingDirectory) handleFile(filename string) error {
+func (wd WingDirectory) handleFile(filename string) error {
 	executor := executor.MakeExecutor()
 
 	// Handle it
@@ -84,7 +96,7 @@ func (dl WingDirectory) handleFile(filename string) error {
 	if err != nil {
 		log.Error("Wingman: Error: ", err.Error())
 	}
-	path := dl.directory + "1.pu"
+	path := wd.directory + wd.wingmanData.Ans()
 	err = os.WriteFile(path, packetEncoded, 0644)
 	if err != nil {
 		return err
