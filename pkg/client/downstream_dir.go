@@ -16,6 +16,14 @@ type DownstreamDirectory struct {
 	directory   string
 }
 
+func (dd *DownstreamDirectory) SetDirectory(directory string) {
+	// We require a trailing slash for now
+	if directory[len(directory)-1:] != "\\" {
+		directory += "\\"
+	}
+	dd.directory = directory
+}
+
 func MakeDownstreamDirectory(directory string) DownstreamDirectory {
 	// Default
 	if directory == "" {
@@ -29,11 +37,11 @@ func MakeDownstreamDirectory(directory string) DownstreamDirectory {
 	return df
 }
 
-func (df *DownstreamDirectory) Do(packet model.Packet) (model.Packet, error) {
+func (dd *DownstreamDirectory) Do(packet model.Packet) (model.Packet, error) {
 	log.Infof("DownstreamDirectory")
 
 	// Write File
-	path := df.directory + df.wingmanData.Req()
+	path := dd.directory + dd.wingmanData.Req()
 
 	// Send it to the downstream executor
 	packetEncoded, err := wingman.EncodePacket(packet)
@@ -47,7 +55,7 @@ func (df *DownstreamDirectory) Do(packet model.Packet) (model.Packet, error) {
 	}
 
 	// Read answer
-	path = df.directory + df.wingmanData.Ans()
+	path = dd.directory + dd.wingmanData.Ans()
 	max := 50
 	for {
 		if max <= 0 {
@@ -76,18 +84,18 @@ func (df *DownstreamDirectory) Do(packet model.Packet) (model.Packet, error) {
 	return packet, fmt.Errorf("Answer not received in time")
 }
 
-func (d *DownstreamDirectory) Start(directory string) error {
-	d.directory = directory
-	log.Info("Start Downstream: Directory on " + d.directory)
+func (dd *DownstreamDirectory) Start(directory string) error {
+	dd.SetDirectory(directory)
+	log.Info("Start Downstream: Directory on " + dd.directory)
 	return nil
 }
 
-func (d *DownstreamDirectory) Directory() string {
-	return d.directory
+func (dd *DownstreamDirectory) Directory() string {
+	return dd.directory
 }
 
-func (d *DownstreamDirectory) Started() bool {
-	if d.directory == "" {
+func (dd *DownstreamDirectory) Started() bool {
+	if dd.directory == "" {
 		return false
 	} else {
 		return true
