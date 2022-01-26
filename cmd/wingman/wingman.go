@@ -14,12 +14,12 @@ C:\Windows\System32\rundll32.exe .\wingman.dll,Start
 //export Start
 func Start() {
 	wingman := wingman.MakeWingman()
-	wingman.StartWingman("")
+	wingman.StartWingman("", "")
 }
 
 func main() {
 	fmt.Println("Antnium 0.1")
 
 	wingman := wingman.MakeWingman()
-	wingman.StartWingman("directory")
+	wingman.StartWingman("directory", "c:\\temp\\")
 }

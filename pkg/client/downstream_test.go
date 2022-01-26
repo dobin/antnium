@@ -9,6 +9,7 @@ import (
 	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 	"github.com/dobin/antnium/pkg/wingman"
+	log "github.com/sirupsen/logrus"
 )
 
 // TestDownstreamClient tests default Downstream: "Client"
@@ -60,7 +61,7 @@ func TestDownstreamLocaltcp(t *testing.T) {
 
 	// Start client, and downstream listeners
 	client.Start()
-	client.DownstreamManager.StartListeners()
+	client.DownstreamManager.StartListeners(downstreamTcpAddr, "")
 
 	// Downstream did not yet connect, this should result an error
 	packet := makeExecTestPacket()
@@ -73,7 +74,7 @@ func TestDownstreamLocaltcp(t *testing.T) {
 
 	// Connect wingman
 	wingman := wingman.MakeWingman()
-	go wingman.StartWingman(downstreamTcpAddr)
+	go wingman.StartWingman("tcp", downstreamTcpAddr)
 
 	// Rudimentary way to wait for client to connect
 	n := 0
@@ -118,6 +119,7 @@ func TestDownstreamLocaltcp(t *testing.T) {
 
 	// Shutdown client
 	wingman.Shutdown()
+	time.Sleep(time.Millisecond * 100)
 
 	// Check if error works, as client is not connected anymore
 	packet = makeExecTestPacket()
@@ -155,13 +157,13 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 	client.Start()
 
 	// Test: 1 connected
-	if len(client.DownstreamManager.DownstreamServers()) != 1 {
+	if len(client.DownstreamManager.DownstreamServers()) != 2 {
 		t.Error("1")
 		return
 	}
 
 	// Test: Start DownstreamServer
-	_, err = client.DownstreamManager.StartListeners()
+	_, err = client.DownstreamManager.StartListeners(downstreamTcpAddr, "")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -186,7 +188,7 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 	// Test: Client not connect ?
 
 	// Test: Start DownstreamServer
-	_, err = client.DownstreamManager.StartListeners()
+	_, err = client.DownstreamManager.StartListeners(downstreamTcpAddr, "")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -200,12 +202,13 @@ func TestDownstreamLocaltcpRestart(t *testing.T) {
 	// Test: Exec
 	// Connect downstream
 	wingman0 := wingman.MakeWingman()
-	go wingman0.StartWingman(downstreamTcpAddr)
+	go wingman0.StartWingman("tcp", downstreamTcpAddr)
 	wingman1 := wingman.MakeWingman()
-	go wingman1.StartWingman(downstreamTcpAddr)
+	go wingman1.StartWingman("tcp", downstreamTcpAddr)
 	// Rudimentary way to wait for client to connect
 	n := 0
 	for len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()) != 2 {
+		log.Infof("Len: %d", len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()))
 		if n == 10 {
 			t.Errorf("Waiting 1s for tcp downstream to connect, which didnt happen. We at: %d", len(client.DownstreamManager.downstreamLocaltcp.DownstreamList()))
 			return

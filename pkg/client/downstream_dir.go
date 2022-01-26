@@ -17,6 +17,11 @@ type DownstreamDirectory struct {
 }
 
 func (dd *DownstreamDirectory) SetDirectory(directory string) {
+	if directory == "" {
+		dd.directory = ""
+		return
+	}
+
 	// We require a trailing slash for now
 	if directory[len(directory)-1:] != "\\" {
 		directory += "\\"

@@ -19,7 +19,7 @@ func main() {
 	fmt.Println("Antnium 0.1")
 	if *doWingman {
 		wingman := wingman.MakeWingman()
-		wingman.StartWingman("")
+		wingman.StartWingman("", "")
 		return
 	}
 

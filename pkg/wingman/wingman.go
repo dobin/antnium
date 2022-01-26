@@ -1,25 +1,33 @@
 package wingman
 
-import (
-	"net"
-)
-
 type Wingman struct {
-	conn net.Conn
+	wingTcp       *WingTcp
+	wingDirectory *WingDirectory
 }
 
 func MakeWingman() Wingman {
-	executor := Wingman{}
-	return executor
+	wingTcp := MakeWingTcp()
+	wingDirectory := MakeWingDirectory()
+
+	w := Wingman{
+		&wingTcp,
+		&wingDirectory,
+	}
+	return w
 }
 
-func (e *Wingman) StartWingman(proto string) {
+func (e *Wingman) StartWingman(proto, data string) {
 	if proto == "tcp" {
-		wingTcp := MakeWingTcp()
-		wingTcp.Start("")
+		e.wingTcp.Start(data)
 	}
 	if proto == "directory" {
-		wingDirectory := MakeWingDirectory()
-		wingDirectory.Start("")
+		e.wingDirectory.Start(data)
 	}
+}
+
+func (e *Wingman) Shutdown() {
+	if e.wingTcp != nil {
+		e.wingTcp.Shutdown()
+	}
+
 }
