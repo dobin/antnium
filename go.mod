@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/aus/proxyplease v0.1.0
+	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/mitchellh/go-ps v1.0.0
