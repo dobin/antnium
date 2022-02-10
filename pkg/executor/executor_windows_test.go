@@ -3,6 +3,7 @@
 package executor
 
 import (
+	"os"
 	"testing"
 
 	"github.com/dobin/antnium/pkg/arch"
@@ -101,13 +102,16 @@ func TestPowershellInvalidCommand(t *testing.T) {
 	}
 }
 
-func TestRawCopy(t *testing.T) {
+func TestCopyFirst(t *testing.T) {
+	copyFirst := "C:\\temp\\server.exe"
+	os.Remove(copyFirst)
+
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "raw"
 	packetArgument["executable"] = "C:\\windows\\system32\\net.exe"
 	packetArgument["param0"] = "user"
 	packetArgument["param1"] = "dobin"
-	packetArgument["copyFirst"] = "C:\\temp\\server.exe"
+	packetArgument["copyFirst"] = copyFirst
 
 	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
 	if err != nil {
@@ -129,6 +133,12 @@ func TestRawCopy(t *testing.T) {
 	if exitCode != 0 {
 		t.Error("ExitCode")
 		return
+	}
+	if _, err := os.Stat(copyFirst); err != nil {
+		t.Error("Did not copy")
+		return
+	} else {
+		os.Remove(copyFirst)
 	}
 
 }

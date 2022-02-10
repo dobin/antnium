@@ -93,9 +93,15 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	exitCode = 0
 	err = nil
 
-	source := "c:\\windows\\system32\\notepad.exe"
-	replace := "c:\\windows\\system32\\calc.exe"
-	hollow(&source, &replace)
+	// Inject?
+
+	// Hollow?
+	/*shellType, ok := packetArgument["hollow"]
+	if ok {
+		source := "c:\\windows\\system32\\notepad.exe"
+		replace := "c:\\windows\\system32\\calc.exe"
+		hollow(&source, &replace)
+	}*/
 
 	processTimeout := 10 * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), processTimeout)
@@ -106,57 +112,67 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("no argument 'shelltype' given")
 	}
 
-	var cmd *exec.Cmd
+	// Extract effective executable path and arguments
+	var executable string
+	var args []string
 	switch shellType {
 	case "cmd":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
-		cmd = exec.CommandContext(ctx, "cmd.exe")
-		cmd.SysProcAttr = getSysProcAttrs()
-		cmd.SysProcAttr.CmdLine = fmt.Sprintf(`cmd.exe /S /C "%s"`, commandStr)
+		executable = `C:\windows\system32\cmd.exe`
+		x := fmt.Sprintf(`cmd.exe /S /C "%s"`, commandStr)
+		args = []string{x}
 
 	case "powershell":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
-		cmd = exec.CommandContext(ctx, "powershell.exe", "-ExecutionPolicy", "Bypass", "-C", commandStr)
-		cmd.SysProcAttr = getSysProcAttrs()
+
+		executable = `C:\Windows\System32\WindowsPowershell\v1.0\`
+		args = []string{"-ExecutionPolicy", "Bypass", "-C", commandStr}
 
 	case "raw":
-		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
-		if err != nil {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
-		}
-		cmd = exec.CommandContext(ctx, executable, args...)
-
-	case "rawCopyFirst":
-		destination, ok := packetArgument["destination"]
-		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments: destination missing")
-		}
-
-		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
+		executable, args, err = model.MakePacketArgumentFrom(packetArgument)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
 
-		err = CopyFile(executable, destination)
+	default:
+		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown a", shellType)
+	}
+
+	/* copyFirst Anti-EDR */
+	copyFirst, ok := packetArgument["copyFirst"]
+	if ok {
+		err = CopyFile(executable, copyFirst)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("error copying file: %s", err.Error())
 		}
-
-		if err != nil {
-			return stdOut, stdErr, pid, exitCode, err
-		}
-		cmd = exec.CommandContext(ctx, destination, args...)
-
-	default:
-		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown", shellType)
 	}
 
+	cmd := exec.CommandContext(ctx, executable, args...)
+	/* Fix up windows exceptions in process parameter handling */
+	switch shellType {
+	case "cmd":
+		// cmd.exe is different
+		cmd.SysProcAttr = getSysProcAttrs()
+		cmd.SysProcAttr.CmdLine = args[0]
+
+	case "powershell":
+		// powershell.exe is different
+		cmd.SysProcAttr = getSysProcAttrs()
+
+	case "raw":
+		// Nothing
+
+	default:
+		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown b", shellType)
+	}
+
+	log.Infof("Executing: %s %v", executable, args)
 	stdOut, err = cmd.Output()
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
