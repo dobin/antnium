@@ -104,15 +104,16 @@ func TestPowershellInvalidCommand(t *testing.T) {
 }
 
 func TestCopyFirst(t *testing.T) {
-	copyFirst := "C:\\temp\\server.exe"
-	os.Remove(copyFirst)
+	destPath := "C:\\temp\\server.exe"
+	os.Remove(destPath)
 
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "raw"
 	packetArgument["executable"] = "C:\\windows\\system32\\net.exe"
 	packetArgument["param0"] = "user"
 	packetArgument["param1"] = "dobin"
-	packetArgument["copyFirst"] = copyFirst
+	packetArgument["spawnType"] = "copyFirst"
+	packetArgument["spawnData"] = destPath
 
 	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
 	if err != nil {
@@ -135,11 +136,11 @@ func TestCopyFirst(t *testing.T) {
 		t.Error("ExitCode")
 		return
 	}
-	if _, err := os.Stat(copyFirst); err != nil {
+	if _, err := os.Stat(destPath); err != nil {
 		t.Error("Did not copy")
 		return
 	} else {
-		os.Remove(copyFirst)
+		os.Remove(destPath)
 	}
 }
 
@@ -149,7 +150,8 @@ func TestHollow(t *testing.T) {
 	packetArgument["executable"] = "C:\\windows\\system32\\net.exe"
 	packetArgument["param0"] = "user"
 	packetArgument["param1"] = "dobin"
-	packetArgument["hollow"] = "c:\\windows\\system32\\hostname.exe"
+	packetArgument["spawnType"] = "hollow"
+	packetArgument["spawnData"] = "c:\\windows\\system32\\hostname.exe"
 
 	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
 	if err != nil {

