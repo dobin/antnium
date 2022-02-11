@@ -1,6 +1,7 @@
 package inject
 
 import (
+	"fmt"
 	"syscall"
 	"unsafe"
 
@@ -187,6 +188,36 @@ func CreateProcessA(appName string,
 		uintptr(unsafe.Pointer(PI)),
 	)
 	return uint32(result), SI, PI, err
+}
+
+func CreateProcessA_Pipe(
+	appName string,
+	commandLine string,
+	processAttributes uintptr,
+	threadAttributes uintptr,
+	inheritHandles uint32,
+	creationFlags uint32,
+	env uintptr,
+	currentDir uintptr,
+	SI *syscall.StartupInfo,
+	PI *syscall.ProcessInformation) (uint32, error) {
+
+	fmt.Printf("Start: %s with %s", appName, commandLine)
+
+	result, _, err := createProcessA.Call(
+		uintptr(unsafe.Pointer(StringToCharPtr(appName))),
+		uintptr(unsafe.Pointer(StringToCharPtr(commandLine))),
+
+		processAttributes,
+		threadAttributes,
+		uintptr(inheritHandles),
+		uintptr(creationFlags),
+		env,
+		currentDir,
+		uintptr(unsafe.Pointer(SI)),
+		uintptr(unsafe.Pointer(PI)),
+	)
+	return uint32(result), err
 }
 
 // https://github.com/abdullah2993/go-runpe/blob/403894fc2c3152c1f8ac98221250f1d46fd70bff/runpe.go#L288

