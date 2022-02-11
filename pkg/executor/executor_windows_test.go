@@ -109,7 +109,7 @@ func TestCopyFirst(t *testing.T) {
 
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "raw"
-	packetArgument["executable"] = "C:\\windows\\system32\\net.exe"
+	packetArgument["executable"] = "net.exe" // Test: no full path
 	packetArgument["param0"] = "user"
 	packetArgument["param1"] = "dobin"
 	packetArgument["spawnType"] = "copyFirst"

