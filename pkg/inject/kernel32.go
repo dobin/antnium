@@ -1,7 +1,6 @@
 package inject
 
 import (
-	"fmt"
 	"syscall"
 	"unsafe"
 
@@ -201,8 +200,6 @@ func CreateProcessA_Pipe(
 	currentDir uintptr,
 	SI *syscall.StartupInfo,
 	PI *syscall.ProcessInformation) (uint32, error) {
-
-	fmt.Printf("Start: %s with %s", appName, commandLine)
 
 	result, _, err := createProcessA.Call(
 		uintptr(unsafe.Pointer(StringToCharPtr(appName))),

