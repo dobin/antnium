@@ -4,7 +4,11 @@ import (
 	"C"
 	"fmt"
 )
-import "github.com/dobin/antnium/pkg/wingman"
+import (
+	"flag"
+
+	"github.com/dobin/antnium/pkg/wingman"
+)
 
 /*
 In a admin shell:
@@ -18,8 +22,16 @@ func Start() {
 }
 
 func main() {
-	fmt.Println("Antnium 0.1")
+	fmt.Println("Wingman 0.1")
+
+	/*
+		tcp       localhost:50000
+		directory c:\temp\
+	*/
+	proto := flag.String("proto", "", "proto")
+	data := flag.String("data", "", "data")
+	flag.Parse()
 
 	wingman := wingman.MakeWingman()
-	wingman.StartWingman("directory", "c:\\temp\\")
+	wingman.StartWingman(*proto, *data)
 }

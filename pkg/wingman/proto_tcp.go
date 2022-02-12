@@ -22,7 +22,7 @@ func MakeWingTcp() WingTcp {
 	return wing
 }
 
-func (e *WingTcp) Start(destination string) {
+func (e *WingTcp) Start(destination string) error {
 	if destination == "" {
 		destination = "localhost:50000"
 	}
@@ -30,28 +30,26 @@ func (e *WingTcp) Start(destination string) {
 
 	conn, err := net.Dial("tcp", destination)
 	if err != nil {
-		log.Error("Could not connect: " + err.Error())
-		return
+		return fmt.Errorf("Wingman: Could not connect: %s", err.Error())
 	}
 	log.Info("Wingman: Connected")
 
 	// Send initial line
 	ex, err := os.Executable()
 	if err != nil {
-		log.Error("Wingman: Error: " + err.Error())
-		return
+		return fmt.Errorf("Wingman: Error: %s", err.Error())
 	}
 	pid := strconv.Itoa(os.Getpid())
 	line := ex + ":" + pid + "\n"
 	_, err = conn.Write([]byte(line))
 	if err != nil {
-		log.Error("Wingman: Error")
-		return
+		return fmt.Errorf("Wingman: Reading from pipe: %s", err.Error())
 	}
 	// no answer required
 	e.conn = conn
 
 	e.Loop()
+	return nil
 }
 
 func (e *WingTcp) Shutdown() {

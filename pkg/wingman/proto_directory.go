@@ -26,12 +26,14 @@ func MakeWingDirectory() WingDirectory {
 	return wing
 }
 
-func (wd WingDirectory) Start(destination string) {
+func (wd WingDirectory) Start(destination string) error {
 	// Always delete old one on start, or we will be confused
 	os.Remove(wd.directory + wd.wingmanData.Req())
 
 	// Loop forever
 	wd.loop()
+
+	return nil
 }
 
 func (wd WingDirectory) loop() {
