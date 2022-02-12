@@ -11,15 +11,17 @@ import (
 )
 
 func main() {
-	flagServerUrl := flag.String("addr", "", "ENV: PROXY")
-	flagProxyUrl := flag.String("proxy", "", "ENV: ADDR")
+	flagServerUrl := flag.String("server", "", "ENV: SERVER")
+	flagProxyUrl := flag.String("proxy", "", "ENV: PROXY")
 	doWingman := flag.Bool("wingman", false, "")
+	proto := flag.String("proto", "", "proto")
+	data := flag.String("data", "", "data")
 	flag.Parse()
 
 	fmt.Println("Antnium 0.1")
 	if *doWingman {
 		wingman := wingman.MakeWingman()
-		wingman.StartWingman("", "")
+		wingman.StartWingman(*proto, *data)
 		return
 	}
 
@@ -33,13 +35,13 @@ func main() {
 
 	c := client.NewClient()
 
-	// env can be overwritten with args
+	if os.Getenv("SERVER") != "" {
+		c.Campaign.ServerUrl = os.Getenv("SERVER")
+	}
 	if os.Getenv("PROXY") != "" {
 		c.Campaign.ProxyUrl = os.Getenv("PROXY")
 	}
-	if os.Getenv("ADDR") != "" {
-		c.Campaign.ProxyUrl = os.Getenv("ADDR")
-	}
+	// env can be overwritten with args
 	if *flagServerUrl != "" {
 		c.Campaign.ServerUrl = *flagServerUrl
 	}
