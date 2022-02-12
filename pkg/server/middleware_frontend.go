@@ -12,8 +12,10 @@ func (m *Middleware) FrontendAddNewPacket(packet *model.Packet, user string) err
 	}
 
 	// Notify UI immediately (for initial STATE_RECORDED)
-	// And send to client, if they are connected via websocket
-	m.channelSend <- *packetInfo
+	m.frontendSend <- *packetInfo
+
+	// Send to client, if they are connected via Websocket
+	m.connectorSend <- *packetInfo
 
 	return nil
 }
