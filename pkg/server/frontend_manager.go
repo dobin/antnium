@@ -8,9 +8,9 @@ type FrontendManager struct {
 	Websocket FrontendWs
 }
 
-func MakeFrontendManager(campaign *campaign.Campaign, middleware *Middleware) FrontendManager {
+func MakeFrontendManager(campaign *campaign.Campaign, config *Config, middleware *Middleware) FrontendManager {
 	frontendRest := MakeFrontendRest(campaign, middleware)
-	frontendWs := MakeFrontendWs(campaign, middleware)
+	frontendWs := MakeFrontendWs(config, middleware)
 
 	f := FrontendManager{
 		campaign:  campaign,

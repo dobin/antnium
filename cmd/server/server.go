@@ -22,7 +22,7 @@ func main() {
 	flagDbWriteOnly := flag.Bool("dbWriteOnly", false, "Only write in DB, dont load it on start (overwrite)")
 	flag.Parse()
 
-	fmt.Println("Antnium 0.1")
+	fmt.Printf("Antnium 0.1\n")
 	s := server.NewServer(*flagListenAddr)
 
 	lvl := "debug"

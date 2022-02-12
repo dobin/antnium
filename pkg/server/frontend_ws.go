@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
@@ -21,7 +20,7 @@ type WebsocketData struct {
 type AuthToken string
 
 type FrontendWs struct {
-	campaign           *campaign.Campaign
+	config             *Config
 	middleware         *Middleware
 	clients            map[*websocket.Conn]bool
 	channelDistributor chan PacketInfo
@@ -29,9 +28,9 @@ type FrontendWs struct {
 	wsUpgrader websocket.Upgrader
 }
 
-func MakeFrontendWs(campaign *campaign.Campaign, middleware *Middleware) FrontendWs {
+func MakeFrontendWs(config *Config, middleware *Middleware) FrontendWs {
 	f := FrontendWs{
-		campaign,
+		config,
 		middleware,
 		make(map[*websocket.Conn]bool),
 		make(chan PacketInfo),
@@ -64,7 +63,7 @@ func (f *FrontendWs) NewConnectionHandler(w http.ResponseWriter, r *http.Request
 		log.Warnf("FrontendWs: could not decode authentication: %v", message)
 		return
 	}
-	if string(authToken) != f.campaign.AdminApiKey {
+	if string(authToken) != f.config.AdminApiKey {
 		log.Warn("FrontendWs: incorrect key for authentication: " + authToken)
 		return
 	}

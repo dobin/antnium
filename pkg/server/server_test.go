@@ -85,7 +85,7 @@ func TestServerClientIntegrationWebsocket(t *testing.T) {
 		t.Errorf("Unittest error: %s", err.Error())
 		return
 	}
-	req.Header.Set("Authorization", c.Campaign.AdminApiKey)
+	req.Header.Set("Authorization", s.config.AdminApiKey)
 	res, err := client.Do(req)
 	if err != nil {
 		t.Errorf("Unittest error: %s", err.Error())

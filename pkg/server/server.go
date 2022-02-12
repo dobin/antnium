@@ -17,6 +17,7 @@ import (
 
 type Server struct {
 	srvaddr          string
+	config           *Config
 	Campaign         *campaign.Campaign
 	connectorManager *ConnectorManager
 	frontendManager  *FrontendManager
@@ -27,13 +28,14 @@ type Server struct {
 
 func NewServer(srvAddr string) Server {
 	campaign := campaign.MakeCampaign()
+	config := MakeConfig()
 
 	channelConnectorSend := make(chan model.Packet, 0)
 	channelFrontendSend := make(chan PacketInfo, 0)
 
 	middleware := MakeMiddleware(channelConnectorSend, channelFrontendSend)
 	connectorManager := MakeConnectorManager(&campaign, &middleware)
-	frontendManager := MakeFrontendManager(&campaign, &middleware)
+	frontendManager := MakeFrontendManager(&campaign, &config, &middleware)
 
 	// Handle packets from Frontend to Connector (Client)
 	go func() {
@@ -42,6 +44,12 @@ func NewServer(srvAddr string) Server {
 			if !ok {
 				break
 			}
+
+			// IF R: send to client: connector.TryViaWebSocket()
+			// IF S: send update to ui: websocket.Distribute()
+			// IF A: send update to ui: websocket.Distribute()
+			// IF C: send to ui: websocket.Distribute()
+
 			// Try to send it via websocket.
 			// If this fails, the packet will still be available in the packetdb to send later
 			ok = connectorManager.Websocket.TryViaWebsocket(&packet)
@@ -91,6 +99,7 @@ func NewServer(srvAddr string) Server {
 
 	w := Server{
 		srvAddr,
+		&config,
 		&campaign,
 		&connectorManager,
 		&frontendManager,

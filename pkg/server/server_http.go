@@ -15,7 +15,7 @@ func (s *Server) Serve() {
 
 	// Admin Authenticated
 	adminRouter := myRouter.PathPrefix("/admin").Subrouter()
-	adminRouter.Use(GetAdminMiddleware(s.Campaign.AdminApiKey))
+	adminRouter.Use(GetAdminMiddleware(s.config.AdminApiKey))
 	adminRouter.HandleFunc("/packets", s.frontendManager.Rest.adminListPackets)
 	adminRouter.HandleFunc("/packets/{clientId}", s.frontendManager.Rest.adminListPacketsClientId)
 	adminRouter.HandleFunc("/clients", s.frontendManager.Rest.adminListClients)

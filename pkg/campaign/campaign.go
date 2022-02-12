@@ -6,11 +6,10 @@ import (
 )
 
 type Campaign struct {
-	ApiKey      string `json:"ApiKey"`
-	AdminApiKey string `json:"AdminApiKey"`
-	EncKey      []byte `json:"EncKey"`
-	WithZip     bool   `json:"WithZip"`
-	WithEnc     bool   `json:"WithEnc"`
+	ApiKey  string `json:"ApiKey"`
+	EncKey  []byte `json:"EncKey"`
+	WithZip bool   `json:"WithZip"`
+	WithEnc bool   `json:"WithEnc"`
 
 	ServerUrl string `json:"ServerUrl"` // URL of the server, as viewed from the clients
 
@@ -29,7 +28,6 @@ type Campaign struct {
 
 func MakeCampaign() Campaign {
 	apiKey := "Secret-Api-Key"
-	adminApiKey := "Secret-AdminApi-Key"
 	encKey := "Secret-Enc-Key"
 	serverUrl := "http://0.0.0.0:8080"
 	proxyUrl := ""
@@ -37,12 +35,11 @@ func MakeCampaign() Campaign {
 	key := GetKey(encKey)
 
 	c := Campaign{
-		ApiKey:      apiKey,
-		AdminApiKey: adminApiKey,
-		EncKey:      key,
-		WithZip:     true,
-		WithEnc:     true,
-		ServerUrl:   serverUrl,
+		ApiKey:    apiKey,
+		EncKey:    key,
+		WithZip:   true,
+		WithEnc:   true,
+		ServerUrl: serverUrl,
 
 		PacketSendPath:      "/send",
 		PacketGetPath:       "/get/",
