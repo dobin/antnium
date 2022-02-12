@@ -83,8 +83,8 @@ func ExecOutputDecode(data []byte) string {
 	}
 }
 
-func hollow(source, replace, name string, args []string) (int, []byte, []byte, error) {
-	log.Infof("Replacing %s with %s", source, replace)
+func hollow(source, replace, name string, args []string) (int, []byte, []byte, int, error) {
+	//log.Infof("Replacing %s with %s", source, replace)
 	data, _ := ioutil.ReadFile(replace)
 	return inject.RunPE64(data, source, name, strings.Join(args, " "))
 }
@@ -205,7 +205,7 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		}
 
 		name := filepath.Base(executable) // Need it without path
-		pid, stdOut, stdErr, err = hollow(sourcePath, executable, name, args)
+		pid, stdOut, stdErr, exitCode, err = hollow(sourcePath, executable, name, args)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Hollow error: %s", err)
 		}

