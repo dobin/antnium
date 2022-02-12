@@ -112,7 +112,8 @@ func (u *UpstreamManager) ConnectRetryForever() error {
 		if u.campaign.ClientUseWebsocket {
 			err := u.Websocket.Connect()
 			if err != nil {
-				log.Debugf("UpstreamManager: Trying to connect to upstraem websocket resulted in: %s", err.Error())
+				log.Debugf("UpstreamManager: Trying to connect to upstream: WEBSOCKET resulted in error")
+				//log.Debugf("UpstreamManager: %s", err.Error())
 			} else {
 				log.Infof("UpstreamManager: Connected to websocket")
 				u.Websocket.Start()
@@ -124,7 +125,8 @@ func (u *UpstreamManager) ConnectRetryForever() error {
 		// Always try REST
 		err := u.Rest.Connect()
 		if err != nil {
-			log.Debugf("UpstreamManager: Trying to connect to upstream REST resulted in: %s", err.Error())
+			log.Debugf("UpstreamManager: Trying to connect to upstream REST: resulted in error")
+			//log.Debugf("UpstreamManager: %s", err.Error())
 		} else {
 			log.Infof("UpstreamManager: Connected to REST")
 			u.Rest.Start()
