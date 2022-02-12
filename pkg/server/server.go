@@ -29,60 +29,51 @@ func NewServer(srvAddr string) Server {
 	campaign := campaign.MakeCampaign()
 	config := MakeConfig()
 
-	channelConnectorSend := make(chan PacketInfo, 0)
-	channelFrontendSend := make(chan PacketInfo, 0)
+	channelSend := make(chan PacketInfo, 0)
 
-	middleware := MakeMiddleware(channelConnectorSend, channelFrontendSend)
+	middleware := MakeMiddleware(channelSend)
 	connectorManager := MakeConnectorManager(&campaign, &middleware)
 	frontendManager := MakeFrontendManager(&campaign, &config, &middleware)
-	/*
-		go func() {
-			for {
-				packet, ok := <-channelSend
-				if !ok {
-					break
-				}
 
-				//switch packet.
-			}
-		}()*/
-
-	// Handle packets from Frontend to Connector (Client)
 	go func() {
 		for {
-			packetInfo, ok := <-channelConnectorSend
+			packetInfo, ok := <-channelSend
 			if !ok {
 				break
 			}
 
-			// IF RECORDED: send to client: connector.TryViaWebSocket()
-			// IF S: send update to ui: websocket.Distribute()
-			// IF A: send update to ui: websocket.Distribute()
-			// IF C: send to ui: websocket.Distribute()
+			switch packetInfo.State {
+			case STATE_RECORDED:
+				// Always notify client about recorded state
+				frontendManager.Websocket.channelDistributor <- packetInfo
 
-			// Try to send it via websocket.
-			// If this fails, the packet will still be available in the packetdb to send later
-			ok = connectorManager.Websocket.TryViaWebsocket(&packetInfo.Packet)
-			if ok {
-				packetInfo, err := middleware.packetDb.sentToClient(packetInfo.Packet.PacketId, "")
-				if err != nil {
-					log.Errorf("could not update packet info: %s", err.Error())
+				// Try to send it via websocket.
+				// If this fails, the packet will still be available in the packetdb to send later
+				ok = connectorManager.Websocket.TryViaWebsocket(&packetInfo.Packet)
+				if ok {
+					packetInfoAns, err := middleware.packetDb.sentToClient(packetInfo.Packet.PacketId, "")
+					if err != nil {
+						log.Errorf("could not update packet info: %s", err.Error())
+					}
+
+					if packetInfoAns.State == STATE_RECORDED {
+						log.Error("Endless loop")
+					} else {
+						// Update UI that we were able to send it
+						//channelSend <- *packetInfoAns
+						frontendManager.Websocket.channelDistributor <- packetInfo
+					}
 				}
 
-				// only notify UI if we really sent a packet
-				channelFrontendSend <- *packetInfo
-			}
-		}
-	}()
+			case STATE_SENT:
+				frontendManager.Websocket.channelDistributor <- packetInfo
 
-	// Handle packets from Connector (Client) to Frontend
-	go func() {
-		for {
-			packet, ok := <-channelFrontendSend
-			if !ok {
-				break
+			case STATE_ANSWERED:
+				frontendManager.Websocket.channelDistributor <- packetInfo
+
+			case STATE_CLIENT:
+				frontendManager.Websocket.channelDistributor <- packetInfo
 			}
-			frontendManager.Websocket.channelDistributor <- packet
 		}
 	}()
 
@@ -135,9 +126,7 @@ func (s *Server) Shutdown() {
 	s.connectorManager.Websocket.Shutdown()
 	s.frontendManager.Websocket.Shutdown()
 
-	close(s.Middleware.frontendSend)
-	close(s.Middleware.connectorSend)
-
+	close(s.Middleware.channelSend)
 }
 
 func (s *Server) DbLoad() error {
