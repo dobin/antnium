@@ -29,36 +29,20 @@ func NewServer(srvAddr string) Server {
 	campaign := campaign.MakeCampaign()
 	config := MakeConfig()
 
-	channelConnectorSend := make(chan PacketInfo, 0)
-	channelFrontendSend := make(chan PacketInfo, 0)
+	channelNewPacket := make(chan PacketInfo, 0)
+	channelToFrontend := make(chan PacketInfo, 0)
 
-	middleware := MakeMiddleware(channelConnectorSend, channelFrontendSend)
+	middleware := MakeMiddleware(channelNewPacket, channelToFrontend)
 	connectorManager := MakeConnectorManager(&campaign, &middleware)
 	frontendManager := MakeFrontendManager(&campaign, &config, &middleware)
-	/*
-		go func() {
-			for {
-				packet, ok := <-channelSend
-				if !ok {
-					break
-				}
-
-				//switch packet.
-			}
-		}()*/
 
 	// Handle packets from Frontend to Connector (Client)
 	go func() {
 		for {
-			packetInfo, ok := <-channelConnectorSend
+			packetInfo, ok := <-channelNewPacket
 			if !ok {
 				break
 			}
-
-			// IF RECORDED: send to client: connector.TryViaWebSocket()
-			// IF S: send update to ui: websocket.Distribute()
-			// IF A: send update to ui: websocket.Distribute()
-			// IF C: send to ui: websocket.Distribute()
 
 			// Try to send it via websocket.
 			// If this fails, the packet will still be available in the packetdb to send later
@@ -70,7 +54,7 @@ func NewServer(srvAddr string) Server {
 				}
 
 				// only notify UI if we really sent a packet
-				channelFrontendSend <- *packetInfo
+				channelToFrontend <- *packetInfo
 			}
 		}
 	}()
@@ -78,7 +62,7 @@ func NewServer(srvAddr string) Server {
 	// Handle packets from Connector (Client) to Frontend
 	go func() {
 		for {
-			packet, ok := <-channelFrontendSend
+			packet, ok := <-channelToFrontend
 			if !ok {
 				break
 			}
@@ -135,8 +119,8 @@ func (s *Server) Shutdown() {
 	s.connectorManager.Websocket.Shutdown()
 	s.frontendManager.Websocket.Shutdown()
 
-	close(s.Middleware.frontendSend)
-	close(s.Middleware.connectorSend)
+	close(s.Middleware.channelToFrontend)
+	close(s.Middleware.channelNewPacket)
 
 }
 

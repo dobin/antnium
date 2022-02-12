@@ -4,19 +4,19 @@ type Middleware struct {
 	packetDb     PacketDb
 	clientInfoDb ClientInfoDb
 
-	connectorSend chan PacketInfo
-	frontendSend  chan PacketInfo
+	channelNewPacket  chan PacketInfo
+	channelToFrontend chan PacketInfo
 }
 
-func MakeMiddleware(channelConnectorSend chan PacketInfo, channelFrontendSend chan PacketInfo) Middleware {
+func MakeMiddleware(channelNewPacket chan PacketInfo, channelToFrontend chan PacketInfo) Middleware {
 	packetDb := MakePacketDb()
 	clientInfoDb := MakeClientInfoDb()
 
 	middleware := Middleware{
 		packetDb,
 		clientInfoDb,
-		channelConnectorSend,
-		channelFrontendSend,
+		channelNewPacket,
+		channelToFrontend,
 	}
 	return middleware
 }
