@@ -29,7 +29,7 @@ func NewServer(srvAddr string) Server {
 	campaign := campaign.MakeCampaign()
 	config := MakeConfig()
 
-	channelSend := make(chan PacketInfo, 0)
+	channelSend := make(chan PacketInfo, 1)
 
 	middleware := MakeMiddleware(channelSend)
 	connectorManager := MakeConnectorManager(&campaign, &middleware)
@@ -60,8 +60,8 @@ func NewServer(srvAddr string) Server {
 						log.Error("Endless loop")
 					} else {
 						// Update UI that we were able to send it
-						//channelSend <- *packetInfoAns
-						frontendManager.Websocket.channelDistributor <- packetInfo
+						channelSend <- *packetInfoAns
+						//frontendManager.Websocket.channelDistributor <- packetInfo
 					}
 				}
 
@@ -126,7 +126,7 @@ func (s *Server) Shutdown() {
 	s.connectorManager.Websocket.Shutdown()
 	s.frontendManager.Websocket.Shutdown()
 
-	close(s.Middleware.channelSend)
+	//close(s.Middleware.channelSend)
 }
 
 func (s *Server) DbLoad() error {
