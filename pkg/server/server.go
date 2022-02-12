@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Server connects the Frontend and Connector, together with the Middleware (Backend)
 type Server struct {
 	srvaddr          string
 	config           *Config
@@ -29,19 +30,23 @@ func NewServer(srvAddr string) Server {
 	campaign := campaign.MakeCampaign()
 	config := MakeConfig()
 
-	channelNewPacket := make(chan PacketInfo, 0)
+	channelToClients := make(chan PacketInfo, 0)
 	channelToFrontend := make(chan PacketInfo, 0)
 
-	middleware := MakeMiddleware(channelNewPacket, channelToFrontend)
+	middleware := MakeMiddleware(channelToClients, channelToFrontend)
 	connectorManager := MakeConnectorManager(&campaign, &middleware)
 	frontendManager := MakeFrontendManager(&campaign, &config, &middleware)
 
-	// Handle packets from Frontend to Connector (Client)
+	// Handle packets to Clients
 	go func() {
 		for {
-			packetInfo, ok := <-channelNewPacket
+			packetInfo, ok := <-channelToClients
 			if !ok {
 				break
+			}
+
+			if packetInfo.State != STATE_RECORDED {
+				log.Warnf("Packet %d not in state RECORDED", packetInfo.State)
 			}
 
 			// Try to send it via websocket.
@@ -59,7 +64,7 @@ func NewServer(srvAddr string) Server {
 		}
 	}()
 
-	// Handle packets from Connector (Client) to Frontend
+	// Handle packets to Frontend
 	go func() {
 		for {
 			packet, ok := <-channelToFrontend
@@ -120,7 +125,7 @@ func (s *Server) Shutdown() {
 	s.frontendManager.Websocket.Shutdown()
 
 	close(s.Middleware.channelToFrontend)
-	close(s.Middleware.channelNewPacket)
+	close(s.Middleware.channelToClients)
 
 }
 

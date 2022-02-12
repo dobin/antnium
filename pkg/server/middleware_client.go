@@ -37,12 +37,19 @@ func (m *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 	return nil
 }
 
+func (m *Middleware) TrySendAllPacketsToClient(clientId string) {
+	packetInfos := m.packetDb.getAllUnsentPacketsToClient(clientId)
+	for _, packetInfo := range packetInfos {
+		m.channelToClients <- packetInfo
+	}
+}
+
 func (m *Middleware) ClientGetPacket(clientId string, remoteAddr string, connectorType string) (model.Packet, bool) {
 	// Update last seen for this host
 	m.clientInfoDb.updateFor(clientId, remoteAddr, connectorType)
 
 	// Check if we have any packets available
-	packetInfo, err := m.packetDb.getPacketForClient(clientId)
+	packetInfo, err := m.packetDb.getUnsentPacketForClient(clientId)
 	if err != nil {
 		return model.Packet{}, false
 	}

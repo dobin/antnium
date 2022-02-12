@@ -64,10 +64,10 @@ func (co *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 	// register client as auth succeeded
 	co.clients[authToken.ClientId] = ws
 
-	co.handleWs(authToken.ClientId, ws)
+	co.initNewRegisteredWs(authToken.ClientId, ws)
 }
 
-func (co *ConnectorWs) handleWs(clientId string, ws *websocket.Conn) {
+func (co *ConnectorWs) initNewRegisteredWs(clientId string, ws *websocket.Conn) {
 	if ws == nil {
 		log.Error("ClientWebsocket: handleWs(): invalid websocket connection")
 		return
@@ -93,28 +93,8 @@ func (co *ConnectorWs) handleWs(clientId string, ws *websocket.Conn) {
 		}
 	}()
 
-	// send all packets which havent yet been answered
-	// make sure its a copy, and only iterate once.
-	// If server is not available (WS disconnected), the packet response is lost.
-
-	// make it a thread, so we return and all the stuff works
-	//go func() {
-	packets := make([]model.Packet, 0)
-	for {
-		packet, ok := co.middleware.ClientGetPacket(clientId, ws.RemoteAddr().String(), "ws")
-		if !ok {
-			break
-		}
-		packets = append(packets, packet)
-	}
-	for _, packet := range packets {
-		ok := co.TryViaWebsocket(&packet)
-		if !ok {
-			log.Errorf("ClientWebsocket: Sending of initial packets via websocket failed")
-		}
-	}
-	//}()
-
+	// As we established the connection now, just blindly try to send stuck packets
+	go co.middleware.TrySendAllPacketsToClient(clientId)
 }
 
 func (co *ConnectorWs) TryViaWebsocket(packet *model.Packet) bool {

@@ -43,7 +43,22 @@ func (db *PacketDb) ByPacketId(packetId string) (*PacketInfo, bool) {
 	return nil, false
 }
 
-func (db *PacketDb) getPacketForClient(clientId string) (*PacketInfo, error) {
+func (db *PacketDb) getAllUnsentPacketsToClient(clientId string) []PacketInfo {
+	packetInfos := make([]PacketInfo, 0)
+	for _, packetInfo := range db.packets {
+		if packetInfo.State != STATE_RECORDED {
+			continue
+		}
+		if packetInfo.Packet.ClientId != clientId {
+			continue
+		}
+		packetInfos = append(packetInfos, *packetInfo)
+	}
+
+	return packetInfos
+}
+
+func (db *PacketDb) getUnsentPacketForClient(clientId string) (*PacketInfo, error) {
 	for _, packetInfo := range db.packets {
 		if packetInfo.State != STATE_RECORDED {
 			continue

@@ -15,7 +15,7 @@ func (m *Middleware) FrontendAddNewPacket(packet *model.Packet, user string) err
 	m.channelToFrontend <- *packetInfo
 
 	// Send to client, if they are connected via Websocket
-	m.channelNewPacket <- *packetInfo
+	m.channelToClients <- *packetInfo
 
 	return nil
 }

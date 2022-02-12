@@ -27,13 +27,13 @@ func TestPacketDb(t *testing.T) {
 	}
 
 	// Client Packet: Should not exist
-	_, err := packetDb.getPacketForClient("xxx")
+	_, err := packetDb.getUnsentPacketForClient("xxx")
 	if err == nil {
 		t.Errorf("Error packetInfoNotExisting")
 	}
 
 	// Client Packet: Should exist
-	packetInfoExisting, err := packetDb.getPacketForClient("23")
+	packetInfoExisting, err := packetDb.getUnsentPacketForClient("23")
 	if err != nil {
 		t.Errorf("Error packetInfoExisting 1")
 	}
@@ -45,7 +45,7 @@ func TestPacketDb(t *testing.T) {
 	packetDb.sentToClient("42", "")
 
 	// Client: Again, queue empty
-	_, err = packetDb.getPacketForClient("23")
+	_, err = packetDb.getUnsentPacketForClient("23")
 	if err == nil {
 		t.Errorf("Error packetInfoExisting 11")
 	}
