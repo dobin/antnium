@@ -37,6 +37,7 @@ func (m *Middleware) ClientSendPacket(packet model.Packet, remoteAddr string, co
 	return nil
 }
 
+// Try sending all non-sent packets to the connected websocket clients
 func (m *Middleware) TrySendAllPacketsToClient(clientId string) {
 	packetInfos := m.packetDb.getAllUnsentPacketsToClient(clientId)
 	for _, packetInfo := range packetInfos {
@@ -44,7 +45,9 @@ func (m *Middleware) TrySendAllPacketsToClient(clientId string) {
 	}
 }
 
-func (m *Middleware) ClientGetPacket(clientId string, remoteAddr string, connectorType string) (model.Packet, bool) {
+// ClientPacketRetrieve returns an unsent packet for the client, if any.
+// Updates packet as it is certain it is being sent
+func (m *Middleware) ClientPacketRetrieve(clientId string, remoteAddr string, connectorType string) (model.Packet, bool) {
 	// Update last seen for this host
 	m.clientInfoDb.updateFor(clientId, remoteAddr, connectorType)
 
@@ -64,30 +67,6 @@ func (m *Middleware) ClientGetPacket(clientId string, remoteAddr string, connect
 	m.channelToFrontend <- *packetInfo
 
 	return packetInfo.Packet, true
-}
-
-func (m *Middleware) AdminUploadFile(basename string, httpFile io.ReadCloser) error {
-	filename := fmt.Sprintf("static/%s", basename)
-
-	if _, err := os.Stat(filename); err == nil {
-		return fmt.Errorf("destination file %s already exists", filename)
-	}
-
-	out, err := os.Create(filename)
-	if err != nil {
-		log.Error("Middleware: AdminUploadFile: Could not open file: " + filename)
-		return err
-	}
-	defer out.Close()
-
-	written, err := io.Copy(out, httpFile)
-	if err != nil {
-		log.Error("Middleware: AdminUploadFile: Error copying: " + err.Error())
-		return err
-	}
-
-	log.Infof("Middleware: AdminUploadFile: Written %d bytes to file %s", written, filename)
-	return nil
 }
 
 func (m *Middleware) ClientUploadFile(packetId string, httpFile io.ReadCloser) {

@@ -36,7 +36,7 @@ func (co *ConnectorRest) getPacket(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	packet, ok := co.middleware.ClientGetPacket(clientId, r.RemoteAddr, "rest")
+	packet, ok := co.middleware.ClientPacketRetrieve(clientId, r.RemoteAddr, "rest")
 	if !ok {
 		// No packet, just return
 		return

@@ -61,17 +61,10 @@ func (co *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 		log.Warn("ClientWebsocket: incorrect key for client websocket authentication: " + authToken.Key)
 		return
 	}
+	clientId := authToken.ClientId
+
 	// register client as auth succeeded
-	co.clients[authToken.ClientId] = ws
-
-	co.initNewRegisteredWs(authToken.ClientId, ws)
-}
-
-func (co *ConnectorWs) initNewRegisteredWs(clientId string, ws *websocket.Conn) {
-	if ws == nil {
-		log.Error("ClientWebsocket: handleWs(): invalid websocket connection")
-		return
-	}
+	co.clients[clientId] = ws
 
 	// Thread which reads from the client connection
 	// Lifetime: Websocket connection
