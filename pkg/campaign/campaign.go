@@ -31,7 +31,7 @@ func MakeCampaign() Campaign {
 	apiKey := "Secret-Api-Key"
 	adminApiKey := "Secret-AdminApi-Key"
 	encKey := "Secret-Enc-Key"
-	serverUrl := "http://localhost:8080"
+	serverUrl := "http://0.0.0.0:8080"
 	proxyUrl := ""
 
 	key := GetKey(encKey)
