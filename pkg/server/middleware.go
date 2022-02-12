@@ -1,16 +1,14 @@
 package server
 
-import "github.com/dobin/antnium/pkg/model"
-
 type Middleware struct {
 	packetDb     PacketDb
 	clientInfoDb ClientInfoDb
 
-	connectorSend chan model.Packet
+	connectorSend chan PacketInfo
 	frontendSend  chan PacketInfo
 }
 
-func MakeMiddleware(channelConnectorSend chan model.Packet, channelFrontendSend chan PacketInfo) Middleware {
+func MakeMiddleware(channelConnectorSend chan PacketInfo, channelFrontendSend chan PacketInfo) Middleware {
 	packetDb := MakePacketDb()
 	clientInfoDb := MakeClientInfoDb()
 

@@ -15,7 +15,7 @@ func (m *Middleware) FrontendAddNewPacket(packet *model.Packet, user string) err
 	m.frontendSend <- *packetInfo
 
 	// Send to client, if they are connected via Websocket
-	m.connectorSend <- packetInfo.Packet
+	m.connectorSend <- *packetInfo
 
 	return nil
 }

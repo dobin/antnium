@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/dobin/antnium/pkg/campaign"
-	"github.com/dobin/antnium/pkg/model"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
@@ -30,31 +29,42 @@ func NewServer(srvAddr string) Server {
 	campaign := campaign.MakeCampaign()
 	config := MakeConfig()
 
-	channelConnectorSend := make(chan model.Packet, 0)
+	channelConnectorSend := make(chan PacketInfo, 0)
 	channelFrontendSend := make(chan PacketInfo, 0)
 
 	middleware := MakeMiddleware(channelConnectorSend, channelFrontendSend)
 	connectorManager := MakeConnectorManager(&campaign, &middleware)
 	frontendManager := MakeFrontendManager(&campaign, &config, &middleware)
+	/*
+		go func() {
+			for {
+				packet, ok := <-channelSend
+				if !ok {
+					break
+				}
+
+				//switch packet.
+			}
+		}()*/
 
 	// Handle packets from Frontend to Connector (Client)
 	go func() {
 		for {
-			packet, ok := <-channelConnectorSend
+			packetInfo, ok := <-channelConnectorSend
 			if !ok {
 				break
 			}
 
-			// IF R: send to client: connector.TryViaWebSocket()
+			// IF RECORDED: send to client: connector.TryViaWebSocket()
 			// IF S: send update to ui: websocket.Distribute()
 			// IF A: send update to ui: websocket.Distribute()
 			// IF C: send to ui: websocket.Distribute()
 
 			// Try to send it via websocket.
 			// If this fails, the packet will still be available in the packetdb to send later
-			ok = connectorManager.Websocket.TryViaWebsocket(&packet)
+			ok = connectorManager.Websocket.TryViaWebsocket(&packetInfo.Packet)
 			if ok {
-				packetInfo, err := middleware.packetDb.sentToClient(packet.PacketId, "")
+				packetInfo, err := middleware.packetDb.sentToClient(packetInfo.Packet.PacketId, "")
 				if err != nil {
 					log.Errorf("could not update packet info: %s", err.Error())
 				}
