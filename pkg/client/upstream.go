@@ -2,11 +2,14 @@ package client
 
 import (
 	"fmt"
+	"net"
 	"net/url"
+	"time"
 
 	"github.com/aus/proxyplease"
 	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
+	log "github.com/sirupsen/logrus"
 )
 
 type Upstream interface {
@@ -17,9 +20,17 @@ type Upstream interface {
 	SendPacket(packet model.Packet) error
 }
 
-//func (u *UpstreamWs) NewDialContext() (*http.Client, error) {
 func NewDialContext(campaign *campaign.Campaign) (proxyplease.DialContext, error) {
 	var dialContext proxyplease.DialContext
+
+	if campaign.DisableProxy {
+		log.Info("Disabled proxy, use direct")
+		dialContext = (&net.Dialer{
+			KeepAlive: 5 * time.Second,
+		}).DialContext
+
+		return dialContext, nil
+	}
 
 	// Automatic proxy configuration
 	proxyUrl, ok := campaign.GetProxy()

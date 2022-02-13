@@ -22,6 +22,7 @@ type Campaign struct {
 	HttpJitter           int    `json:"HttpJitter"` // in percent
 	ClientUseWebsocket   bool   `json:"ClientUseWebsocket"`
 	ProxyUrl             string `json:"ProxyUrl"`             // Default campaign proxy url, empty for none
+	DisableProxy         bool   `json:"DisableProxy"`         // If we want to disable any proxy (mostly for testing)
 	AutoStartDownstreams bool   `json:"AutoStartDownstreams"` // opens local tcp socket when true automagically
 	DoClientInfo         bool   `json:"DoClientInfo"`         // If we want to disable ClientInfos
 }
@@ -50,6 +51,7 @@ func MakeCampaign() Campaign {
 		HttpJitter:           20,
 		ClientUseWebsocket:   true,
 		ProxyUrl:             proxyUrl,
+		DisableProxy:         false, //
 		AutoStartDownstreams: false, // broken, do not use
 		DoClientInfo:         true,
 	}
