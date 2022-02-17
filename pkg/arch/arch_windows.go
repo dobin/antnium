@@ -179,6 +179,9 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		if destinationPath == "" {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn copyfirst, but no path in spawnData found")
 		}
+		if !IsValidPath(destinationPath) {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Destination path invalid: %s", destinationPath)
+		}
 
 		err = CopyFile(executable, destinationPath)
 		if err != nil {
@@ -280,4 +283,20 @@ func CopyFile(src, dst string) error {
 		return err
 	}
 	return out.Close()
+}
+
+func IsValidPath(fp string) bool {
+	// Check if file already exists
+	if _, err := os.Stat(fp); err == nil {
+		return true
+	}
+
+	// Attempt to create it
+	var d []byte
+	if err := ioutil.WriteFile(fp, d, 0644); err == nil {
+		os.Remove(fp) // And delete it
+		return true
+	}
+
+	return false
 }
