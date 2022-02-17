@@ -19,7 +19,7 @@ func (u *UpstreamRest) HttpGet(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Session-Token", u.campaign.ApiKey)
+	req.Header.Set(u.campaign.AuthHeader, u.campaign.ApiKey)
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (u *UpstreamRest) HttpPost(url string, data *bytes.Reader) (*http.Response,
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Session-Token", u.campaign.ApiKey)
+	req.Header.Set(u.campaign.AuthHeader, u.campaign.ApiKey)
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err

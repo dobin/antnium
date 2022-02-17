@@ -34,7 +34,7 @@ func (s *Server) Serve() {
 
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
-	clientRouter.Use(GetClientMiddleware(s.Campaign.ApiKey))
+	clientRouter.Use(GetClientMiddleware(s.Campaign.AuthHeader, s.Campaign.ApiKey))
 	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{clientId}", s.connectorManager.Rest.getPacket) // /getPacket/{clientId}
 	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.connectorManager.Rest.sendPacket)            // /sendPacket
 	myRouter.HandleFunc("/ws", s.connectorManager.Websocket.wsHandlerClient)
@@ -78,11 +78,11 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func GetClientMiddleware(key string) func(http.Handler) http.Handler {
+func GetClientMiddleware(AuthHeader, key string) func(http.Handler) http.Handler {
 	// Middleware function, which will be called for each request
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token := r.Header.Get("X-Session-Token")
+			token := r.Header.Get(AuthHeader)
 			if token == key {
 				// Pass down the request to the next middleware (or final handler)
 				next.ServeHTTP(w, r)

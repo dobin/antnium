@@ -18,6 +18,7 @@ type Campaign struct {
 	FileUploadPath      string `json:"FileUploadPath"`
 	FileDownloadPath    string `json:"FileDownloadPath"`
 	ClientWebsocketPath string `json:"ClientWebsocketPath"`
+	AuthHeader          string `json:"AuthHeader"`
 
 	HttpJitter           int    `json:"HttpJitter"` // in percent
 	ClientUseWebsocket   bool   `json:"ClientUseWebsocket"`
@@ -47,6 +48,7 @@ func MakeCampaign() Campaign {
 		FileUploadPath:      "/upload/",
 		FileDownloadPath:    "/static/",
 		ClientWebsocketPath: "/ws",
+		AuthHeader:          "X-Session-Token",
 
 		HttpJitter:           20,
 		ClientUseWebsocket:   true,
