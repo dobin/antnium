@@ -206,7 +206,7 @@ func TestUpstreamServerWsReconnect(t *testing.T) {
 		return
 	}
 
-	s.Shutdown()
+	//s.Shutdown()
 }
 
 // Test Upstream REST with server first down and started later
@@ -237,7 +237,7 @@ func TestUpstreamServerRestConnectLate(t *testing.T) {
 	packetInfo := makeSimpleTestPacketInfo(clientId, packetId)
 	s.Middleware.AddPacketInfo(packetInfo)
 	go s.Serve()
-	defer s.Shutdown()
+	//defer s.Shutdown()
 
 	// Test: Client connected
 	// expect packet to be received upon connection (its already added)
