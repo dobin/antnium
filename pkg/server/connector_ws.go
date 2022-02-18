@@ -74,6 +74,7 @@ func (co *ConnectorWs) wsHandlerClient(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				// Websocket closed, clean it up
 				ws.Close()
+				//delete(co.clients, clientId) // need mutex
 				co.clients[clientId] = nil
 				break
 			}

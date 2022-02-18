@@ -30,7 +30,9 @@ func (f *FrontendRest) adminListPackets(rw http.ResponseWriter, r *http.Request)
 	packetInfos := f.middleware.FrontendAllPacket()
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
-		log.Error("FrontendRest: Could not JSON marshal")
+		e := "Could not JSON marshal"
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -41,12 +43,17 @@ func (f *FrontendRest) adminListPacketsClientId(rw http.ResponseWriter, r *http.
 	clientId := vars["clientId"]
 
 	if clientId == "" {
+		e := "No client ID given"
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	packetInfos := f.middleware.FrontendGetPacketById(clientId)
 	json, err := json.Marshal(packetInfos)
 	if err != nil {
-		log.Error("FrontendRest: Could not JSON marshal")
+		e := "Could not JSON marshal"
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -56,7 +63,9 @@ func (f *FrontendRest) adminListClients(rw http.ResponseWriter, r *http.Request)
 	hostList := f.middleware.FrontendAllClients()
 	json, err := json.Marshal(hostList)
 	if err != nil {
-		log.Error("FrontendRest: Could not JSON marshal")
+		e := "Could not JSON marshal"
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -66,16 +75,18 @@ func (f *FrontendRest) adminUploadFile(rw http.ResponseWriter, r *http.Request) 
 	r.ParseMultipartForm(10 << 20)
 	file, header, err := r.FormFile("fileKey")
 	if err != nil {
-		log.Println("Error Getting File", err)
+		e := "Error Getting File: "
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
 
 	err = f.middleware.AdminUploadFile(header.Filename, file)
 	if err != nil {
-		log.Errorf("Could not upload file: %s", err.Error())
-		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte(err.Error()))
+		e := fmt.Sprintf("Could not upload file: %s", err.Error())
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 
@@ -89,27 +100,34 @@ func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Error("FrontendRest: Could not read body")
+		e := "Invalid body"
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	var packet model.Packet
 	err = json.Unmarshal(reqBody, &packet)
 	if err != nil {
-		log.Errorf("FrontendRest: Could not unmarshall: %s", err.Error())
+		e := "Could not JSON marshal"
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 
-	common.LogPacket("FrontendRest: Add Packet", packet)
+	common.LogPacket("Add Packet", packet)
 
 	if packet.ClientId == "" || packet.PacketId == "" || packet.PacketType == "" {
-		log.Errorf("FrontendRest: Missing data in packet: %v", packet)
+		e := fmt.Sprintf("Missing data in packet: %v", packet)
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 
 	err = f.middleware.FrontendAddNewPacket(&packet, user)
 	if err != nil {
-		log.Errorf("FrontendRest: FrontendAddPacket error: %s", err.Error())
-		http.Error(rw, "", http.StatusBadRequest)
+		e := fmt.Sprintf("FrontendAddPacket error: %s", err.Error())
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 }
@@ -117,7 +135,9 @@ func (f *FrontendRest) adminAddPacket(rw http.ResponseWriter, r *http.Request) {
 func (f *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request) {
 	json, err := json.Marshal(f.campaign)
 	if err != nil {
-		log.Error("FrontendRest: Could not JSON marshal")
+		e := fmt.Sprintf("Could not JSON marshal")
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -126,12 +146,16 @@ func (f *FrontendRest) adminGetCampaign(rw http.ResponseWriter, r *http.Request)
 func (f *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := common.ListDirectory("./upload")
 	if err != nil {
-		log.Error("FrontendRest: Could not list directory ./upload: ", err)
+		e := fmt.Sprintf("Could not list directory ./upload: %s", err.Error())
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	json, err := json.Marshal(dirList)
 	if err != nil {
-		log.Error("FrontendRest: Could not JSON marshal", err)
+		e := fmt.Sprintf("Could not JSON marshal")
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	fmt.Fprint(rw, string(json))
@@ -140,12 +164,16 @@ func (f *FrontendRest) adminGetUploads(rw http.ResponseWriter, r *http.Request) 
 func (f *FrontendRest) adminGetStatics(rw http.ResponseWriter, r *http.Request) {
 	dirList, err := common.ListDirectory("./static")
 	if err != nil {
-		log.Errorf("FrontendRest: Could not list directory: ./static: %s", err)
+		e := fmt.Sprintf("Could not list directory ./static: %s", err.Error())
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	json, err := json.Marshal(dirList)
 	if err != nil {
-		log.Error("FrontendRest: Could not JSON marshal", err)
+		e := fmt.Sprintf("Could not JSON marshal")
+		log.Error(e)
+		http.Error(rw, e, http.StatusBadRequest)
 		return
 	}
 	fmt.Fprint(rw, string(json))

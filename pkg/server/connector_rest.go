@@ -67,7 +67,6 @@ func (co *ConnectorRest) sendPacket(rw http.ResponseWriter, r *http.Request) {
 
 	common.LogPacket("ConnectorRest:FromClient", packet)
 	co.middleware.ClientSendPacket(packet, r.RemoteAddr, "rest")
-	fmt.Fprint(rw, "asdf")
 }
 
 func (co *ConnectorRest) uploadFile(w http.ResponseWriter, r *http.Request) {
@@ -75,6 +74,4 @@ func (co *ConnectorRest) uploadFile(w http.ResponseWriter, r *http.Request) {
 	packetId := vars["packetId"]
 
 	co.middleware.ClientUploadFile(packetId, r.Body)
-
-	fmt.Fprintf(w, "ok\n")
 }
