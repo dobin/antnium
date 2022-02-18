@@ -19,6 +19,7 @@ type Campaign struct {
 	FileDownloadPath    string `json:"FileDownloadPath"`
 	ClientWebsocketPath string `json:"ClientWebsocketPath"`
 	AuthHeader          string `json:"AuthHeader"`
+	UserAgent           string `json:"UserAgent"`
 
 	HttpJitter           int    `json:"HttpJitter"` // in percent
 	ClientUseWebsocket   bool   `json:"ClientUseWebsocket"`
@@ -49,6 +50,7 @@ func MakeCampaign() Campaign {
 		FileDownloadPath:    "/static/",
 		ClientWebsocketPath: "/ws",
 		AuthHeader:          "X-Session-Token",
+		UserAgent:           "Go-http-client/1.1",
 
 		HttpJitter:           20,
 		ClientUseWebsocket:   true,

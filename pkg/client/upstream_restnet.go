@@ -20,6 +20,8 @@ func (u *UpstreamRest) HttpGet(url string) (*http.Response, error) {
 		return nil, err
 	}
 	req.Header.Set(u.campaign.AuthHeader, u.campaign.ApiKey)
+	req.Header.Set("User-Agent", u.campaign.UserAgent)
+
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -34,6 +36,7 @@ func (u *UpstreamRest) HttpPost(url string, data *bytes.Reader) (*http.Response,
 		return nil, err
 	}
 	req.Header.Set(u.campaign.AuthHeader, u.campaign.ApiKey)
+	req.Header.Set("User-Agent", u.campaign.UserAgent)
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err

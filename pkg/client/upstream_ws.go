@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/dobin/antnium/pkg/campaign"
@@ -43,6 +44,9 @@ func (u *UpstreamWs) Connect() error {
 	var ws *websocket.Conn
 	var err error
 
+	requestHeader := http.Header{}
+	requestHeader.Add("User-Agent", u.campaign.UserAgent)
+
 	// Handle all proxy related settings in NewDialContext
 	dialContext, err := NewDialContext(u.campaign)
 	if err != nil {
@@ -51,7 +55,7 @@ func (u *UpstreamWs) Connect() error {
 	dialer := websocket.Dialer{
 		NetDialContext: dialContext,
 	}
-	ws, _, err = dialer.Dial(myUrl, nil)
+	ws, _, err = dialer.Dial(myUrl, requestHeader)
 	if err != nil {
 		return fmt.Errorf("could not connect websocket with proxy to %s: %s", myUrl, err.Error())
 	}
