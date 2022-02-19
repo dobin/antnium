@@ -11,6 +11,15 @@ import (
 	"github.com/dobin/antnium/pkg/model"
 )
 
+func TestWindowsPathResolve(t *testing.T) {
+	path := `%windir%\bla.exe`
+	result := arch.ResolveWinPath(path)
+
+	if result != `C:\WINDOWS\bla.exe` {
+		t.Errorf("Wrong: %s", result)
+	}
+}
+
 func TestCmdValidCommand(t *testing.T) {
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "cmd"

