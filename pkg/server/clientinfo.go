@@ -20,4 +20,5 @@ type ClientInfo struct {
 	IsElevated    string   `json:"isElevated"`
 	ConnectorType string   `json:"ConnectorType"`
 	WorkingDir    string   `json:"WorkingDir"`
+	Env           []string `json:"Env"`
 }

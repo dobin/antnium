@@ -18,6 +18,7 @@ type ClientConfig struct {
 	LocalIps  []string
 	Arch      string
 	Processes []string
+	Env       []string
 }
 
 func MakeClientConfig() ClientConfig {
@@ -76,7 +77,7 @@ func MakeClientConfig() ClientConfig {
 	}
 
 	// Env
-	//envList := os.Environ()
+	envList := os.Environ()
 
 	// Machine ID
 	// https://github.com/denisbrodbeck/machineid
@@ -87,6 +88,7 @@ func MakeClientConfig() ClientConfig {
 		LocalIps:  localIps,
 		Arch:      arch,
 		Processes: processList,
+		Env:       envList,
 	}
 	return db
 }

@@ -37,6 +37,7 @@ func (db *ClientInfoDb) updateFor(clientId string, ip string, connectorType stri
 			Processes:     nil,
 			IsAdmin:       "",
 			IsElevated:    "",
+			Env:           nil,
 			ConnectorType: connectorType,
 		}
 	} else {
@@ -70,6 +71,7 @@ func (db *ClientInfoDb) updateFromClientinfo(clientId, ip string, connectorType 
 	isElevated := response["isElevated"]
 	processes := model.ResponseToArray("processes", response)
 	WorkingDir := response["WorkingDir"]
+	Env := model.ResponseToArray("env", response)
 
 	db.clients[clientId].Hostname = hostname
 	db.clients[clientId].LocalIps = localIps
@@ -78,6 +80,7 @@ func (db *ClientInfoDb) updateFromClientinfo(clientId, ip string, connectorType 
 	db.clients[clientId].IsAdmin = isAdmin
 	db.clients[clientId].IsElevated = isElevated
 	db.clients[clientId].WorkingDir = WorkingDir
+	db.clients[clientId].Env = Env
 }
 
 func (db *ClientInfoDb) AllAsList() []ClientInfo {
