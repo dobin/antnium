@@ -141,7 +141,7 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	case "cmd":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no commandline")
 		}
 		commandStr = ResolveWinPath(commandStr)
 		executable = `C:\windows\system32\cmd.exe`
@@ -151,11 +151,22 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	case "powershell":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no commandline")
 		}
 		commandStr = ResolveWinPath(commandStr)
 		executable = `C:\Windows\System32\WindowsPowershell\v1.0\powershell.exe`
 		args = []string{"-ExecutionPolicy", "Bypass", "-C", commandStr}
+
+	case "commandexec":
+		executable, ok = packetArgument["executable"]
+		if !ok {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no executable")
+		}
+		argline, ok := packetArgument["argline"]
+		if !ok {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no argline")
+		}
+		args = strings.Fields(argline)
 
 	case "raw":
 		executable, args, err = model.MakePacketArgumentFrom(packetArgument)
@@ -208,12 +219,6 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 	case "powershell":
 		// powershell.exe is different
 		cmd.SysProcAttr = getSysProcAttrs()
-
-	case "raw":
-		// Nothing
-
-	default:
-		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown b", shellType)
 	}
 
 	log.Infof("Executing: %s %v", executable, args)
