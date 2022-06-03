@@ -20,6 +20,7 @@ func main() {
 
 	dumpData := flag.Bool("dumpData", false, "dumpData")
 	noProxy := flag.Bool("noProxy", false, "noProxy")
+	noWebsocket := flag.Bool("nowebsocket", false, "")
 
 	flag.Parse()
 
@@ -63,9 +64,11 @@ func main() {
 	if *flagProxyUrl != "" {
 		c.Campaign.ProxyUrl = *flagProxyUrl
 	}
-
 	if *noProxy {
 		c.Campaign.DisableProxy = true
+	}
+	if *noWebsocket {
+		c.Campaign.ClientUseWebsocket = false
 	}
 
 	c.Start()
