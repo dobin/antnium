@@ -42,7 +42,7 @@ Note: for Linux use `make` instead of `makewin.bat`, and replace `\` with `/`
 
 Go install: 
 * Windows: https://golang.org/doc/install
-* Linux: `apt install golang`
+* Linux: `apt install golang gcc-mingw-w64`
 
 Compile client.exe and server.exe: 
 ```

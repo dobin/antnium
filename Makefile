@@ -1,5 +1,9 @@
 # Linux Makefile
 
+# LDFLAGS = "-s -w"
+# LDFLAGS = "-H windowsgui"
+LDFLAGS=
+
 # For debugging
 runserver: 
 	go run cmd/server/server.go --listenaddr 127.0.0.1:8080
@@ -19,23 +23,12 @@ server:
 
 client:
 	GOOS=linux GOARCH=amd64 go build -o client.elf cmd/client/client.go
-	GOOS=windows GOARCH=amd64 go build -o client.exe -ldflags "-H windowsgui"  cmd/client/client.go
-	#GOOS=darwin GOARCH=amd64 go build -o client.darwin cmd/client/client.go
+	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc CGO_LDFLAGS="-L /usr/x86_64-w64-mingw32/lib/ -lpsapi" go build -o client.exe -ldflags $(LDFLAGS) cmd/client/client.go
 
 wingman:
-	GOOS=windows GOARCH=amd64 go build -o wingman.exe cmd/wingman/wingman.go 
-
+	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc CGO_LDFLAGS="-L /usr/x86_64-w64-mingw32/lib/ -lpsapi" go build -o wingman.exe -ldflags $(LDFLAGS) cmd/wingman/wingman.go 
 
 deploy: compile
-	# client
-	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o client.elf cmd/client/client.go
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o client.exe cmd/client/client.go
-	# GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o client.darwin cmd/client/client.go
-	GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o wingman.exe cmd/wingman/wingman.go 
-
-	# server
-	GOOS=linux GOARCH=amd64 go build cmd/server/server.go 
-
 	# directory structure
 	mkdir -p build/static build/upload
 
@@ -50,4 +43,4 @@ test:
 	go test ./...
 
 clean:
-	rm server.exe client.exe client.elf client.darwin wingman.exe
+	rm -f server.exe client.exe client.elf client.darwin wingman.exe

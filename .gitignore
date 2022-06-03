@@ -7,3 +7,4 @@ build/*
 client.*
 wingman.*
 cmd/cgo
+.vscode
