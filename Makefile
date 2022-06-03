@@ -2,7 +2,7 @@
 
 # LDFLAGS = "-s -w"
 # LDFLAGS = "-H windowsgui"
-LDFLAGS=
+LDFLAGS=""
 
 # For debugging
 runserver: 
