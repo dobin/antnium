@@ -13,7 +13,7 @@ import (
 
 func TestWindowsPathResolve(t *testing.T) {
 	path := `%windir%\bla.exe`
-	result := arch.ResolveWinPath(path)
+	result := arch.ResolveWinVar(path)
 
 	if result != `C:\WINDOWS\bla.exe` {
 		t.Errorf("Wrong: %s", result)

