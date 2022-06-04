@@ -1,3 +1,8 @@
+github.com/Binject/debug v0.0.0-20210312092933-6277045c2fdf h1:Cx4YJvjPZD91xiffqJOq8l3j1YKcvx3+8duqq7DX9gY=
+github.com/Binject/debug v0.0.0-20210312092933-6277045c2fdf/go.mod h1:QzgxDLY/qdKlvnbnb65eqTedhvQPbaSP2NqIbcuKvsQ=
+github.com/Binject/go-donut v0.0.0-20210701074227-67a31e2d883e h1:ytVmxGQuS7ELO/WpvH6iuY1hVcJ6iOTw3VLOOIFlo8o=
+github.com/Binject/go-donut v0.0.0-20210701074227-67a31e2d883e/go.mod h1:dc3mUnr4KTKcFKVq7BVbHGF0xAHrIyooQ+VTO7/bIZw=
+github.com/akamensky/argparse v1.3.0/go.mod h1:S5kwC7IuDcEr5VeXtGPRVZ5o/FdhcMlQz4IZQuw64xA=
 github.com/alexbrainman/sspi v0.0.0-20180613141037-e580b900e9f5 h1:P5U+E4x5OkVEKQDklVPmzs71WM56RTTRqV4OrDC//Y4=
 github.com/alexbrainman/sspi v0.0.0-20180613141037-e580b900e9f5/go.mod h1:976q2ETgjT2snVCf2ZaBnyBbVoPERGjUz+0sofzEfro=
 github.com/aus/proxyplease v0.1.0 h1:oANCVDoihKw0FlKCMrVv0ensolBFWamlPbUrRgGbwpY=
@@ -15,6 +20,8 @@ github.com/gofrs/uuid v4.2.0+incompatible h1:yyYWMnhkhrKwwr8gAOcOCYxOOscHgDS9yZg
 github.com/gofrs/uuid v4.2.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
+github.com/google/uuid v1.2.0 h1:qJYtXnJRWmpe7m/3XlyhrsLrEURqHRM2kxzoxXqyUDs=
+github.com/google/uuid v1.2.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=

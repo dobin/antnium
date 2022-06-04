@@ -3,6 +3,7 @@ module github.com/dobin/antnium
 go 1.16
 
 require (
+	github.com/Binject/go-donut v0.0.0-20210701074227-67a31e2d883e // indirect
 	github.com/aus/proxyplease v0.1.0
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gorilla/mux v1.8.0
