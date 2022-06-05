@@ -1,13 +1,11 @@
 package server
 
 import (
-	"io"
 	"testing"
 
 	"github.com/dobin/antnium/pkg/campaign"
-	"github.com/dobin/antnium/pkg/client"
 	"github.com/dobin/antnium/pkg/common"
-	"github.com/dobin/antnium/pkg/model"
+	"github.com/dobin/antnium/pkg/executor"
 )
 
 // TestServerPacketIdDuplicate checks if server throws an error when adding two packets with same PacketId
@@ -42,44 +40,19 @@ func TestServerFileDownloadSecureReference(t *testing.T) {
 	go s.Serve()
 
 	// Client related
-	config := client.MakeClientConfig()
 	campaign := campaign.MakeCampaign()
 	campaign.ServerUrl = "http://127.0.0.1:" + port
 
-	// Create filename
-	coder := model.MakeCoder(s.Campaign)
-	filenameEncrypted, err := coder.EncryptDataB64([]byte("unittest"))
+	executor := executor.MakeExecutor(&campaign)
+	fileContent, err := executor.SecureFileDownload("unittest")
 	if err != nil {
-		t.Error("Encrypt")
-		return
-	}
-
-	// Attempt to download the file
-	upstreamRest := client.MakeUpstreamRest(&config, &campaign)
-	upstreamRest.Connect()
-	url := campaign.ServerUrl + "/secure/" + string(filenameEncrypted)
-	resp, err := upstreamRest.HttpGet(url)
-	if err != nil {
-		t.Errorf("Error: %s", err.Error())
-		return
-	}
-
-	// Decode the file
-	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Errorf("%s", err.Error())
-		return
-	}
-	decoded, err := coder.DecryptB64Zip(b)
-	if err != nil {
-		t.Errorf("Decrypt: %s", err.Error())
+		t.Errorf("Download: %s", err.Error())
 		return
 	}
 
 	// Check if it is the right content
-	if string(decoded) != "test" {
-		t.Errorf("Content: %s\n", decoded)
+	if string(fileContent) != "test" {
+		t.Errorf("Content: %s\n", fileContent)
 		return
 	}
 
