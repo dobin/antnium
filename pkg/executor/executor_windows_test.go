@@ -225,7 +225,7 @@ func TestCommandExec(t *testing.T) {
 		return
 	}
 	out := string(packetResponse["stdout"])
-	if !strings.Contains(out, "User name") {
+	if !strings.Contains(out, "Full Name") {
 		t.Errorf("Output: %s", out)
 		return
 	}
