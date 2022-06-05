@@ -35,6 +35,7 @@ deploy: compile
 	cp server.elf build/
 	cp client.elf client.exe build/static/
 	cp wingman.exe build/static/
+	cp static/* build/static/
 	cp -R webui/* build/webui/
 
 
