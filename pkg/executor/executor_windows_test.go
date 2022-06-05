@@ -21,98 +21,104 @@ func TestWindowsPathResolve(t *testing.T) {
 }
 
 func TestCmdValidCommand(t *testing.T) {
+	executor := MakeExecutor()
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "cmd"
 	packetArgument["commandline"] = "hostname"
 
-	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	packetResponse, err := executor.actionExecShell(packetArgument)
 	if err != nil {
 		t.Error("Error: " + err.Error())
 	}
-	if len(stdOut) == 0 {
+	if len(packetResponse["stdout"]) == 0 {
 		t.Error("No stdout")
 	}
-	if len(stdErr) != 0 {
+	if len(packetResponse["stdErr"]) != 0 {
 		t.Error("Stderr")
 	}
-	if pid == 0 {
+	if packetResponse["pid"] == "0" {
 		t.Error("Pid")
 	}
-	if exitCode != 0 {
+	if packetResponse["exitCode"] != "0" {
 		t.Error("ExitCode")
 	}
 }
 
 func TestPowershellValidCommand(t *testing.T) {
+	executor := MakeExecutor()
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "powershell"
 	packetArgument["commandline"] = "hostname"
 
-	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	packetResponse, err := executor.actionExecShell(packetArgument)
 	if err != nil {
 		t.Error("Error: " + err.Error())
 	}
-	if len(stdOut) == 0 {
+	if len(packetResponse["stdout"]) == 0 {
 		t.Error("No stdout")
 	}
-	if len(stdErr) != 0 {
+	if len(packetResponse["stdErr"]) != 0 {
 		t.Error("Stderr")
 	}
-	if pid == 0 {
+	if packetResponse["pid"] == "0" {
 		t.Error("Pid")
 	}
-	if exitCode != 0 {
+	if packetResponse["exitCode"] != "0" {
 		t.Error("ExitCode")
 	}
 }
 
 func TestCmdInvalidCommand(t *testing.T) {
+	executor := MakeExecutor()
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "cmd"
 	packetArgument["commandline"] = "invalid"
 
-	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	packetResponse, err := executor.actionExecShell(packetArgument)
 	if err == nil {
 		t.Error("No Error")
 	}
-	if len(stdOut) != 0 {
-		t.Error("Stdout")
+	if len(packetResponse["stdout"]) != 0 {
+		t.Error("stdout")
 	}
-	if len(stdErr) == 0 {
-		t.Error("No Stderr")
+	if len(packetResponse["stderr"]) == 0 {
+		t.Error("Stderr")
 	}
-	if pid == 0 {
+	if packetResponse["pid"] == "0" {
 		t.Error("Pid")
 	}
-	if exitCode == 0 {
+	if packetResponse["exitCode"] == "0" {
 		t.Error("ExitCode")
 	}
 }
 
 func TestPowershellInvalidCommand(t *testing.T) {
+	executor := MakeExecutor()
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "powershell"
 	packetArgument["commandline"] = "invalid"
 
-	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	packetResponse, err := executor.actionExecShell(packetArgument)
 	if err == nil {
 		t.Error("No Error")
 	}
-	if len(stdOut) != 0 {
-		t.Error("Stdout")
+	if len(packetResponse["stdout"]) != 0 {
+		t.Error("stdout")
 	}
-	if len(stdErr) == 0 {
-		t.Error("No Stderr")
+	if len(packetResponse["stderr"]) == 0 {
+		t.Error("Stderr")
 	}
-	if pid == 0 {
+	if packetResponse["pid"] == "0" {
 		t.Error("Pid")
 	}
-	if exitCode == 0 {
+	if packetResponse["exitCode"] == "0" {
 		t.Error("ExitCode")
 	}
 }
 
 func TestCopyFirst(t *testing.T) {
+	executor := MakeExecutor()
+
 	destPath := "C:\\temp\\server.exe"
 	os.Remove(destPath)
 
@@ -124,27 +130,24 @@ func TestCopyFirst(t *testing.T) {
 	packetArgument["spawnType"] = "copyFirst"
 	packetArgument["spawnData"] = destPath
 
-	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	packetResponse, err := executor.actionExecLol(packetArgument)
 	if err != nil {
 		t.Error("Error: " + err.Error())
 		return
 	}
-	if len(stdErr) > 0 {
-		t.Error("Stderr: " + string(stdErr))
-		return
+	if len(packetResponse["stdout"]) == 0 {
+		t.Error("No stdout")
 	}
-	if len(stdOut) == 0 {
-		t.Error("Stdout")
-		return
+	if len(packetResponse["stderr"]) != 0 {
+		t.Error("Stderr")
 	}
-	if pid == 0 {
+	if packetResponse["pid"] == "0" {
 		t.Error("Pid")
-		return
 	}
-	if exitCode != 0 {
+	if packetResponse["exitCode"] != "0" {
 		t.Error("ExitCode")
-		return
 	}
+
 	if _, err := os.Stat(destPath); err != nil {
 		t.Error("Did not copy")
 		return
@@ -154,6 +157,8 @@ func TestCopyFirst(t *testing.T) {
 }
 
 func TestHollow(t *testing.T) {
+	executor := MakeExecutor()
+
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "raw"
 	packetArgument["executable"] = "C:\\windows\\system32\\net.exe"
@@ -162,69 +167,73 @@ func TestHollow(t *testing.T) {
 	packetArgument["spawnType"] = "hollow"
 	packetArgument["spawnData"] = "c:\\windows\\system32\\hostname.exe"
 
-	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	packetResponse, err := executor.actionExecLol(packetArgument)
 	if err != nil {
 		t.Error("Error: " + err.Error())
 		return
 	}
-	if len(stdErr) > 0 {
-		t.Error("Stderr: " + string(stdErr))
+	if len(packetResponse["stderr"]) > 0 {
+		t.Error("Stderr")
 		return
 	}
-	if len(stdOut) == 0 {
+	if len(packetResponse["stdout"]) == 0 {
 		t.Error("Stdout")
 		return
 	}
-	out := string(stdOut)
+	out := string(packetResponse["stdout"])
 	if !strings.Contains(out, "User name") {
 		t.Errorf("Output: %s", out)
 		return
 	}
-	if pid == 0 {
+	if packetResponse["pid"] == "0" {
 		t.Error("Pid")
 		return
 	}
-	if exitCode != 0 {
+	if packetResponse["exitCode"] != "0" {
 		t.Error("ExitCode")
 		return
 	}
 }
 
 func TestCommandExec(t *testing.T) {
+	executor := MakeExecutor()
+
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "commandexec"
 	packetArgument["executable"] = "net.exe"
 	packetArgument["argline"] = "user dobin"
 
-	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	packetResponse, err := executor.actionExecLol(packetArgument)
 	if err != nil {
 		t.Error("Error: " + err.Error())
 		return
 	}
-	if len(stdOut) == 0 {
-		t.Error("No stdout")
+	if len(packetResponse["stderr"]) > 0 {
+		t.Error("Stderr")
 		return
 	}
-	out := string(stdOut)
+	if len(packetResponse["stdout"]) == 0 {
+		t.Error("Stdout")
+		return
+	}
+	out := string(packetResponse["stdout"])
 	if !strings.Contains(out, "User name") {
 		t.Errorf("Output: %s", out)
 		return
 	}
-	if len(stdErr) != 0 {
-		t.Error("Stderr")
-		return
-	}
-	if pid == 0 {
+	if packetResponse["pid"] == "0" {
 		t.Error("Pid")
 		return
 	}
-	if exitCode != 0 {
+	if packetResponse["exitCode"] != "0" {
 		t.Error("ExitCode")
 		return
 	}
 }
 
 func TestRemote(t *testing.T) {
+	executor := MakeExecutor()
+
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "remote"
 
@@ -233,29 +242,30 @@ func TestRemote(t *testing.T) {
 	packetArgument["argline"] = "DotNet"
 	packetArgument["injectInto"] = "C:\\windows\\notepad.exe"
 
-	stdOut, stdErr, pid, exitCode, err := arch.Exec(packetArgument)
+	packetResponse, err := executor.actionExecRemote(packetArgument)
 	if err != nil {
 		t.Error("Error: " + err.Error())
 		return
 	}
-	if len(stdOut) == 0 {
-		t.Error("No stdout")
+
+	if len(packetResponse["stderr"]) > 0 {
+		t.Error("Stderr")
 		return
 	}
-	out := string(stdOut)
+	if len(packetResponse["stdout"]) == 0 {
+		t.Error("Stdout")
+		return
+	}
+	out := string(packetResponse["stdout"])
 	if !strings.Contains(out, "====== DotNet ======") {
 		t.Errorf("Output: %s", out)
 		return
 	}
-	if len(stdErr) != 0 {
-		t.Error("Stderr")
-		return
-	}
-	if pid == 0 {
+	if packetResponse["pid"] == "0" {
 		t.Error("Pid")
 		return
 	}
-	if exitCode != 0 {
+	if packetResponse["exitCode"] != "0" {
 		t.Error("ExitCode")
 		return
 	}

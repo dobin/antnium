@@ -13,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func execDirect(executable string, args []string, spawnType string, spawnData string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
+func ExecDirect(executable string, args []string, spawnType string, spawnData string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), processTimeout)
 	defer cancel()
 

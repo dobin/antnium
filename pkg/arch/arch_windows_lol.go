@@ -8,7 +8,7 @@ import (
 	"os/exec"
 )
 
-func execCmdExe(commandStr string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
+func ExecCmdExe(commandStr string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), processTimeout)
 	defer cancel()
 
@@ -26,7 +26,7 @@ func execCmdExe(commandStr string) (stdOut []byte, stdErr []byte, pid int, exitC
 	return execIt(cmd)
 }
 
-func execPowershell(commandStr string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
+func ExecPowershell(commandStr string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), processTimeout)
 	defer cancel()
 
