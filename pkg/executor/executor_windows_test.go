@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/dobin/antnium/pkg/arch"
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
 )
 
@@ -21,7 +22,8 @@ func TestWindowsPathResolve(t *testing.T) {
 }
 
 func TestCmdValidCommand(t *testing.T) {
-	executor := MakeExecutor()
+	campaign := campaign.Campaign{}
+	executor := MakeExecutor(&campaign)
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "cmd"
 	packetArgument["commandline"] = "hostname"
@@ -45,7 +47,8 @@ func TestCmdValidCommand(t *testing.T) {
 }
 
 func TestPowershellValidCommand(t *testing.T) {
-	executor := MakeExecutor()
+	campaign := campaign.Campaign{}
+	executor := MakeExecutor(&campaign)
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "powershell"
 	packetArgument["commandline"] = "hostname"
@@ -69,7 +72,8 @@ func TestPowershellValidCommand(t *testing.T) {
 }
 
 func TestCmdInvalidCommand(t *testing.T) {
-	executor := MakeExecutor()
+	campaign := campaign.Campaign{}
+	executor := MakeExecutor(&campaign)
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "cmd"
 	packetArgument["commandline"] = "invalid"
@@ -93,7 +97,8 @@ func TestCmdInvalidCommand(t *testing.T) {
 }
 
 func TestPowershellInvalidCommand(t *testing.T) {
-	executor := MakeExecutor()
+	campaign := campaign.Campaign{}
+	executor := MakeExecutor(&campaign)
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "powershell"
 	packetArgument["commandline"] = "invalid"
@@ -117,7 +122,8 @@ func TestPowershellInvalidCommand(t *testing.T) {
 }
 
 func TestCopyFirst(t *testing.T) {
-	executor := MakeExecutor()
+	campaign := campaign.Campaign{}
+	executor := MakeExecutor(&campaign)
 
 	destPath := "C:\\temp\\server.exe"
 	os.Remove(destPath)
@@ -157,7 +163,8 @@ func TestCopyFirst(t *testing.T) {
 }
 
 func TestHollow(t *testing.T) {
-	executor := MakeExecutor()
+	campaign := campaign.Campaign{}
+	executor := MakeExecutor(&campaign)
 
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "raw"
@@ -196,7 +203,8 @@ func TestHollow(t *testing.T) {
 }
 
 func TestCommandExec(t *testing.T) {
-	executor := MakeExecutor()
+	campaign := campaign.Campaign{}
+	executor := MakeExecutor(&campaign)
 
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "commandexec"
@@ -232,7 +240,8 @@ func TestCommandExec(t *testing.T) {
 }
 
 func TestRemote(t *testing.T) {
-	executor := MakeExecutor()
+	campaign := campaign.Campaign{}
+	executor := MakeExecutor(&campaign)
 
 	packetArgument := make(model.PacketArgument, 2)
 	packetArgument["shelltype"] = "remote"

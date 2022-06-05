@@ -45,7 +45,7 @@ func MakeUpstreamRest(config *ClientConfig, campaign *campaign.Campaign) Upstrea
 // Connect creates a REST connection to the server, or returns an error
 func (u *UpstreamRest) Connect() error {
 	// Handle all proxy related settings in NewDialContext
-	dialContext, err := NewDialContext(u.campaign)
+	dialContext, err := common.NewDialContext(u.campaign)
 	if err != nil {
 		return err
 	}

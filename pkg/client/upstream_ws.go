@@ -48,7 +48,7 @@ func (u *UpstreamWs) Connect() error {
 	requestHeader.Add("User-Agent", u.campaign.UserAgent)
 
 	// Handle all proxy related settings in NewDialContext
-	dialContext, err := NewDialContext(u.campaign)
+	dialContext, err := common.NewDialContext(u.campaign)
 	if err != nil {
 		return err
 	}

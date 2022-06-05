@@ -24,7 +24,7 @@ func NewClient() Client {
 	config := MakeClientConfig()
 	campaign := campaign.MakeCampaign()
 	upstreamManager := MakeUpstreamManager(&config, &campaign)
-	downstreamManager := MakeDownstreamManager(&config, upstreamManager.ChannelOutgoing)
+	downstreamManager := MakeDownstreamManager(&config, &campaign, upstreamManager.ChannelOutgoing)
 
 	if campaign.AutoStartDownstreams {
 		_, err := downstreamManager.StartListeners("localhost:50000", "ipc/")

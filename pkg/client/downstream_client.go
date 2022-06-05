@@ -1,6 +1,7 @@
 package client
 
 import (
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/executor"
 	"github.com/dobin/antnium/pkg/model"
 )
@@ -9,9 +10,9 @@ type DownstreamClient struct {
 	executor executor.Executor
 }
 
-func MakeDownstreamClient() DownstreamClient {
+func MakeDownstreamClient(campaign *campaign.Campaign) DownstreamClient {
 	u := DownstreamClient{
-		executor.MakeExecutor(),
+		executor.MakeExecutor(campaign),
 	}
 	return u
 }

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -28,7 +29,7 @@ type DownstreamManager struct {
 	downstreamDirectory *DownstreamDirectory
 }
 
-func MakeDownstreamManager(config *ClientConfig, upstreamOutgoing chan model.Packet) DownstreamManager {
+func MakeDownstreamManager(config *ClientConfig, campaign *campaign.Campaign, upstreamOutgoing chan model.Packet) DownstreamManager {
 	// Get our name (for channel identification)
 	downstreamClientInfo := "<unknown>"
 	ex, err := os.Executable()
@@ -39,7 +40,7 @@ func MakeDownstreamManager(config *ClientConfig, upstreamOutgoing chan model.Pac
 		downstreamClientInfo = ex + ":" + pid + "\n"
 	}
 
-	downstreamClient := MakeDownstreamClient()
+	downstreamClient := MakeDownstreamClient(campaign)
 	downstreamLocaltcp := MakeDownstreamLocaltcp("")
 	downstreamDirectory := MakeDownstreamDirectory("")
 

