@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 )
 
@@ -14,6 +15,10 @@ func (u *UpstreamRest) PacketSendUrl() string {
 }
 
 func (u *UpstreamRest) HttpGet(url string) (*http.Response, error) {
+	if !u.Connected() {
+		return nil, fmt.Errorf("Not connected")
+	}
+
 	client := u.httpClient
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -30,6 +35,10 @@ func (u *UpstreamRest) HttpGet(url string) (*http.Response, error) {
 }
 
 func (u *UpstreamRest) HttpPost(url string, data *bytes.Reader) (*http.Response, error) {
+	if !u.Connected() {
+		return nil, fmt.Errorf("Not connected")
+	}
+
 	client := u.httpClient
 	req, err := http.NewRequest("POST", url, data)
 	if err != nil {

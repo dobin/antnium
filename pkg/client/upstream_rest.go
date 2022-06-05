@@ -149,7 +149,11 @@ func (u *UpstreamRest) SendPacket(packet model.Packet) error {
 
 // Connected returns false if we know that that websocket connection is dead
 func (u *UpstreamRest) Connected() bool {
-	return true
+	if u.httpClient == nil {
+		return false
+	} else {
+		return true
+	}
 }
 
 func (u *UpstreamRest) ChanIncoming() chan model.Packet {
