@@ -35,16 +35,20 @@ func (s *Server) Serve() {
 	// Client Authenticated
 	clientRouter := myRouter.PathPrefix("/").Subrouter()
 	clientRouter.Use(GetClientMiddleware(s.Campaign.AuthHeader, s.Campaign.ApiKey))
-	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{clientId}", s.connectorManager.Rest.getPacket) // /getPacket/{clientId}
-	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.connectorManager.Rest.sendPacket)            // /sendPacket
-	myRouter.HandleFunc("/ws", s.connectorManager.Websocket.wsHandlerClient)
+	clientRouter.HandleFunc(s.Campaign.PacketGetPath+"{clientId}", s.connectorManager.Rest.getPacket)           // /getPacket/{clientId}
+	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.connectorManager.Rest.sendPacket)                      // /sendPacket
+	clientRouter.HandleFunc(s.Campaign.SecureDownloadPath+"{filename}", s.connectorManager.Rest.secureDownload) // /secure/
 
-	// Authentication only via packetId parameter
+	// Public websocket also authenticated in the handler
+	myRouter.HandleFunc(s.Campaign.ClientWebsocketPath, s.connectorManager.Websocket.wsHandlerClient) // "/ws"
+
+	// Public
+	// - Authentication only via packetId parameter
 	myRouter.HandleFunc(s.Campaign.FileUploadPath+"{packetId}", s.connectorManager.Rest.uploadFile) // /upload/{packetId}
-	// Authentication based on known filenames
+	// - Authentication based on known filenames
 	myRouter.PathPrefix(s.Campaign.FileDownloadPath).Handler(
 		http.StripPrefix(s.Campaign.FileDownloadPath, http.FileServer(http.Dir("./static/")))) // /static
-	// Authentication based on its a random directory name
+	// - Authentication based on its a random directory name?
 	myRouter.PathPrefix("/webui").Handler(
 		http.StripPrefix("/webui", http.FileServer(http.Dir("./webui/")))) // /static
 

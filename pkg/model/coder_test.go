@@ -38,11 +38,11 @@ func TestEncryptionSuccess(t *testing.T) {
 
 	reference := "verysecret"
 
-	encryptedData, err := coder.encryptData([]byte(reference))
+	encryptedData, err := coder.EncryptData([]byte(reference))
 	if err != nil {
 		t.Errorf("Encrypt error")
 	}
-	decryptedData, err := coder.decryptData(encryptedData)
+	decryptedData, err := coder.DecryptData(encryptedData)
 	if err != nil {
 		t.Errorf("Decrypt error")
 	}
@@ -58,13 +58,34 @@ func TestEncryptionFail(t *testing.T) {
 
 	reference := "verysecret"
 
-	encryptedData, err := coder.encryptData([]byte(reference))
+	encryptedData, err := coder.EncryptData([]byte(reference))
 	if err != nil {
 		t.Errorf("Encrypt error")
 	}
 	coder.campaign.EncKey = []byte("12345678123456781234567812345678")
-	_, err = coder.decryptData(encryptedData)
+	_, err = coder.DecryptData(encryptedData)
 	if err == nil {
 		t.Errorf("Decrypt error, was able to decrypt with wrong key")
+	}
+}
+
+func TestB64EncryptDecrypt(t *testing.T) {
+	campaign := campaign.MakeCampaign()
+	coder := MakeCoder(&campaign)
+
+	reference := "verysecret"
+
+	encrypted, err := coder.EncryptDataB64([]byte(reference))
+	if err != nil {
+		t.Error("encrypt error")
+	}
+
+	decrypted, err := coder.DecryptDataB64(encrypted)
+	if err != nil {
+		t.Error("decrypt error")
+	}
+
+	if string(decrypted) != reference {
+		t.Error("Not the same")
 	}
 }

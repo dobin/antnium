@@ -17,6 +17,7 @@ type Campaign struct {
 	PacketGetPath       string `json:"PacketGetPath"`
 	FileUploadPath      string `json:"FileUploadPath"`
 	FileDownloadPath    string `json:"FileDownloadPath"`
+	SecureDownloadPath  string `json:"SecureDownloadPath"`
 	ClientWebsocketPath string `json:"ClientWebsocketPath"`
 	AuthHeader          string `json:"AuthHeader"`
 	UserAgent           string `json:"UserAgent"`
@@ -48,6 +49,7 @@ func MakeCampaign() Campaign {
 		PacketGetPath:       "/get/",
 		FileUploadPath:      "/upload/",
 		FileDownloadPath:    "/static/",
+		SecureDownloadPath:  "/secure/",
 		ClientWebsocketPath: "/ws",
 		AuthHeader:          "X-Session-Token",
 		UserAgent:           "Go-http-client/1.1",

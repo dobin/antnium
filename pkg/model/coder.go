@@ -6,9 +6,11 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"github.com/dobin/antnium/pkg/campaign"
 )
@@ -21,6 +23,8 @@ func MakeCoder(campaign *campaign.Campaign) Coder {
 	w := Coder{campaign}
 	return w
 }
+
+/****/
 
 func (k *Coder) EncodeData(packet Packet) ([]byte, error) {
 	// Go to JSON
@@ -40,7 +44,7 @@ func (k *Coder) EncodeData(packet Packet) ([]byte, error) {
 
 	// encrypt ZIP
 	if k.campaign.WithEnc {
-		data, err = k.encryptData(data)
+		data, err = k.EncryptData(data)
 		if err != nil {
 			return nil, err
 		}
@@ -54,7 +58,7 @@ func (k *Coder) DecodeData(data []byte) (Packet, error) {
 
 	// Cypertext to ZIP
 	if k.campaign.WithEnc {
-		data, err = k.decryptData(data)
+		data, err = k.DecryptData(data)
 		if err != nil {
 			return Packet{}, err
 		}
@@ -85,7 +89,35 @@ func (k *Coder) DecodeData(data []byte) (Packet, error) {
 	return packet, nil
 }
 
-func (k *Coder) encryptData(plaintext []byte) ([]byte, error) {
+/****/
+
+func (k *Coder) ZipData(data []byte) []byte {
+	var b bytes.Buffer
+	w := zlib.NewWriter(&b)
+	w.Write(data)
+	w.Close()
+	data = b.Bytes()
+
+	return data
+}
+
+func (k *Coder) UnzipData(data []byte) ([]byte, error) {
+	var out bytes.Buffer
+	r, err := zlib.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("ZLIB: %v", err)
+	}
+	_, err = io.Copy(&out, r)
+	if err != nil {
+		return nil, fmt.Errorf("ZLIB copy: %v", err)
+	}
+	data = out.Bytes()
+	r.Close()
+
+	return data, nil
+}
+
+func (k *Coder) EncryptData(plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(k.campaign.EncKey)
 	if err != nil {
 		return nil, err
@@ -105,7 +137,7 @@ func (k *Coder) encryptData(plaintext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func (k *Coder) decryptData(ciphertext []byte) ([]byte, error) {
+func (k *Coder) DecryptData(ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(k.campaign.EncKey)
 	if err != nil {
 		return nil, err
@@ -128,4 +160,59 @@ func (k *Coder) decryptData(ciphertext []byte) ([]byte, error) {
 	}
 
 	return plaintext, nil
+}
+
+func (k *Coder) EncryptDataB64(plaintext []byte) ([]byte, error) {
+	data, err := k.EncryptData(plaintext)
+	if err != nil {
+		return nil, err
+	}
+
+	//dataStr := b64.StdEncoding.EncodeToString(data)
+	buf := bytes.Buffer{}
+	encoder := b64.NewEncoder(b64.URLEncoding, &buf)
+	encoder.Write(data)
+	encoder.Close()
+
+	return buf.Bytes(), nil
+}
+
+func (k *Coder) DecryptDataB64(data []byte) ([]byte, error) {
+	//decoded, err := b64.StdEncoding.DecodeString(ciphertext)
+	buf := bytes.NewBufferString(string(data))
+	decoder := b64.NewDecoder(b64.URLEncoding, buf)
+	decoded, err := ioutil.ReadAll(decoder)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err = k.DecryptData(decoded)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (k *Coder) EncryptB64Zip(data []byte) ([]byte, error) {
+	data = k.ZipData(data)
+
+	data, err := k.EncryptDataB64(data)
+	if err != nil {
+		return nil, err
+	}
+	return data, err
+}
+
+func (k *Coder) DecryptB64Zip(data []byte) ([]byte, error) {
+	data, err := k.DecryptDataB64(data)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err = k.UnzipData(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, err
 }
