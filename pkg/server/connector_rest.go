@@ -100,6 +100,7 @@ func (co *ConnectorRest) secureDownload(rw http.ResponseWriter, r *http.Request)
 		fileContent, err = os.ReadFile("./static/" + string(filename))
 		if err != nil {
 			log.Errorf("Cant access file %s: %s", filename, err.Error())
+			rw.WriteHeader(404)
 			return
 		}
 	}
@@ -108,6 +109,7 @@ func (co *ConnectorRest) secureDownload(rw http.ResponseWriter, r *http.Request)
 	fileContent, err = coder.EncryptB64Zip(fileContent)
 	if err != nil {
 		log.Errorf("Error: %s", err.Error())
+		rw.WriteHeader(500)
 	}
 
 	// send it
