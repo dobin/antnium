@@ -44,7 +44,7 @@ func TestServerFileDownloadSecureReference(t *testing.T) {
 	campaign.ServerUrl = "http://127.0.0.1:" + port
 
 	executor := executor.MakeExecutor(&campaign)
-	fileContent, err := executor.SecureFileDownload("unittest")
+	fileContent, err := executor.SecureFileDownload("unittest", "", "")
 	if err != nil {
 		t.Errorf("Download: %s", err.Error())
 		return

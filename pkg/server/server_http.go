@@ -39,10 +39,10 @@ func (s *Server) Serve() {
 	clientRouter.HandleFunc(s.Campaign.PacketSendPath, s.connectorManager.Rest.sendPacket)            // /sendPacket
 
 	// Public
-	// - Authenticated based on encrypted filename
-	myRouter.HandleFunc(s.Campaign.SecureDownloadPath+"{filename}", s.connectorManager.Rest.secureDownload) // /secure/
+	// - Authenticated based on encrypted post data arguments
+	myRouter.HandleFunc(s.Campaign.SecureDownloadPath, s.connectorManager.Rest.secureDownload) // /secure
 	// - Authenticated in the handler
-	myRouter.HandleFunc(s.Campaign.ClientWebsocketPath, s.connectorManager.Websocket.wsHandlerClient) // "/ws"
+	myRouter.HandleFunc(s.Campaign.ClientWebsocketPath, s.connectorManager.Websocket.wsHandlerClient) // /ws
 	// - Authentication only via packetId parameter
 	myRouter.HandleFunc(s.Campaign.FileUploadPath+"{packetId}", s.connectorManager.Rest.uploadFile) // /upload/{packetId}
 	// - Authentication based on known filenames

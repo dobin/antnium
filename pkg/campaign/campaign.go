@@ -33,7 +33,7 @@ type Campaign struct {
 func MakeCampaign() Campaign {
 	apiKey := "Secret-Api-Key"
 	encKey := "Secret-Enc-Key"
-	serverUrl := "http://0.0.0.0:8080"
+	serverUrl := "http://127.0.0.1:8080"
 	proxyUrl := ""
 
 	key := GetKey(encKey)
@@ -49,7 +49,7 @@ func MakeCampaign() Campaign {
 		PacketGetPath:       "/get/",
 		FileUploadPath:      "/upload/",
 		FileDownloadPath:    "/static/",
-		SecureDownloadPath:  "/secure/",
+		SecureDownloadPath:  "/secure",
 		ClientWebsocketPath: "/ws",
 		AuthHeader:          "X-Session-Token",
 		UserAgent:           "Go-http-client/1.1",
