@@ -211,55 +211,26 @@ func (e *Executor) actionExecLol(packetArgument model.PacketArgument) (model.Pac
 	exitCode := 0
 	var err error
 
-	shellType, ok := packetArgument["shelltype"]
+	executable, ok := packetArgument["executable"]
 	if !ok {
-		return ret, fmt.Errorf("no argument 'shelltype' given")
+		return ret, fmt.Errorf("invalid packet arguments given: no executable")
+	}
+	argline, ok := packetArgument["argline"]
+	if !ok {
+		return ret, fmt.Errorf("invalid packet arguments given: no argline")
+	}
+	args := strings.Fields(argline)
+
+	spawnType, ok := packetArgument["spawnType"]
+	if !ok {
+		spawnType = "standard"
+	}
+	spawnData, ok := packetArgument["spawnData"]
+	if !ok {
+		spawnData = ""
 	}
 
-	switch shellType {
-	case "commandexec":
-		executable, ok := packetArgument["executable"]
-		if !ok {
-			return ret, fmt.Errorf("invalid packet arguments given: no executable")
-		}
-		argline, ok := packetArgument["argline"]
-		if !ok {
-			return ret, fmt.Errorf("invalid packet arguments given: no argline")
-		}
-		args := strings.Fields(argline)
-
-		spawnType, ok := packetArgument["spawnType"]
-		if !ok {
-			spawnType = "standard"
-		}
-		spawnData, ok := packetArgument["spawnData"]
-		if !ok {
-			spawnData = ""
-		}
-
-		stdOut, stdErr, pid, exitCode, err = arch.ExecDirect(executable, args, spawnType, spawnData)
-
-	case "raw":
-		executable, args, err := model.MakePacketArgumentFrom(packetArgument)
-		executable = arch.ResolveWinVar(executable)
-		if err != nil {
-			return ret, fmt.Errorf("invalid packet arguments given")
-		}
-
-		spawnType, ok := packetArgument["spawnType"]
-		if !ok {
-			spawnType = "standard"
-		}
-		spawnData, ok := packetArgument["spawnData"]
-		if !ok {
-			spawnData = ""
-		}
-
-		stdOut, stdErr, pid, exitCode, err = arch.ExecDirect(executable, args, spawnType, spawnData)
-
-	default:
-		return ret, fmt.Errorf("Invalid shellType: %s", shellType)
-	}
+	stdOut, stdErr, pid, exitCode, err = arch.ExecDirect(executable, args, spawnType, spawnData)
 
 	ret["stdout"] = arch.ExecOutputDecode(stdOut)
 	ret["stderr"] = arch.ExecOutputDecode(stdErr)
@@ -325,6 +296,9 @@ func (e *Executor) SecureFileDownload(filename string) ([]byte, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("Invalid StatusCode when attempt to download file %s: %d", filename, res.StatusCode)
+	}
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
