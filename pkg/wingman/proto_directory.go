@@ -66,7 +66,7 @@ func (wd WingDirectory) loop() {
 }
 
 func (wd WingDirectory) handleFile(filename string) error {
-	executor := executor.MakeExecutor()
+	executor := executor.MakeExecutor(nil)
 
 	// Handle it
 	log.Infof("Reading file: %s", filename)

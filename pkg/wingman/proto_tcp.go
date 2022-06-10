@@ -59,7 +59,7 @@ func (e *WingTcp) Shutdown() {
 }
 
 func (e *WingTcp) Loop() {
-	executor := executor.MakeExecutor()
+	executor := executor.MakeExecutor(nil)
 
 	for {
 		// Read
