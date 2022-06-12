@@ -22,7 +22,7 @@ server:
 	go build -o server.elf cmd/server/server.go 
 
 client:
-	GOOS=linux GOARCH=amd64 go build -o client.elf cmd/client/client.go
+	#GOOS=linux GOARCH=amd64 go build -o client.elf cmd/client/client.go
 	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc CGO_LDFLAGS="-L /usr/x86_64-w64-mingw32/lib/ -lpsapi" go build -o client.exe -ldflags $(LDFLAGS) cmd/client/client.go
 
 wingman:
