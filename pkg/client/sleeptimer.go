@@ -21,9 +21,9 @@ func (c *SleepTimer) getSleepDuration() time.Duration {
 	diff := timeDiff.Seconds()
 
 	if diff < 10 {
-		return time.Second * 5
+		return time.Second * 1
 	} else if diff < 60 { // 1min
-		return time.Second * 30
+		return time.Second * 3
 	} else if diff < 600 { // 10min
 		return time.Minute * 10
 	} else {
