@@ -4,9 +4,23 @@
 Anti Tanium
 ```
 
+A C2 framework and RAT written in Go. 
+
 There are two components: 
-* client.exe: The actual trojan
-* server.exe: C2 infrastructure 
+* client.exe: The actual RAT / beacon / agent / implant
+* server.exe: C2 server
+
+## Features
+
+* HTTP/S and Websocket communication channel
+* Command execution
+  * Direct LOLbins
+  * Interactive cmd.exe/Powershell shell
+  * Remote .NET binaries
+* Encrypted communication
+* Malleable C2
+* File upload / download
+* File browser
 
 
 ## Quick How to use
@@ -19,9 +33,14 @@ on the same host). This is also the default, no need to change anything.
 Check campaign in `campaign/campaign.go`: 
 * `serverUrl = "http://127.0.0.1:8080"`
 
-Build it: 
+Build it on windows: 
 ```
-.\makewin.bat deploy
+> .\makewin.bat deploy
+```
+
+Build it on linux: 
+```
+$ make deploy
 ```
 
 Start server, and client: 
@@ -36,7 +55,22 @@ Access the WebUI by opening the following URL in the browser after starting serv
 http://localhost:8080/webui/
 ```
 
-Note: for Linux use `make` instead of `makewin.bat`, and replace `\` with `/`
+## Directories
+
+### `static/`: Public directory for tools
+
+Put files there you want to download on other machines. Like `client.exe`, `wingman.exe`. 
+And your tools, like `mimikatz.exe`, or `seatbelt.exe`. But use more inconspicuous file names. 
+
+The files are also available via the `/secure` API requested with encrypted filenames, and encrypted+base64 encoded file as response.
+
+dotNet files can be execute by using `remote` execution option (accessed via `/secure`).
+
+### `upload/`: Private directory for data exfiltration 
+
+File uploads from the client will be stored there. 
+
+
 
 ## Detailed build instructions
 
@@ -64,8 +98,8 @@ Start server.exe:
 > .\server.exe
 
 Antnium 0.1
-Loaded 102 packets from db.packets.json
-Loaded 21 clients from db.clients.json 
+Loaded 0 packets from db.packets.json
+Loaded 0 clients from db.clients.json 
 Periodic DB dump enabled
 Starting webserver on 127.0.0.1:8080  
 ```
@@ -83,18 +117,24 @@ time="2021-09-02T21:48:16+02:00" level=info msg=Send 1_computerId=c4oil02sdke2sp
 
 ## Notes on Campaign configuration
 
-`campaign.go` connects a compiled client.exe with a specific server.exe, which forms a campaign. 
+`pkg/campaign/campaign.go` connects a compiled client.exe with a specific server.exe, which forms a campaign. 
 A campaign has individual encryption- and authentication keys, which are shared between
 server and client. 
 
 ```
 type Campaign struct {
 	ApiKey      string  // Key used to access client facing REST
-	AdminApiKey string  // Key used to access admin facing REST
 	EncKey      []byte  // Key used to encrypt packets between server/client
+
 	ServerUrl   string  // URL of the server, as viewed from the clients
 }
 ```
+
+And admin UI / operator key in `pkt/server/config.go`:
+```
+type Config struct {
+	AdminApiKey string
+}```
 
 Note that `ServerUrl` is the URL used by the client for all interaction with the server. 
 It is the public server URL, e.g. `http://totallynotmalware.ch`. The actual server.exe may
@@ -111,7 +151,7 @@ The Angular UI files are publicly accessible. Lets assume `ServerUrl="http://loc
 When connecting to the UI in the browser, you need first to configure the server IP and its password:
 * AdminApiKey (default: "Secret-AdminApi-Key", like in Campagin default)
 * ServerIP (default: "http://localhost:8080")
-* User (optional)
+* User (optional, can be chosen randomly)
 
 ## Client
 

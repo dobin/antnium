@@ -2,10 +2,14 @@
 
 ## Commands
 
+* ping: special, initiated by client, and not logged. Handled by server. Contains host info. 
 * exec: Execute a file
-* fileupload: upload a file 
-* filedownload: download a file 
+* fileUpload: upload a file 
+* fileDownload: download a file 
 * dir: directory content
+* iOpen: interactive shell open
+* iIssue: interactive shell issue data
+
 
 For a complete list, see `doc/protocol.md`.
 
@@ -27,7 +31,6 @@ Use:
 * `server.exe --dbWriteOnly` to only write but not read
 
 
-
 ## Security 
 
 The client and server share a static encryption key, and a API key. 
@@ -41,25 +44,7 @@ If the blue team manages to extract the encryption key from a client binary, the
 * decrypt all past communications of all client instances (if they have proxy log)
 * Issue new commands to existing clients (if they can perform HTTP MITM on proxy)
 
-This is intentional. The campgain is only protected against outsiders, not a motivated blue team. 
+This is intentional. The campaign is only protected against outsiders, not a motivated blue team. 
 
 The admin API is protected by a separate AdminApi key, not found in the client. 
 
-## Packet Types
-
-From client to server:
-
-* Ping
-  * sent from client to server upon start
-  * only packet not initiated by server
-  * only packettype the server knows about
-  * not logged or broadcasted (anti-spam)
-  * contains host info
-  * data available through /admin/clients API
-
-From server to client: 
-* exec
-* iOpen
-* iIssue
-* fileUpload
-* fileDownload
