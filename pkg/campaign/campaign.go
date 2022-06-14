@@ -31,19 +31,12 @@ type Campaign struct {
 }
 
 func MakeCampaign() Campaign {
-	apiKey := "Secret-Api-Key"
-	encKey := "Secret-Enc-Key"
-	serverUrl := "http://127.0.0.1:8080"
-	proxyUrl := ""
-
-	key := GetKey(encKey)
-
 	c := Campaign{
-		ApiKey:    apiKey,
-		EncKey:    key,
+		ApiKey:    "Secret-Api-Key",
+		EncKey:    GetKey("Secret-Enc-Key"),
 		WithZip:   true,
 		WithEnc:   true,
-		ServerUrl: serverUrl,
+		ServerUrl: "http://127.0.0.1:8080",
 
 		PacketSendPath:      "/send",
 		PacketGetPath:       "/get/",
@@ -56,7 +49,7 @@ func MakeCampaign() Campaign {
 
 		HttpJitter:           20,
 		ClientUseWebsocket:   true,
-		ProxyUrl:             proxyUrl,
+		ProxyUrl:             "",
 		DisableProxy:         false, //
 		AutoStartDownstreams: false, // broken, do not use
 		DoClientInfo:         true,
