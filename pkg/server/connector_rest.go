@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/Binject/go-donut/donut"
 	"github.com/dobin/antnium/pkg/campaign"
@@ -117,7 +119,7 @@ func (co *ConnectorRest) secureDownload(rw http.ResponseWriter, r *http.Request)
 			return
 		}
 		// convert it to shellcode
-		fileContent, err = fileToShellcode(fileContent, args.Argline)
+		fileContent, err = fileToShellcode(fileContent, args)
 		if err != nil {
 			log.Errorf("Error: %s", err.Error())
 			rw.WriteHeader(500)
@@ -136,11 +138,11 @@ func (co *ConnectorRest) secureDownload(rw http.ResponseWriter, r *http.Request)
 	fmt.Fprint(rw, string(fileContent))
 }
 
-func fileToShellcode(fileContent []byte, argline string) ([]byte, error) {
+func fileToShellcode(fileContent []byte, args model.SecureDownloadArgs) ([]byte, error) {
 	config := donut.DonutConfig{
-		Type:       donut.DONUT_MODULE_NET_EXE,
+		Type:       getDonutType(args.Filename, args.IsDotnet),
 		InstType:   donut.DONUT_INSTANCE_PIC,
-		Parameters: argline,
+		Parameters: args.Argline,
 		//Class:      className,
 		//Method:     method,
 		Bypass:   3,         // 1=skip, 2=abort on fail, 3=continue on fail.
@@ -157,4 +159,34 @@ func fileToShellcode(fileContent []byte, argline string) ([]byte, error) {
 		return nil, err
 	}
 	return ss.Bytes(), nil
+}
+
+// based on https://github.com/BishopFox/sliver/blob/6ff1edb962fd268b18fbbf162488eda601cfc637/server/generate/donut.go
+func getDonutType(filename string, dotnet bool) donut.ModuleType {
+	ext := filepath.Ext(filename)
+
+	var donutType donut.ModuleType
+	switch strings.ToLower(filepath.Ext(ext)) {
+	case ".exe", ".bin":
+		if dotnet {
+			donutType = donut.DONUT_MODULE_NET_EXE
+			log.Infof("NET_EXE")
+		} else {
+			donutType = donut.DONUT_MODULE_EXE
+			log.Infof("EXE")
+		}
+	case ".dll":
+		if dotnet {
+			donutType = donut.DONUT_MODULE_NET_DLL
+		} else {
+			donutType = donut.DONUT_MODULE_DLL
+		}
+	case ".xsl":
+		donutType = donut.DONUT_MODULE_XSL
+	case ".js":
+		donutType = donut.DONUT_MODULE_JS
+	case ".vbs":
+		donutType = donut.DONUT_MODULE_VBS
+	}
+	return donutType
 }

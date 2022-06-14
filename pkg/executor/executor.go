@@ -253,10 +253,6 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 	if !ok {
 		return ret, fmt.Errorf("invalid packet arguments given: no filename")
 	}
-	fileType, ok := packetArgument["type"]
-	if !ok {
-		return ret, fmt.Errorf("invalid packet arguments given: no type")
-	}
 	argline, ok := packetArgument["argline"]
 	if !ok {
 		return ret, fmt.Errorf("invalid packet arguments given: no argline")
@@ -266,7 +262,15 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 		return ret, fmt.Errorf("invalid packet arguments given: no injectInto")
 	}
 
-	fileContent, err := e.SecureFileDownload(filename, argline, fileType)
+	isDotnet := true // Lets have it true as default for now
+	isDotnetStr, ok := packetArgument["isDotnet"]
+	if ok {
+		if isDotnetStr != "true" {
+			isDotnet = false
+		}
+	}
+
+	fileContent, err := e.SecureFileDownload(filename, argline, isDotnet)
 	if err != nil {
 		return ret, err
 	}
@@ -281,7 +285,7 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 	return ret, err
 }
 
-func (e *Executor) SecureFileDownload(filename, argline, filetype string) ([]byte, error) {
+func (e *Executor) SecureFileDownload(filename string, argline string, isDotnet bool) ([]byte, error) {
 	if e.campaign == nil {
 		return nil, fmt.Errorf("No campaign available, cant download")
 	}
@@ -293,6 +297,7 @@ func (e *Executor) SecureFileDownload(filename, argline, filetype string) ([]byt
 	args := model.SecureDownloadArgs{
 		Filename: filename,
 		Argline:  argline,
+		IsDotnet: isDotnet,
 	}
 	data, err := json.Marshal(args)
 	if err != nil {
