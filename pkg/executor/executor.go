@@ -282,6 +282,9 @@ func (e *Executor) actionExecRemote(packetArgument model.PacketArgument) (model.
 }
 
 func (e *Executor) SecureFileDownload(filename, argline, filetype string) ([]byte, error) {
+	if e.campaign == nil {
+		return nil, fmt.Errorf("No campaign available, cant download")
+	}
 	coder := model.MakeCoder(e.campaign)
 
 	url := e.campaign.ServerUrl + e.campaign.SecureDownloadPath
