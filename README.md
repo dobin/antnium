@@ -13,10 +13,18 @@ There are two components:
 ## Features
 
 * HTTP/S and Websocket communication channel
+* Proxy support (manual, windows, authenticated and kerberos)
 * Command execution
   * Direct LOLbins
+	* Copy file first
+	* Process hollowing
   * Interactive cmd.exe/Powershell shell
-  * Remote .NET binaries
+  * Remote managed and unmanaged code
+	* Using donut
+	* PE to shellcode
+	* Encrypted
+	* AMSI bypass
+* EDR bypass with Reflexxion (ntdll.dll restore)
 * Encrypted communication
 * Malleable C2
 * File upload / download
@@ -149,9 +157,10 @@ The Angular UI files are publicly accessible. Lets assume `ServerUrl="http://loc
 * or `ng serve` from antniumui directory, and then open `http://localhost:4200` on your browser
 
 When connecting to the UI in the browser, you need first to configure the server IP and its password:
-* AdminApiKey (default: "Secret-AdminApi-Key", like in Campagin default)
+* AdminApiKey (default: "Secret-AdminApi-Key", like in config default)
 * ServerIP (default: "http://localhost:8080")
 * User (optional, can be chosen randomly)
+
 
 ## Client
 
@@ -199,7 +208,7 @@ Put a reverse proxy before it (make sure it supports websockets!) or forward por
 
 ## Options
 
-For proxy, use full HTTP url:
+For manual proxy, use full HTTP url:
 ```
 client.exe -proxy http://proxy:8080
 ```
@@ -214,7 +223,7 @@ export PROXY http://localhost:8080
 ## Wingman
 
 Wingman is basically the Client, but without direct connection to the C2. 
-It can connect to an existing client on localhost:50000 (more sure its started, if Campaign.AutoStartDownstreams is false)
+It can connect to an existing client on localhost:50000 (make sure its started, if Campaign.AutoStartDownstreams is false)
 
 Connects to localhost port 50000:
 ```

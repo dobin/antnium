@@ -10,8 +10,8 @@
 * iOpen: interactive shell open
 * iIssue: interactive shell issue data
 
-
 For a complete list, see `doc/protocol.md`.
+
 
 ## Server
 
@@ -19,12 +19,14 @@ For a complete list, see `doc/protocol.md`.
 * uploads files from client via REST to `./upload/`
 * serves directory `./static/`
 
+
 ### DB
 
 The server stores its data in the files: 
 * db.packets.json
 * db.clients.json
-regularly. It will load it on start automatically. 
+regularly (e.g. once a minute), and on sigint. 
+It will load it on start automatically. 
 
 Use: 
 * `server.exe --dbReadOnly` to only read but not update
