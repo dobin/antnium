@@ -4,7 +4,12 @@
 Anti Tanium
 ```
 
-A C2 framework and RAT written in Go. 
+A C2 framework and RAT written in Go.
+
+This source code is publicly published as reference for my presentation 
+[Develop your own RAT - AV & EDR Defense](https://docs.google.com/presentation/d/1UZmFo_TvSS2TvPJKlDjIW1kTVjYGGaYO86Buh2UgbaI/mobilepresent#slide=id.g11cdb36f978_1_129). 
+Antnium inteded to fulfill my own requirements, and not those of others. Works for the campaigns i performed, but is not necessarily meant to be
+a generic C2 framework.
 
 There are two components: 
 * client.exe: The actual RAT / beacon / agent / implant
@@ -122,6 +127,14 @@ time="2021-09-02T21:48:16+02:00" level=info msg="Connecting to WS succeeded"
 time="2021-09-02T21:48:16+02:00" level=info msg=Send 1_computerId=c4oil02sdke2sp3nfngg 2_packetId=0 3_downstreamId=client 4_packetType=ping 5_arguments="map[]" 6_response=...
 time="2021-09-02T21:48:16+02:00" level=info msg=Send 1_computerId=c4oil02sdke2sp3nfngg 2_packetId=0 3_downstreamId=client 4_packetType=ping 5_arguments="map[]" 6_response=...
 ```
+
+## Notes on cross compiling
+
+Compiling the Windows client from Linux works, but requires
+some manual GO gcc command line fu, because of some
+windows dependencies. If it doesnt immediately work, compile
+the windows client on windows itself (`makewin.bat client`).
+
 
 ## Notes on Campaign configuration
 
