@@ -134,7 +134,8 @@ And admin UI / operator key in `pkt/server/config.go`:
 ```
 type Config struct {
 	AdminApiKey string
-}```
+}
+```
 
 Note that `ServerUrl` is the URL used by the client for all interaction with the server. 
 It is the public server URL, e.g. `http://totallynotmalware.ch`. The actual server.exe may
