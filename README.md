@@ -4,7 +4,12 @@
 Anti Tanium
 ```
 
-A C2 framework and RAT written in Go. 
+A C2 framework and RAT written in Go.
+
+This source code is publicly published as reference for my presentation 
+[Develop your own RAT - AV & EDR Defense](https://docs.google.com/presentation/d/1UZmFo_TvSS2TvPJKlDjIW1kTVjYGGaYO86Buh2UgbaI/mobilepresent#slide=id.g11cdb36f978_1_129). 
+Antnium inteded to fulfill my own requirements, and not those of others. Works for the campaigns i performed, but is not necessarily meant to be
+a generic C2 framework.
 
 There are two components: 
 * client.exe: The actual RAT / beacon / agent / implant
@@ -13,10 +18,18 @@ There are two components:
 ## Features
 
 * HTTP/S and Websocket communication channel
+* Proxy support (manual, windows, authenticated and kerberos)
 * Command execution
   * Direct LOLbins
+	* Copy file first
+	* Process hollowing
   * Interactive cmd.exe/Powershell shell
-  * Remote .NET binaries
+  * Remote managed and unmanaged code
+	* Using donut
+	* PE to shellcode
+	* Encrypted
+	* AMSI bypass
+* EDR bypass with Reflexxion (ntdll.dll restore)
 * Encrypted communication
 * Malleable C2
 * File upload / download
@@ -115,6 +128,14 @@ time="2021-09-02T21:48:16+02:00" level=info msg=Send 1_computerId=c4oil02sdke2sp
 time="2021-09-02T21:48:16+02:00" level=info msg=Send 1_computerId=c4oil02sdke2sp3nfngg 2_packetId=0 3_downstreamId=client 4_packetType=ping 5_arguments="map[]" 6_response=...
 ```
 
+## Notes on cross compiling
+
+Compiling the Windows client from Linux works, but requires
+some manual GO gcc command line fu, because of some
+windows dependencies. If it doesnt immediately work, compile
+the windows client on windows itself (`makewin.bat client`).
+
+
 ## Notes on Campaign configuration
 
 `pkg/campaign/campaign.go` connects a compiled client.exe with a specific server.exe, which forms a campaign. 
@@ -150,9 +171,10 @@ The Angular UI files are publicly accessible. Lets assume `ServerUrl="http://loc
 * or `ng serve` from antniumui directory, and then open `http://localhost:4200` on your browser
 
 When connecting to the UI in the browser, you need first to configure the server IP and its password:
-* AdminApiKey (default: "Secret-AdminApi-Key", like in Campagin default)
+* AdminApiKey (default: "Secret-AdminApi-Key", like in config default)
 * ServerIP (default: "http://localhost:8080")
 * User (optional, can be chosen randomly)
+
 
 ## Client
 
@@ -200,7 +222,7 @@ Put a reverse proxy before it (make sure it supports websockets!) or forward por
 
 ## Options
 
-For proxy, use full HTTP url:
+For manual proxy, use full HTTP url:
 ```
 client.exe -proxy http://proxy:8080
 ```
@@ -215,7 +237,7 @@ export PROXY http://localhost:8080
 ## Wingman
 
 Wingman is basically the Client, but without direct connection to the C2. 
-It can connect to an existing client on localhost:50000 (more sure its started, if Campaign.AutoStartDownstreams is false)
+It can connect to an existing client on localhost:50000 (make sure its started, if Campaign.AutoStartDownstreams is false)
 
 Connects to localhost port 50000:
 ```

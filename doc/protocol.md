@@ -28,60 +28,108 @@ General:
 * Response: 
   * "error": Any Go err.Error() information when handling the packet
 
-### Ping 
+### "ping" 
 
 * Arguments: None 
 * Response: 
   * "response" = "ping answer"
 
-### Test
+### "test"
 
 * Arguments: None 
 * Response: 
-  * "response" = "test answer"
+  * "response" = "response"
 
-### Exec 
+### "execShell"
  
 * Arguments: 
-  * "executable": Path to executable 
-  * "paramX": params for executable, where 0 <= X < 9
+  * "shelltype": "cmd" or "powershell"
+  * "commandline": What should be executed (e.g. "dir")
 
 * Response:
   * "stdout"
   * "stderr"
+  * "pid"
+  * "exitCode"
 
-### Filedownload
+### "execLol"
 
 * Arguments: 
-  * "remoteurl": URL to download
+  * "executable": path to the executable to execute
+  * "argline": all parameters as string, e.g. "-v user test"
+  * "spawnType": "copyFirst" or "hollow"
+  * "spawnData":
+    * for "copyFirst": path to where to copy the file first
+    * for "hollow": path to an existing executable to hollow
+
+* Response:
+  * "stdout"
+  * "stderr"
+  * "pid"
+  * "exitCode"
+
+
+### "execRemote"
+
+* Arguments: 
+  * "filename": filename of a file on the server `static/` directory
+  * "argline": all parameters as string, e.g. "-v user test"
+  * "injectInto": path to an existing executable to inject into
+  * "isDotnet": if the file is managed code / dotNet (used for Donut shellcode generation)
+
+* Response:
+  * "stdout"
+  * "stderr"
+  * "pid"
+  * "exitCode"
+
+This will initiate a "secureFileDownload".
+
+### "filedownload"
+
+* Arguments: 
+  * "remoteurl": URL to download (usuall C2 server)
   * "destination": Path/filename of where to download
 
 * Response: 
   * "response": a string showing success, or not
 
-### Fileupload
+### "fileupload"
 
 * Arguments:
-  * "remoteurl": Where to upload
+  * "remoteurl": Where to upload (usually C2 server)
   * "source": Which file/path to upload
 
 * Response: 
   * "response": HTTP status of upload
 
-### iOpen 
+### "iOpen" 
 
 * Arguments: 
-  * "force": Optional
+  * "force": Optional, reopens shell even if active
 
 * Response: 
-  * "stdout"
-  * "stderr"
+  * "stdout": Initial output of shell
+  * "stderr": Initial error output of shell
 
-### iIssue 
+### "iIssue" 
 
 * Arguments: 
   * "commandline": Stuff to write to the shell (usually a command line)
 
 * Response: 
-  * "stdout"
-  * "stderr"
+  * "stdout": Standard output of the shell
+  * "stderr": Standard error of the shell
+
+### "iClose"
+
+* Arguments: None
+* Response:
+  * "stdout": "closed"
+
+### "dir"
+
+* Arguments: 
+  * "path": Path to list
+* Response:
+  * "filelist": JSON of DirEntry array of files/directories

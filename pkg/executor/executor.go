@@ -145,14 +145,11 @@ func (e *Executor) actionInteractiveShellClose(packetArgument model.PacketArgume
 	ret := make(model.PacketResponse)
 
 	err := e.interactiveShell.Close()
-	if err != nil {
-		ret["error"] = err.Error()
-		ret["stdout"] = "closed"
-	} else {
-		ret["status"] = "no error"
-		ret["stdout"] = "closed"
-	}
+	ret["stdout"] = "closed"
 
+	if err != nil {
+		return ret, err
+	}
 	return ret, nil
 }
 
